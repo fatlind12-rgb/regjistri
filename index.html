@@ -974,8 +974,6 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
       <button class="tab-btn" onclick="switchTab('monthly',this)">🗓 Mujore</button>
       <button class="tab-btn" onclick="switchTab('salary',this)">💰 Pagat</button>
       <button class="tab-btn" onclick="switchTab('payments',this)">💳 Pagesat</button>
-      <button class="tab-btn" onclick="switchTab('expenses',this)">🧾 Shpenzimet</button>
-      <button class="tab-btn" onclick="switchTab('profit',this)">💼 Fitimi</button>
       <button class="tab-btn" onclick="switchTab('all',this)">📋 Të Gjitha</button>
     </div>
 
@@ -1072,62 +1070,6 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
         </div>
       </div>
       <div id="paymentsContainer"></div>
-    </div>
-
-    <!-- EXPENSES TAB -->
-    <div id="tab-expenses" style="display:none">
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-hd"><h3>➕ Shto Shpenzim</h3></div>
-        <div class="card-bd">
-          <div class="grid2">
-            <div>
-              <label>Data</label>
-              <input type="date" id="expDate"/>
-            </div>
-            <div>
-              <label>Vendi (lidh me një vend pune)</label>
-              <select id="expLoc" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
-                <option value="">-- Zgjedh vendin --</option>
-              </select>
-            </div>
-            <div>
-              <label>Kategoria</label>
-              <select id="expCat" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
-                <option value="material">🧱 Materiale</option>
-                <option value="transport">🚛 Transport</option>
-                <option value="qira">🏠 Qira/Vegla</option>
-                <option value="ushqim">🍔 Ushqim/Kafe</option>
-                <option value="tjeter">📦 Tjetër</option>
-              </select>
-            </div>
-            <div>
-              <label>Shuma (€)</label>
-              <input type="number" id="expAmount" placeholder="p.sh. 250" min="0" step="0.01" inputmode="decimal"/>
-            </div>
-            <div style="grid-column:1/-1">
-              <label>Përshkrimi</label>
-              <input type="text" id="expDesc" placeholder="p.sh. 5 thes çimento + 200kg hekur"/>
-            </div>
-          </div>
-          <button class="btn-p" onclick="addExpense()">✔ Shto Shpenzimin</button>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-bd" style="padding:14px 20px">
-          <label style="margin-bottom:6px">Filtro</label>
-          <select id="expFilterLoc" onchange="renderExpenses()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
-            <option value="">📍 Të gjitha vendet</option>
-          </select>
-        </div>
-      </div>
-
-      <div id="expensesContainer"></div>
-    </div>
-
-    <!-- PROFIT TAB -->
-    <div id="tab-profit" style="display:none">
-      <div id="profitContainer"></div>
     </div>
 
     <!-- ALL TAB -->
@@ -1366,7 +1308,7 @@ function switchTab(tab, btn) {
   selectedWorker = null;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['locations','chart','monthly','salary','payments','expenses','profit','all'].forEach(t => {
+  ['locations','chart','monthly','salary','payments','all'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
   renderHistory();
@@ -1723,8 +1665,6 @@ function renderHistory() {
   if (activeTab==='monthly')   renderMonthly(filtered);
   if (activeTab==='salary')    renderSalary();
   if (activeTab==='payments')  renderPayments();
-  if (activeTab==='expenses')  renderExpenses();
-  if (activeTab==='profit')    renderProfit();
   if (activeTab==='all')       renderAll(filtered);
 }
 
