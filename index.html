@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Regjistri i Punës</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Regjistri">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+<style>
+:root {
+  --bg: #f5f2ec;
+  --surface: #ffffff;
+  --surface2: #f0ece4;
+  --border: #ddd8ce;
+  --accent: #c84b2f;
+  --green: #2a6049;
+  --text: #1a1714;
+  --muted: #8a8178;
+  --r: 14px;
+  --sh: 0 2px 18px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+/* HEADER */
+header {
+  background: var(--text); color: var(--bg);
+  padding: 0 32px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+}
+.logo { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; }
+.logo-dot { color: #c84b2f; }
+.nav { display: flex; gap: 6px; }
+.nav-btn {
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: transparent; color: rgba(255,255,255,0.68);
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-btn.active { background: #c84b2f; border-color: #c84b2f; color: #fff; }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+.page { max-width: 1060px; margin: 0 auto; padding: 30px 22px; }
+
+/* SECTION TITLE */
+.stitle {
+  font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.stitle .chip {
+  font-size: 0.75rem; font-family: 'DM Mono', monospace;
+  color: var(--muted); font-weight: 400;
+  background: var(--surface2); padding: 3px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+}
+
+/* CARD */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: var(--sh); overflow: hidden; margin-bottom: 18px;
+}
+.card-hd {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-hd h3 { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; }
+.card-bd { padding: 20px; }
+
+/* FORM */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-bottom: 18px; }
+@media(max-width:560px) { .grid2 { grid-template-columns: 1fr; } }
+label { display: block; font-size: 0.73rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
+input, textarea {
+  width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 0.91rem; padding: 9px 12px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+input:focus, textarea:focus { border-color: var(--text); background: #fff; }
+
+.toggle-group { display: flex; gap: 7px; }
+.tbtn {
+  flex: 1; padding: 9px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.17s;
+}
+.tbtn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+
+/* Not Connected Wall */
+.not-connected-wall {
+  background: var(--surface); border: 2px dashed var(--border);
+  border-radius: var(--r); padding: 48px 24px;
+  text-align: center; margin-bottom: 20px;
+  display: none;
+}
+.not-connected-wall.visible { display: block; }
+.ncw-icon { font-size: 3rem; margin-bottom: 14px; }
+.ncw-title { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; }
+.ncw-sub { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+.loc-picker { position: relative; }
+.loc-picker input { padding-right: 36px; }
+.loc-toggle {
+  position: absolute; top: 50%; right: 8px;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  font-size: 0.9rem; padding: 6px 8px;
+  border-radius: 6px; transition: all 0.15s;
+}
+.loc-toggle:hover { background: var(--border); color: var(--text); }
+.loc-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1.5px solid var(--text);
+  border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  max-height: 240px; overflow-y: auto;
+  z-index: 50; display: none;
+  padding: 5px;
+}
+.loc-dropdown.open { display: block; }
+.loc-opt {
+  padding: 9px 12px; border-radius: 7px;
+  font-size: 0.88rem; cursor: pointer;
+  transition: background 0.13s;
+  display: flex; align-items: center; gap: 8px;
+}
+.loc-opt:hover, .loc-opt.kbd-active { background: var(--surface2); }
+.loc-opt::before { content: '📍'; font-size: 0.85rem; opacity: 0.7; }
+.loc-opt.new::before { content: '➕'; }
+.loc-opt.new { color: var(--accent); font-weight: 600; }
+.loc-empty { padding: 14px; text-align: center; font-size: 0.83rem; color: var(--muted); }
+
+/* CHECKLIST */
+.checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap: 9px; margin-bottom: 20px; }
+.chk-item { position: relative; }
+.chk-item input[type=checkbox] { position: absolute; opacity: 0; width: 0; height: 0; }
+.chk-lbl {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--surface2);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  cursor: pointer; transition: all 0.17s; user-select: none;
+}
+.chk-lbl:hover { border-color: #bbb; }
+.chk-item input:checked + .chk-lbl { border-color: var(--green); background: rgba(42,96,73,0.07); }
+.chk-box {
+  width: 21px; height: 21px; border-radius: 6px; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.17s; background: #fff;
+}
+.chk-item input:checked + .chk-lbl .chk-box { background: var(--green); border-color: var(--green); }
+.chk-mark { color: #fff; font-size: 0.7rem; font-weight: 900; opacity: 0; transform: scale(0.3); transition: all 0.15s; }
+.chk-item input:checked + .chk-lbl .chk-mark { opacity: 1; transform: scale(1); }
+.chk-name { font-size: 0.87rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chk-item input:checked + .chk-lbl .chk-name { color: var(--green); font-weight: 700; }
+
+/* Extra Hours Input */
+.chk-wrap { display: flex; flex-direction: column; gap: 5px; }
+.extra-hours {
+  background: rgba(240,160,96,0.08);
+  border: 1.5px solid rgba(240,160,96,0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 10px;
+  animation: slideDown 0.2s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.extra-hours label {
+  font-size: 0.78rem;
+  color: #b06a30;
+  font-weight: 600;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.extra-hours input {
+  flex: 1; min-width: 60px; max-width: 90px;
+  background: #fff;
+  border: 1.5px solid rgba(240,160,96,0.4);
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 7px 10px;
+  text-align: center;
+  color: #b06a30;
+}
+.extra-hours input:focus { border-color: #d07a3a; background: #fff; }
+
+/* BUTTONS */
+.btn-p {
+  padding: 11px 24px; border-radius: 8px; border: none;
+  background: var(--text); color: var(--bg);
+  font-family: 'Syne', sans-serif; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+}
+.btn-p:hover { opacity: 0.82; }
+.btn-p:active { transform: scale(0.98); }
+.btn-o {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 0.83rem; font-weight: 500; cursor: pointer; transition: all 0.17s;
+}
+.btn-o:hover { border-color: var(--text); }
+.btn-sm {
+  padding: 5px 12px; border-radius: 6px; border: none;
+  background: var(--surface2); color: var(--muted);
+  font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-sm:hover { background: var(--border); color: var(--text); }
+
+/* WORKERS VIEW */
+#wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px,1fr)); gap: 12px; margin-bottom: 18px; }
+.wcard {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 16px; padding-right: 96px; display: flex; align-items: center;
+  gap: 12px; box-shadow: var(--sh); position: relative; transition: border-color 0.2s;
+}
+.wcard:hover { border-color: #bbb; }
+.wav {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--text); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; flex-shrink: 0;
+}
+.wi strong { display: block; font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wi small { font-size: 0.73rem; color: var(--muted); }
+.wi { flex: 1; min-width: 0; }
+.btn-xw { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.9rem; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.15s; padding: 0; }
+.btn-xw:hover, .btn-xw:active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-edit { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.9rem; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.15s; padding: 0; }
+.btn-edit:hover, .btn-edit:active { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-xe { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 0.9rem; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.15s; padding: 0; }
+.btn-xe:hover, .btn-xe:active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.card-actions { position: absolute; top: 6px; right: 6px; display: flex; gap: 5px; }
+.entry-actions { display: flex; gap: 5px; align-items: center; }
+.add-form { display: flex; gap: 11px; flex-wrap: wrap; align-items: flex-end; }
+.add-form > div { flex: 1; min-width: 145px; }
+
+/* ══════ HISTORY VIEW ══════ */
+/* STATS ROW */
+.stats4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 11px; margin-bottom: 20px; }
+@media(max-width:560px) { .stats4 { grid-template-columns: repeat(2,1fr); } }
+.sbox { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--sh); }
+.sval { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; line-height: 1; }
+.slbl { font-size: 0.71rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* FILTER */
+.frow { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.frow input { flex: 1; min-width: 130px; }
+
+/* TAB SWITCHER */
+.tab-bar { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab-btn {
+  padding: 8px 18px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.17s;
+}
+.tab-btn:hover { border-color: #bbb; color: var(--text); }
+.tab-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+
+/* LOCATION CARDS */
+.loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 14px; margin-bottom: 20px; }
+.loc-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 18px 20px; box-shadow: var(--sh);
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.loc-card:hover { border-color: var(--text); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.11); }
+.loc-card.selected { border-color: var(--accent); background: rgba(200,75,47,0.04); }
+.loc-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; background: var(--border); transition: background 0.2s;
+}
+.loc-card:hover::before { background: var(--text); }
+.loc-card.selected::before { background: var(--accent); }
+.loc-name { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; padding-right: 30px; }
+.loc-stats { display: flex; gap: 14px; }
+.loc-stat { text-align: center; }
+.loc-stat .n { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
+.loc-stat .l { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.loc-bar { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.loc-bar-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.5s ease; }
+.loc-card.selected .loc-bar-fill { background: var(--accent); }
+.loc-arrow { position: absolute; top: 16px; right: 16px; color: var(--muted); font-size: 1rem; transition: transform 0.2s; }
+.loc-card:hover .loc-arrow { transform: translateX(3px); }
+
+/* DRILL-DOWN PANEL */
+.drill-panel {
+  background: var(--surface); border: 2px solid var(--text);
+  border-radius: var(--r); padding: 22px; margin-bottom: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  animation: slideIn 0.25s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.drill-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 10px; }
+.drill-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; }
+.drill-sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+
+.drill-workers { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 10px; margin-bottom: 16px; }
+.dw-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px 15px;
+  display: flex; align-items: center; gap: 11px;
+}
+.dw-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--text); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; flex-shrink: 0;
+}
+.dw-info strong { display: block; font-size: 0.88rem; font-weight: 600; }
+.dw-info small { font-size: 0.75rem; color: var(--muted); }
+
+.drill-entries { max-height: 320px; overflow-y: auto; }
+.day-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; }
+.day-row {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.16s;
+}
+.day-row:hover, .day-row:active { border-color: var(--text); background: #eae5db; transform: translateX(2px); }
+.day-icon { font-size: 1.2rem; flex-shrink: 0; }
+.day-info { flex: 1; min-width: 0; }
+.day-date { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.day-meta { font-size: 0.78rem; color: var(--muted); }
+.day-arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+.de-row {
+  display: flex; align-items: start; gap: 12px; padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.de-row:last-child { border-bottom: none; }
+.de-date { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); white-space: nowrap; padding-top: 2px; min-width: 80px; }
+.de-name { font-size: 0.87rem; font-weight: 600; }
+.de-desc { font-size: 0.79rem; color: var(--muted); margin-top: 2px; }
+
+/* SUB-TABS - Progress / Completed */
+.sub-tab-bar {
+  display: flex; gap: 8px; margin-bottom: 16px;
+  background: var(--surface2); padding: 4px;
+  border-radius: 10px; border: 1px solid var(--border);
+}
+.sub-tab-btn {
+  flex: 1; padding: 9px 12px; border-radius: 7px;
+  border: none; background: transparent;
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem; font-weight: 600; cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.sub-tab-btn:hover { color: var(--text); }
+.sub-tab-btn.active {
+  background: var(--surface); color: var(--text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.sub-count {
+  background: var(--surface2); color: var(--muted);
+  padding: 1px 8px; border-radius: 20px;
+  font-size: 0.73rem; font-weight: 700;
+  border: 1px solid var(--border); min-width: 22px; text-align: center;
+}
+.sub-tab-btn.active .sub-count { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Completed location styling */
+.loc-card.completed {
+  background: rgba(42,96,73,0.04);
+  border-color: rgba(42,96,73,0.25);
+  opacity: 0.92;
+}
+.loc-card.completed::before { background: var(--green); }
+.loc-card.completed:hover { opacity: 1; border-color: var(--green); }
+
+/* Location card action buttons */
+.loc-card-actions {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; gap: 5px; z-index: 5;
+}
+.loc-edit-btn {
+  width: 30px; height: 30px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 0.88rem; font-weight: 700;
+  transition: all 0.16s; padding: 0;
+}
+.loc-edit-btn:hover, .loc-edit-btn:active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* Status toggle button on location card */
+.loc-status-btn {
+  width: 30px; height: 30px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 0.95rem; font-weight: 700;
+  transition: all 0.16s; padding: 0;
+}
+.loc-status-btn:hover, .loc-status-btn:active { background: var(--green); color: #fff; border-color: var(--green); transform: scale(1.08); }
+.loc-card.completed .loc-status-btn:hover { background: #d07a3a; border-color: #d07a3a; }
+
+/* Day descriptions shown under date */
+.day-descs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-top: 5px;
+}
+.day-desc-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.73rem;
+  color: var(--muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* Adjust loc-name padding for two action buttons */
+.loc-name { padding-right: 72px; }
+
+/* CHART STATS */
+.chart-stats-row {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  margin-bottom: 16px;
+}
+@media(max-width:580px) { .chart-stats-row { grid-template-columns: repeat(3, 1fr); } }
+.chart-stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 8px;
+  text-align: center; box-shadow: var(--sh);
+}
+.cs-val { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; line-height: 1; }
+.cs-lbl { font-size: 0.66rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.chart-wrap { padding: 8px 0; }
+.chart-title { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+.bar-chart { display: flex; flex-direction: column; gap: 6px; }
+.bc-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; transition: all 0.16s; border: 1.5px solid transparent; }
+.bc-row.clickable { cursor: pointer; }
+.bc-row.clickable:hover, .bc-row.clickable:active { background: var(--surface2); }
+.bc-row.selected { background: rgba(200,75,47,0.06); border-color: var(--accent); }
+.bc-label { font-size: 0.85rem; font-weight: 500; min-width: 130px; max-width: 160px; color: var(--text); display: flex; align-items: center; gap: 9px; }
+.bc-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--text); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+}
+.bc-name-text { display: flex; flex-direction: column; overflow: hidden; line-height: 1.2; }
+.bc-name-text small { font-size: 0.7rem; color: var(--muted); font-weight: 400; margin-top: 1px; }
+.bc-bars { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.bc-bar-wrap { display: flex; align-items: center; gap: 7px; }
+.bc-bar { height: 10px; border-radius: 3px; min-width: 2px; transition: width 0.5s ease; }
+.bc-bar.full-bar { background: var(--green); }
+.bc-bar.half-bar { background: #f0a060; }
+.bc-bar.extra-bar { background: #b06a30; }
+.bc-count { font-size: 0.72rem; font-family: 'DM Mono', monospace; color: var(--muted); white-space: nowrap; }
+
+.chart-legend { display: flex; gap: 16px; margin-top: 14px; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* MONTHLY SUMMARY */
+.month-section { margin-bottom: 28px; }
+.month-header {
+  font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+  padding: 12px 16px; background: var(--text); color: var(--bg);
+  border-radius: 10px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.month-total { font-size: 0.78rem; font-family: 'DM Mono', monospace; color: rgba(255,255,255,0.6); font-weight: 400; }
+.month-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh); }
+.month-table th {
+  padding: 10px 14px; text-align: left;
+  font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.month-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 0.87rem; }
+.month-table tr:last-child td { border-bottom: none; }
+.month-table tbody tr:hover { background: var(--surface2); }
+.td-name { font-weight: 600; display: flex; align-items: center; gap: 9px; }
+.mini-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--text); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.td-days { font-family: 'DM Mono', monospace; font-size: 0.88rem; }
+.td-full { color: var(--green); font-weight: 600; }
+.td-half { color: #d07a3a; font-weight: 600; }
+.td-total { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 800; }
+.progress-cell { min-width: 100px; }
+.mini-prog { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.mini-prog-fill { height: 100%; background: var(--green); border-radius: 3px; }
+
+/* Wage badge */
+.wage-badge {
+  display: inline-block; font-size: 0.72rem; font-weight: 600;
+  color: var(--green); background: rgba(42,96,73,0.08);
+  border: 1px solid rgba(42,96,73,0.2);
+  border-radius: 20px; padding: 1px 8px; margin-top: 3px;
+}
+
+/* Salary cards */
+.salary-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
+.salary-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 16px 18px; box-shadow: var(--sh);
+}
+.salary-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.salary-total { flex-shrink: 0; }
+.salary-breakdown { border-top: 1px solid var(--border); padding-top: 10px; }
+.sb-row { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; flex-wrap: wrap; }
+.sb-row:not(:last-child) { border-bottom: 1px solid var(--surface2); }
+.sb-lbl { flex: 1; font-size: 0.85rem; color: var(--text); }
+.sb-formula { font-size: 0.73rem; color: var(--muted); font-family: 'DM Mono', monospace; width: 100%; }
+.sb-val { font-size: 0.88rem; font-weight: 700; font-family: 'DM Mono', monospace; margin-left: auto; }
+.sb-extra { background: rgba(240,160,96,0.06); border-radius: 6px; padding: 6px 8px; }
+.sb-total { background: rgba(42,96,73,0.05); border-radius: 6px; padding: 8px; margin-top: 6px; border: 1px solid rgba(42,96,73,0.15) !important; }
+.sb-total .sb-lbl { font-weight: 700; color: var(--green); }
+
+/* Location edit button */
+.loc-card-actions {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; gap: 5px; z-index: 5;
+}
+.loc-edit-btn {
+  width: 30px; height: 30px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 0.88rem; font-weight: 700;
+  transition: all 0.16s; padding: 0;
+}
+.loc-edit-btn:hover, .loc-edit-btn:active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* BADGES */
+.badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+.badge-full { background: rgba(42,96,73,0.1); color: var(--green); border: 1px solid rgba(42,96,73,0.22); }
+.badge-half { background: rgba(200,75,47,0.08); color: var(--accent); border: 1px solid rgba(200,75,47,0.2); }
+.badge-extra { background: rgba(240,160,96,0.15); color: #b06a30; border: 1px solid rgba(240,160,96,0.4); font-family: 'DM Mono', monospace; }
+.badge-extra-only { background: #b06a30; color: #fff; border: 1px solid #b06a30; font-family: 'DM Sans', sans-serif; font-weight: 700; }
+
+/* HISTORY ENTRIES (all tab) */
+.eg { margin-bottom: 20px; }
+.eg-date { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 8px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+.ecard {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px 16px; margin-bottom: 7px;
+  box-shadow: var(--sh); display: grid; grid-template-columns: auto 1fr auto auto;
+  gap: 12px; align-items: start; transition: border-color 0.15s;
+}
+.ecard:hover { border-color: #bbb; }
+.eav { width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
+.ei strong { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 2px; }
+.ei-meta { font-size: 0.77rem; color: var(--muted); display: flex; gap: 7px; flex-wrap: wrap; }
+.ei-meta .loc::before { content: '📍 '; }
+.ei-desc { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+.btn-xe-tab { background: none; border: 1px solid transparent; color: var(--border); cursor: pointer; font-size: 0.88rem; padding: 3px 6px; border-radius: 5px; transition: all 0.13s; }
+.btn-xe-tab:hover { color: var(--accent); border-color: var(--accent); }
+
+.export-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty-state .big { font-size: 2.4rem; margin-bottom: 10px; }
+.empty-state p { font-size: 0.87rem; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(14px);
+  background: var(--text); color: var(--bg);
+  padding: 10px 22px; border-radius: 30px;
+  font-size: 0.85rem; font-weight: 600;
+  opacity: 0; transition: all 0.27s; z-index: 999;
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ═══ GOOGLE DRIVE SYNC ═══ */
+.sync-bar {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--sh);
+}
+.sync-status {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 0;
+}
+.sync-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sync-dot.online { background: var(--green); box-shadow: 0 0 0 4px rgba(42,96,73,0.18); animation: pulse 2s infinite; }
+.sync-dot.syncing { background: #e0a040; }
+.sync-dot.error { background: var(--accent); }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(42,96,73,0.4); } 50% { box-shadow: 0 0 0 5px rgba(42,96,73,0); } }
+.sync-text { font-size: 0.82rem; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sync-text small { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 400; margin-top: 1px; }
+.sync-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-sync {
+  padding: 7px 12px; border-radius: 7px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: all 0.16s; display: flex; align-items: center; gap: 5px;
+}
+.btn-sync:hover { border-color: var(--text); }
+.btn-sync.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn-sync.primary:hover { opacity: 0.85; }
+.btn-sync:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Config modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 500; padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: var(--r);
+  padding: 24px; max-width: 480px; width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.modal h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
+.modal p { font-size: 0.86rem; color: var(--muted); margin-bottom: 14px; line-height: 1.55; }
+.modal code {
+  background: var(--surface2); padding: 1px 7px; border-radius: 4px;
+  font-family: 'DM Mono', monospace; font-size: 0.82rem;
+  border: 1px solid var(--border); word-break: break-all;
+}
+.modal .row-end { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE - ANDROID OPTIMIZED
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Header - kompakt me ikona vetëm */
+  header { padding: 0 12px; height: 56px; }
+  .logo { font-size: 0.95rem; }
+  .nav { gap: 4px; }
+  .nav-btn {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    border-radius: 7px;
+  }
+  /* Fshih tekstin, mbaj vetëm emoji-n në mobile */
+  .nav-btn .nav-txt { display: none; }
+
+  .page { padding: 14px 12px; }
+
+  /* Titujt më të vegjël */
+  .stitle { font-size: 1.1rem; margin-bottom: 14px; gap: 7px; }
+  .stitle .chip { font-size: 0.7rem; padding: 2px 8px; }
+
+  /* Cards */
+  .card-hd { padding: 12px 14px; }
+  .card-hd h3 { font-size: 0.85rem; }
+  .card-bd { padding: 14px; }
+
+  /* Form - gjithmonë 1 kolonë në mobile */
+  .grid2 { grid-template-columns: 1fr !important; gap: 12px; margin-bottom: 14px; }
+
+  /* Inputs më të mëdhenj për prekje */
+  input, textarea {
+    font-size: 16px; /* 16px parandalon zoom-in automatik në iOS/Android */
+    padding: 11px 13px;
+  }
+  label { font-size: 0.72rem; }
+
+  /* Toggle buttons */
+  .tbtn { padding: 11px 8px; font-size: 0.82rem; }
+
+  /* Checklist - kolonë e vetme e gjerë në mobile */
+  .checklist {
+    grid-template-columns: 1fr !important;
+    gap: 7px;
+    margin-bottom: 16px;
+  }
+  .chk-lbl { padding: 13px 14px; }
+  .chk-name { font-size: 0.92rem; }
+  .chk-box { width: 24px; height: 24px; }
+
+  /* Butonat më të mëdhenj */
+  .btn-p { padding: 13px 22px; font-size: 0.9rem; width: 100%; }
+  .btn-o { padding: 10px 14px; font-size: 0.82rem; }
+
+  /* Workers grid - 1 kolonë */
+  #wgrid { grid-template-columns: 1fr !important; gap: 9px; }
+  .wcard { padding: 13px; }
+
+  /* Add worker form */
+  .add-form { gap: 10px; }
+  .add-form > div { min-width: 100%; flex: 1 1 100%; }
+
+  /* Stats - 2x2 në mobile */
+  .stats4 { grid-template-columns: repeat(2,1fr) !important; gap: 9px; }
+  .sbox { padding: 12px 14px; }
+  .sval { font-size: 1.5rem; }
+  .slbl { font-size: 0.68rem; }
+
+  /* Filter */
+  .frow input { min-width: 100%; flex: 1 1 100%; }
+
+  /* Tab bar - scrollable nëse nuk hyn */
+  .tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 9px 14px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Location cards - 1 kolonë e plotë */
+  .loc-grid { grid-template-columns: 1fr !important; gap: 11px; }
+  .loc-card { padding: 16px 18px; }
+  .loc-name { font-size: 0.92rem; }
+  .loc-stats { gap: 10px; }
+  .loc-stat .n { font-size: 1.15rem; }
+  .loc-stat .l { font-size: 0.64rem; }
+
+  /* Drill panel */
+  .drill-panel { padding: 16px; }
+  .drill-title { font-size: 0.98rem; }
+  .drill-sub { font-size: 0.75rem; }
+  .drill-workers { grid-template-columns: 1fr; gap: 8px; }
+
+  .de-row { gap: 9px; padding: 10px 0; }
+  .de-date { font-size: 0.72rem; min-width: 64px; }
+  .de-name { font-size: 0.85rem; }
+  .de-desc { font-size: 0.76rem; }
+
+  /* Bar chart */
+  .bc-label { min-width: 80px; max-width: 100px; font-size: 0.76rem; }
+  .bc-count { font-size: 0.68rem; }
+
+  /* Month table - scroll horizontal nëse nevojitet */
+  .month-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .month-header { font-size: 0.88rem; padding: 11px 13px; }
+  .month-total { font-size: 0.7rem; }
+  .month-table th, .month-table td { padding: 9px 11px; font-size: 0.82rem; }
+  .mini-av { width: 24px; height: 24px; font-size: 0.65rem; }
+
+  /* History entry cards */
+  .ecard {
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    padding: 12px 13px;
+  }
+  .ecard > div:nth-child(3),
+  .ecard > button {
+    grid-column: 2;
+  }
+  .ecard > div:nth-child(3) { margin-top: 2px; }
+  .ecard > button { justify-self: end; margin-top: -28px; }
+
+  /* Export row */
+  .export-row { flex-direction: column; gap: 8px; }
+  .btn-o { width: 100%; }
+
+  /* Location picker dropdown */
+  .loc-dropdown { max-height: 280px; }
+  .loc-opt { padding: 12px 14px; font-size: 0.92rem; }
+}
+
+/* Ekrane shumë të vogla (telefona të vegjël) */
+@media (max-width: 380px) {
+  header { padding: 0 10px; }
+  .logo { font-size: 0.88rem; }
+  .nav-btn { padding: 7px 8px; font-size: 0.72rem; }
+  .page { padding: 12px 10px; }
+  .stitle { font-size: 1rem; }
+  .sval { font-size: 1.3rem; }
+}
+
+/* Prek-friendly: tap targets të paktën 44px */
+@media (pointer: coarse) {
+  button, .chk-lbl, .loc-card, .nav-btn, .tab-btn { min-height: 40px; }
+  .btn-p { min-height: 48px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Regjistri<span class="logo-dot">.</span>Punës</div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showView('register',this)">📝<span class="nav-txt"> Regjistro</span></button>
+    <button class="nav-btn" onclick="showView('workers',this)">👷<span class="nav-txt"> Punëtorët</span></button>
+    <button class="nav-btn" onclick="showView('history',this)">📊<span class="nav-txt"> Historia</span></button>
+  </div>
+</header>
+
+<!-- ══ REGJISTRO ══ -->
+<div id="view-register" class="view active">
+  <div class="page">
+    <div class="sync-bar">
+      <div class="sync-status">
+        <div class="sync-dot" id="syncDot"></div>
+        <div class="sync-text" id="syncText">Jo i lidhur me Google Drive<small id="syncSub">Klik "Lidhu" për të hyrë në të dhënat tuaja</small></div>
+      </div>
+      <div class="sync-actions">
+        <button class="btn-sync" id="btnSyncNow" onclick="syncNow()" style="display:none">🔄 Sync</button>
+        <button class="btn-sync primary" id="btnConnect" onclick="connectDrive()">🔗 Lidhu</button>
+        <button class="btn-sync" id="btnDisconnect" onclick="disconnectDrive()" style="display:none">⏏</button>
+      </div>
+    </div>
+
+    <!-- Not connected wall -->
+    <div id="notConnectedWall" class="not-connected-wall">
+      <div class="ncw-icon">☁️</div>
+      <div class="ncw-title">Lidhu me Google Drive</div>
+      <div class="ncw-sub">Të dhënat ruhen vetëm në Google Drive.<br>Lidhu me llogarinë tënde Google për të parë dhe regjistruar të dhënat.</div>
+      <button class="btn-p" onclick="connectDrive()" style="margin-top:18px">🔗 Lidhu me Google</button>
+    </div>
+
+    <div id="registerFormBody">
+      <div class="stitle">Regjistrim i Ri <span id="todayLabel"></span></div>
+      <div class="card">
+        <div class="card-hd"><h3>📅 Detajet e Ditës</h3></div>
+      <div class="card-bd">
+        <div class="grid2">
+          <div><label>Data</label><input type="date" id="regDate"/></div>
+          <div><label>Lloji i Ditës</label>
+            <div class="toggle-group">
+              <button class="tbtn active" id="btnFull" onclick="setDT('full')">☀️ Ditë Plotë</button>
+              <button class="tbtn" id="btnHalf" onclick="setDT('half')">🌤 Gjysmë</button>
+              <button class="tbtn" id="btnExtra" onclick="setDT('extra')">⏰ Vetëm Ekstra</button>
+            </div>
+          </div>
+          <div>
+            <label>Vendi i Punës</label>
+            <div class="loc-picker">
+              <input type="text" id="regLoc" placeholder="Kërko ose shkruaj vendin..." autocomplete="off"
+                     oninput="filterLocs()" onfocus="openLocList()" onkeydown="locKey(event)"/>
+              <button type="button" class="loc-toggle" onclick="toggleLocList()" tabindex="-1">▾</button>
+              <div class="loc-dropdown" id="locDropdown"></div>
+            </div>
+          </div>
+          <div><label>Çfarë u Bë</label><input type="text" id="regDesc" placeholder="p.sh. Vendosja e betonit..."/></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>👷 Cili Punëtor Punoi Sot?</h3></div>
+      <div class="card-bd">
+        <div class="checklist" id="checklist"></div>
+        <button class="btn-p" onclick="saveEntry()">✔ Ruaj Regjistrimin</button>
+      </div>
+    </div>
+    </div><!-- end registerFormBody -->
+  </div>
+</div>
+
+<!-- ══ PUNËTORËT ══ -->
+<div id="view-workers" class="view">
+  <div class="page">
+    <div class="stitle">Punëtorët <span id="wCount" class="chip">0</span></div>
+    <div id="wgrid"></div>
+    <div class="card">
+      <div class="card-hd"><h3>➕ Shto Punëtor</h3></div>
+      <div class="card-bd">
+        <div class="add-form">
+          <div><label>Emri i Plotë</label><input type="text" id="nwName" placeholder="p.sh. Arben Krasniqi" onkeydown="if(event.key==='Enter')addWorker()"/></div>
+          <div><label>Roli (opsional)</label><input type="text" id="nwRole" placeholder="p.sh. Murator" onkeydown="if(event.key==='Enter')addWorker()"/></div>
+          <div><label>Rroga Ditore (€/ditë, 8h)</label><input type="number" id="nwWage" placeholder="p.sh. 50" min="0" step="0.5" inputmode="decimal"/></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addWorker()" style="width:100%">Shto</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORIA ══ -->
+<div id="view-history" class="view">
+  <div class="page">
+    <div class="stitle">Historia e Punës</div>
+
+    <div class="stats4">
+      <div class="sbox"><div class="sval" id="hS1">0</div><div class="slbl">Regjistrime</div></div>
+      <div class="sbox"><div class="sval" id="hS2">0</div><div class="slbl">Punëtorë</div></div>
+      <div class="sbox"><div class="sval" id="hS3">0</div><div class="slbl">Plota</div></div>
+      <div class="sbox"><div class="sval" id="hS4">0</div><div class="slbl">Gjysëm</div></div>
+    </div>
+
+    <div class="frow">
+      <input type="text" id="hFN" placeholder="🔍 Kërko punëtor..." oninput="renderHistory()"/>
+      <input type="month" id="hFM" oninput="renderHistory()"/>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('locations',this)">📍 Vendet</button>
+      <button class="tab-btn" onclick="switchTab('chart',this)">📊 Analiza</button>
+      <button class="tab-btn" onclick="switchTab('monthly',this)">🗓 Mujore</button>
+      <button class="tab-btn" onclick="switchTab('salary',this)">💰 Pagat</button>
+      <button class="tab-btn" onclick="switchTab('all',this)">📋 Të Gjitha</button>
+    </div>
+
+    <!-- LOCATIONS TAB -->
+    <div id="tab-locations">
+      <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="switchLocSubTab('progress',this)">🚧 Në Progres <span class="sub-count" id="subTabProgressCount">0</span></button>
+        <button class="sub-tab-btn" onclick="switchLocSubTab('completed',this)">✅ Të Kompletuara <span class="sub-count" id="subTabCompletedCount">0</span></button>
+      </div>
+      <div class="loc-grid" id="locGrid"></div>
+      <div id="drillPanel"></div>
+    </div>
+
+    <!-- CHART TAB -->
+    <div id="tab-chart" style="display:none">
+      <div class="chart-stats-row" id="chartStats"></div>
+      <div class="card">
+        <div class="card-hd"><h3>📊 Ditët e Punës sipas Punëtorit</h3></div>
+        <div class="card-bd">
+          <div class="chart-wrap">
+            <div class="chart-title">Klik mbi një punëtor për detaje</div>
+            <div class="bar-chart" id="barChart"></div>
+            <div class="chart-legend">
+              <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div> Ditë Plotë</div>
+              <div class="leg-item"><div class="leg-dot" style="background:#f0a060"></div> Gjysmë</div>
+              <div class="leg-item"><div class="leg-dot" style="background:#b06a30"></div> Vetëm Ekstra</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="workerDrillPanel"></div>
+    </div>
+
+    <!-- MONTHLY TAB -->
+    <div id="tab-monthly" style="display:none">
+      <div class="month-selector card">
+        <div class="card-bd" style="padding:14px 20px">
+          <label style="margin-bottom:6px">Zgjedh Muajin</label>
+          <div class="loc-picker">
+            <select id="monthSelect" onchange="onMonthChange()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+              <option value="">Të gjithë muajt</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="monthlyContainer"></div>
+    </div>
+
+    <!-- SALARY TAB -->
+    <div id="tab-salary" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-bd" style="padding:14px 20px">
+          <label style="margin-bottom:6px">Filtro Muajin</label>
+          <select id="salaryMonthSelect" onchange="onSalaryMonthChange()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+            <option value="">📅 Të gjithë muajt</option>
+          </select>
+        </div>
+      </div>
+      <div id="salaryContainer"></div>
+    </div>
+
+    <!-- ALL TAB -->
+    <div id="tab-all" style="display:none">
+      <div id="allContainer"></div>
+      <div class="export-row">
+        <button class="btn-o" onclick="exportCSV()">📥 Eksporto CSV</button>
+        <button class="btn-o" onclick="copyAll()">📋 Kopjo Gjitha</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h3>🔧 Konfigurimi i Google Drive</h3>
+    <p>Për të aktivizuar sinkronizimin, duhet të vendosni <strong>Google OAuth Client ID</strong> tuajin. Klik <a href="#" onclick="document.getElementById('helpModal').classList.add('open');return false">këtu për udhëzimet</a>.</p>
+    <label>Client ID</label>
+    <input type="text" id="configClientId" placeholder="123456789-abc...apps.googleusercontent.com" style="font-family:'DM Mono',monospace;font-size:0.78rem"/>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('configModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveConfig()">Ruaj & Lidhu</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <h3>📘 Si të Krijoni Client ID</h3>
+    <p><strong>1.</strong> Shko te <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> dhe krijo një projekt të ri (p.sh. "Regjistri").</p>
+    <p><strong>2.</strong> Aktivizo <strong>Google Drive API</strong>: meny → "APIs & Services" → "Library" → kërko "Google Drive API" → "Enable".</p>
+    <p><strong>3.</strong> Shko te "OAuth consent screen" → zgjedh "External" → plotëso emrin dhe email-in → ruaj.</p>
+    <p><strong>4.</strong> Shko te "Credentials" → "Create Credentials" → "OAuth client ID" → zgjedh <strong>"Web application"</strong>.</p>
+    <p><strong>5.</strong> Tek "Authorized JavaScript origins" shto <code id="originUrl"></code></p>
+    <p><strong>6.</strong> Kopjo <strong>Client ID</strong> dhe ngjite në kutinë e konfigurimit.</p>
+    <p><strong>7.</strong> Te "OAuth consent screen" → "Test users" → shto email-in tënd që të hyrë.</p>
+    <div class="row-end">
+      <button class="btn-sync primary" onclick="document.getElementById('helpModal').classList.remove('open')">Kuptohet</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LOCATION MODAL -->
+<div class="modal-overlay" id="editLocModal">
+  <div class="modal">
+    <h3>✎ Edito Vendin e Punës</h3>
+    <input type="hidden" id="editLocOldName"/>
+    <div style="margin-bottom:14px">
+      <label>Emri i Ri</label>
+      <input type="text" id="editLocNewName" placeholder="Shkruaj emrin e ri..." onkeydown="if(event.key==='Enter')saveEditLoc()"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT WORKER MODAL -->
+<div class="modal-overlay" id="editWorkerModal">
+  <div class="modal">
+    <h3>✎ Edito Punëtorin</h3>
+    <input type="hidden" id="editWkId"/>
+    <div style="margin-bottom:13px">
+      <label>Emri i Plotë</label>
+      <input type="text" id="editWkName" onkeydown="if(event.key==='Enter')saveEditWorker()"/>
+    </div>
+    <div style="margin-bottom:13px">
+      <label>Roli (opsional)</label>
+      <input type="text" id="editWkRole" placeholder="p.sh. Murator"/>
+    </div>
+    <div style="margin-bottom:13px">
+      <label>💰 Rroga Ditore (€/ditë, 8h)</label>
+      <input type="number" id="editWkWage" placeholder="p.sh. 50" min="0" step="0.5" inputmode="decimal"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('editWorkerModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditWorker()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LOCATION MODAL -->
+<div class="modal-overlay" id="editLocModal">
+  <div class="modal">
+    <h3>✎ Edito Vendin e Punës</h3>
+    <input type="hidden" id="editLocOldName"/>
+    <div style="margin-bottom:14px">
+      <label>Emri i Ri</label>
+      <input type="text" id="editLocNewName" placeholder="Shkruaj emrin e ri..." onkeydown="if(event.key==='Enter')saveEditLoc()"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ENTRY MODAL -->
+<div class="modal-overlay" id="editEntryModal">
+  <div class="modal">
+    <h3>✎ Edito Regjistrimin</h3>
+    <input type="hidden" id="editEntryId"/>
+    <div style="margin-bottom:14px">
+      <label>Data</label>
+      <input type="date" id="editDate"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Lloji i Ditës</label>
+      <div class="toggle-group">
+        <button class="tbtn" id="editBtnFull" onclick="setEditDayType('full')">☀️ Plotë</button>
+        <button class="tbtn" id="editBtnHalf" onclick="setEditDayType('half')">🌤 Gjysmë</button>
+        <button class="tbtn" id="editBtnExtra" onclick="setEditDayType('extra')">⏰ Vetëm Ekstra</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Vendi i Punës</label>
+      <div class="loc-picker">
+        <input type="text" id="editLocation" placeholder="Zgjedh ose shkruaj vendin..." autocomplete="off"
+               oninput="filterEditLocs()" onfocus="openEditLocList()" onkeydown="editLocKey(event)"/>
+        <button type="button" class="loc-toggle" onclick="toggleEditLocList()" tabindex="-1">▾</button>
+        <div class="loc-dropdown" id="editLocDropdown"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Çfarë u Bë</label>
+      <input type="text" id="editDesc"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>⏰ Orë Ekstra</label>
+      <input type="number" id="editExtraHours" min="0" max="24" step="0.5" placeholder="0" inputmode="decimal"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('editEntryModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditEntry()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let workers = [];
+let entries = [];
+let locStatus = {};
+
+// ── INIT: start empty, load from Drive after login ──
+// We keep a local cache only to survive page refresh while connected
+function loadLocalCache() {
+  workers = JSON.parse(localStorage.getItem('pun_workers')||'[]');
+  entries = JSON.parse(localStorage.getItem('pun_entries')||'[]');
+  locStatus = JSON.parse(localStorage.getItem('pun_loc_status')||'{}');
+  // Migrate old IDs
+  let migrated = false;
+  entries.forEach((e, i) => {
+    if (typeof e.id !== 'string') {
+      e.id = 'e' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,7);
+      migrated = true;
+    }
+  });
+  if (migrated) localStorage.setItem('pun_entries', JSON.stringify(entries));
+}
+
+loadLocalCache();
+
+let dayType = 'full';
+let activeTab = 'locations';
+let locSubTab = 'progress'; // 'progress' or 'completed'
+let selectedLoc = null;
+let selectedDate = null;
+let selectedWorker = null;
+let selectedMonth = ''; // empty means show all months
+let selectedSalaryMonth = '';
+
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0];
+document.getElementById('regDate').value = todayStr;
+document.getElementById('todayLabel').textContent = fmtDate(todayStr);
+
+// ── NAV ──
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='register') renderChecklist();
+  if (name==='workers') renderWorkers();
+  if (name==='history') renderHistory();
+}
+
+function switchTab(tab, btn) {
+  activeTab = tab;
+  selectedLoc = null;
+  selectedDate = null;
+  selectedWorker = null;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['locations','chart','monthly','salary','all'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  renderHistory();
+}
+
+// ── DAY TYPE ──
+function setDT(t) {
+  dayType = t;
+  document.getElementById('btnFull').classList.toggle('active', t==='full');
+  document.getElementById('btnHalf').classList.toggle('active', t==='half');
+  document.getElementById('btnExtra').classList.toggle('active', t==='extra');
+  // When "Only Extra" is selected, auto-expand extra inputs for visible checked workers
+  // Also update the visual hint
+  const checklist = document.getElementById('checklist');
+  if (checklist) checklist.classList.toggle('mode-extra', t==='extra');
+}
+
+// ── LOCATION PICKER ──
+let kbdIdx = -1;
+
+function getSavedLocs() {
+  // Only return locations that are NOT completed
+  return [...new Set(entries.map(e => e.location))]
+    .filter(loc => (locStatus[loc] || 'progress') !== 'completed')
+    .sort();
+}
+
+function filterLocs() {
+  kbdIdx = -1;
+  renderLocDropdown();
+  openLocList();
+}
+
+function renderLocDropdown() {
+  const input = document.getElementById('regLoc');
+  const dd = document.getElementById('locDropdown');
+  const q = input.value.trim().toLowerCase();
+  const all = getSavedLocs();
+  const matches = q ? all.filter(l => l.toLowerCase().includes(q)) : all;
+
+  let html = '';
+  if (matches.length === 0 && all.length === 0) {
+    html = `<div class="loc-empty">Nuk ka vende të ruajtura ende.<br>Shkruaj një të ri më lart.</div>`;
+  } else if (matches.length === 0) {
+    html = `<div class="loc-opt new" onclick="pickLoc('${escAttr(input.value.trim())}')">Përdor "${esc(input.value.trim())}" si vend i ri</div>`;
+  } else {
+    html = matches.map((l,i) => `<div class="loc-opt" data-idx="${i}" onclick="pickLoc('${escAttr(l)}')">${esc(l)}</div>`).join('');
+    // Add "new" option if user typed something that doesn't exactly match
+    if (q && !all.some(l => l.toLowerCase() === q)) {
+      html += `<div class="loc-opt new" onclick="pickLoc('${escAttr(input.value.trim())}')">Shto "${esc(input.value.trim())}" si vend i ri</div>`;
+    }
+  }
+  dd.innerHTML = html;
+}
+
+function openLocList() {
+  renderLocDropdown();
+  document.getElementById('locDropdown').classList.add('open');
+}
+
+function closeLocList() {
+  document.getElementById('locDropdown').classList.remove('open');
+  kbdIdx = -1;
+}
+
+function toggleLocList() {
+  const dd = document.getElementById('locDropdown');
+  if (dd.classList.contains('open')) closeLocList();
+  else { document.getElementById('regLoc').focus(); openLocList(); }
+}
+
+function pickLoc(loc) {
+  document.getElementById('regLoc').value = loc;
+  closeLocList();
+}
+
+function locKey(e) {
+  const opts = [...document.querySelectorAll('#locDropdown .loc-opt')];
+  if (!opts.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    kbdIdx = Math.min(opts.length-1, kbdIdx+1);
+    updateKbd(opts);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    kbdIdx = Math.max(0, kbdIdx-1);
+    updateKbd(opts);
+  } else if (e.key === 'Enter') {
+    if (kbdIdx >= 0) { e.preventDefault(); opts[kbdIdx].click(); }
+  } else if (e.key === 'Escape') {
+    closeLocList();
+  }
+}
+
+function updateKbd(opts) {
+  opts.forEach((o,i) => o.classList.toggle('kbd-active', i === kbdIdx));
+  if (opts[kbdIdx]) opts[kbdIdx].scrollIntoView({ block: 'nearest' });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.loc-picker')) {
+    closeLocList();
+    closeEditLocList();
+  }
+});
+
+// ── EDIT LOCATION PICKER ──
+let editKbdIdx = -1;
+
+function populateEditLocDropdown() {
+  editKbdIdx = -1;
+  renderEditLocDropdown();
+}
+
+function filterEditLocs() {
+  editKbdIdx = -1;
+  renderEditLocDropdown();
+  openEditLocList();
+}
+
+function renderEditLocDropdown() {
+  const input = document.getElementById('editLocation');
+  const dd = document.getElementById('editLocDropdown');
+  const q = input.value.trim().toLowerCase();
+  const all = getSavedLocs();
+  const matches = q ? all.filter(l => l.toLowerCase().includes(q)) : all;
+  let html = '';
+  if (matches.length === 0 && all.length === 0) {
+    html = `<div class="loc-empty">Nuk ka vende të ruajtura.</div>`;
+  } else if (matches.length === 0) {
+    html = `<div class="loc-opt new" onclick="pickEditLoc('${escAttr(input.value.trim())}')">Përdor "${esc(input.value.trim())}"</div>`;
+  } else {
+    html = matches.map((l,i) => `<div class="loc-opt" data-idx="${i}" onclick="pickEditLoc('${escAttr(l)}')">${esc(l)}</div>`).join('');
+    if (q && !all.some(l => l.toLowerCase() === q)) {
+      html += `<div class="loc-opt new" onclick="pickEditLoc('${escAttr(input.value.trim())}')">Shto "${esc(input.value.trim())}" si vend i ri</div>`;
+    }
+  }
+  dd.innerHTML = html;
+}
+
+function openEditLocList() {
+  renderEditLocDropdown();
+  document.getElementById('editLocDropdown').classList.add('open');
+}
+
+function closeEditLocList() {
+  const dd = document.getElementById('editLocDropdown');
+  if (dd) dd.classList.remove('open');
+  editKbdIdx = -1;
+}
+
+function toggleEditLocList() {
+  const dd = document.getElementById('editLocDropdown');
+  if (dd.classList.contains('open')) closeEditLocList();
+  else { document.getElementById('editLocation').focus(); openEditLocList(); }
+}
+
+function pickEditLoc(loc) {
+  document.getElementById('editLocation').value = loc;
+  closeEditLocList();
+}
+
+function editLocKey(e) {
+  const opts = [...document.querySelectorAll('#editLocDropdown .loc-opt')];
+  if (!opts.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); editKbdIdx = Math.min(opts.length-1, editKbdIdx+1); updateEditKbd(opts); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); editKbdIdx = Math.max(0, editKbdIdx-1); updateEditKbd(opts); }
+  else if (e.key === 'Enter') { if (editKbdIdx >= 0) { e.preventDefault(); opts[editKbdIdx].click(); } }
+  else if (e.key === 'Escape') closeEditLocList();
+}
+
+function updateEditKbd(opts) {
+  opts.forEach((o,i) => o.classList.toggle('kbd-active', i === editKbdIdx));
+  if (opts[editKbdIdx]) opts[editKbdIdx].scrollIntoView({ block: 'nearest' });
+}
+
+// ── WORKERS ──
+function addWorker() {
+  const name = document.getElementById('nwName').value.trim();
+  const role = document.getElementById('nwRole').value.trim();
+  const wage = parseFloat(document.getElementById('nwWage').value) || 0;
+  if (!name) { showToast('⚠ Shkruaj emrin!'); return; }
+  workers.push({ id: Date.now(), name, role, dailyWage: wage });
+  save(); renderWorkers(); renderChecklist();
+  document.getElementById('nwName').value = '';
+  document.getElementById('nwRole').value = '';
+  document.getElementById('nwWage').value = '';
+  showToast('✔ Punëtori u shtua!');
+}
+
+function delWorker(id) {
+  if (!confirm('Fshi këtë punëtor?')) return;
+  workers = workers.filter(w => w.id !== id);
+  save(); renderWorkers(); renderChecklist();
+  showToast('🗑 Punëtori u fshi', true);
+}
+
+function editWorker(id) {
+  const w = workers.find(x => x.id === id);
+  if (!w) return;
+  document.getElementById('editWkId').value = id;
+  document.getElementById('editWkName').value = w.name;
+  document.getElementById('editWkRole').value = w.role || '';
+  document.getElementById('editWkWage').value = w.dailyWage || '';
+  document.getElementById('editWorkerModal').classList.add('open');
+  setTimeout(() => document.getElementById('editWkName').select(), 100);
+}
+
+function saveEditWorker() {
+  const id = parseInt(document.getElementById('editWkId').value);
+  const w = workers.find(x => x.id === id);
+  if (!w) return;
+  const name = document.getElementById('editWkName').value.trim();
+  const role = document.getElementById('editWkRole').value.trim();
+  const wage = parseFloat(document.getElementById('editWkWage').value) || 0;
+  if (!name) { showToast('⚠ Emri nuk mund të jetë bosh!'); return; }
+  w.name = name; w.role = role; w.dailyWage = wage;
+  entries.forEach(e => {
+    if (e.workerId === id) { e.workerName = name; e.workerRole = role; }
+  });
+  save(); renderWorkers(); renderChecklist();
+  document.getElementById('editWorkerModal').classList.remove('open');
+  showToast('✔ Punëtori u përditësua!');
+}
+
+function renderWorkers() {
+  const g = document.getElementById('wgrid');
+  document.getElementById('wCount').textContent = workers.length;
+  if (!workers.length) {
+    g.innerHTML = `<div class="empty-state"><div class="big">👷</div><p>Nuk ka punëtorë ende.</p></div>`;
+    return;
+  }
+  g.innerHTML = workers.map(w => `
+    <div class="wcard">
+      <div class="wav">${ini(w.name)}</div>
+      <div class="wi">
+        <strong>${esc(w.name)}</strong>
+        <small>${esc(w.role)||'Punëtor'}</small>
+        ${w.dailyWage ? `<span class="wage-badge">💰 ${w.dailyWage}€/ditë</span>` : ''}
+      </div>
+      <div class="card-actions">
+        <button class="btn-edit" onclick="editWorker(${w.id})" title="Edito">✎</button>
+        <button class="btn-xw" onclick="delWorker(${w.id})" title="Fshi">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── CHECKLIST ──
+function renderChecklist() {
+  const cl = document.getElementById('checklist');
+  if (!workers.length) {
+    cl.innerHTML = `<p style="color:var(--muted);font-size:0.87rem;grid-column:1/-1">Shko te <strong>Punëtorët</strong> për të shtuar punëtorë.</p>`;
+    return;
+  }
+  cl.innerHTML = workers.map(w => `
+    <div class="chk-wrap">
+      <label class="chk-item">
+        <input type="checkbox" value="${w.id}" onchange="toggleExtraInput(${w.id})"/>
+        <div class="chk-lbl">
+          <div class="chk-box"><span class="chk-mark">✓</span></div>
+          <span class="chk-name">${esc(w.name)}</span>
+        </div>
+      </label>
+      <div class="extra-hours" id="extra-${w.id}" style="display:none">
+        <label>⏰ Orë Ekstra</label>
+        <input type="number" id="extraVal-${w.id}" min="0" max="24" step="0.5" value="0" inputmode="decimal" placeholder="0"/>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleExtraInput(workerId) {
+  const cb = document.querySelector(`#checklist input[value="${workerId}"]`);
+  const extra = document.getElementById('extra-' + workerId);
+  if (cb && extra) {
+    // In extra mode, show input whenever checked (it's required)
+    extra.style.display = cb.checked ? 'flex' : 'none';
+    if (!cb.checked) {
+      const inp = document.getElementById('extraVal-' + workerId);
+      if (inp) inp.value = '0';
+    } else if (dayType === 'extra') {
+      // Auto-focus extra input when in extra-only mode
+      const inp = document.getElementById('extraVal-' + workerId);
+      if (inp && (parseFloat(inp.value) || 0) === 0) {
+        setTimeout(() => inp.select(), 100);
+      }
+    }
+  }
+}
+
+// ── SAVE ──
+function saveEntry() {
+  const date = document.getElementById('regDate').value;
+  const loc  = document.getElementById('regLoc').value.trim();
+  const desc = document.getElementById('regDesc').value.trim();
+  const chkd = [...document.querySelectorAll('#checklist input:checked')];
+  if (!date) { showToast('⚠ Zgjidh datën!'); return; }
+  if (!loc)  { showToast('⚠ Shkruaj vendin!'); return; }
+  if (!desc) { showToast('⚠ Shkruaj çfarë u bë!'); return; }
+  if (!chkd.length) { showToast('⚠ Zgjedh të paktën 1 punëtor!'); return; }
+
+  // If type is 'extra', validate that all selected workers have extra hours > 0
+  if (dayType === 'extra') {
+    const missing = chkd.filter(c => {
+      const inp = document.getElementById('extraVal-' + c.value);
+      return !inp || (parseFloat(inp.value) || 0) <= 0;
+    });
+    if (missing.length) {
+      showToast('⚠ Vendos orët ekstra për të gjithë punëtorët!', true);
+      return;
+    }
+  }
+
+  chkd.forEach(c => {
+    const w = workers.find(x => x.id === parseInt(c.value));
+    if (w) {
+      const extraInput = document.getElementById('extraVal-' + w.id);
+      const extraHours = extraInput ? Math.max(0, parseFloat(extraInput.value) || 0) : 0;
+      entries.unshift({
+        id: 'e' + Date.now() + '_' + Math.random().toString(36).slice(2,9),
+        workerId: w.id, workerName: w.name, workerRole: w.role||'',
+        date, location: loc, dayType, desc, extraHours
+      });
+    }
+  });
+  save();
+  document.getElementById('regLoc').value = '';
+  document.getElementById('regDesc').value = '';
+  document.getElementById('regDate').value = todayStr;
+  setDT('full'); renderChecklist();
+  showToast(`✔ Ruajtur ${chkd.length} regjistrim${chkd.length>1?'e':''}!`);
+}
+
+// ── HISTORY MAIN ──
+function getFiltered() {
+  const nf = document.getElementById('hFN').value.toLowerCase();
+  const mf = document.getElementById('hFM').value;
+  return entries.filter(e =>
+    e.workerName.toLowerCase().includes(nf) && (!mf || e.date.startsWith(mf))
+  );
+}
+
+function renderHistory() {
+  const filtered = getFiltered();
+  document.getElementById('hS1').textContent = filtered.length;
+  document.getElementById('hS2').textContent = new Set(filtered.map(e=>e.workerId)).size;
+  document.getElementById('hS3').textContent = filtered.filter(e=>e.dayType==='full').length;
+  document.getElementById('hS4').textContent = filtered.filter(e=>e.dayType==='half').length;
+
+  if (activeTab==='locations') renderLocations(filtered);
+  if (activeTab==='chart')     renderChart(filtered);
+  if (activeTab==='monthly')   renderMonthly(filtered);
+  if (activeTab==='salary')    renderSalary();
+  if (activeTab==='all')       renderAll(filtered);
+}
+
+// ── LOCATIONS TAB ──
+function renderLocations(filtered) {
+  const locMap = {};
+  filtered.forEach(e => {
+    if (!locMap[e.location]) locMap[e.location] = { entries:[] };
+    locMap[e.location].entries.push(e);
+  });
+
+  // For each location: count UNIQUE days worked
+  Object.keys(locMap).forEach(loc => {
+    const entries = locMap[loc].entries;
+    const uniqueDates = [...new Set(entries.map(e => e.date))];
+    let full = 0, half = 0;
+    uniqueDates.forEach(date => {
+      const dayEntries = entries.filter(e => e.date === date);
+      const hasFullDay = dayEntries.some(e => e.dayType === 'full');
+      if (hasFullDay) full++; else half++;
+    });
+    locMap[loc].full = full;
+    locMap[loc].half = half;
+    locMap[loc].uniqueDays = uniqueDates.length;
+    locMap[loc].uniqueWorkers = new Set(entries.map(e => e.workerId)).size;
+    locMap[loc].status = locStatus[loc] || 'progress';
+  });
+
+  const allLocs = Object.keys(locMap).sort((a,b) => locMap[b].uniqueDays - locMap[a].uniqueDays);
+  const progressLocs = allLocs.filter(l => locMap[l].status === 'progress');
+  const completedLocs = allLocs.filter(l => locMap[l].status === 'completed');
+
+  // Update counts in sub-tabs
+  document.getElementById('subTabProgressCount').textContent = progressLocs.length;
+  document.getElementById('subTabCompletedCount').textContent = completedLocs.length;
+
+  const visibleLocs = locSubTab === 'progress' ? progressLocs : completedLocs;
+  const maxDays = visibleLocs.length ? Math.max(...visibleLocs.map(l => locMap[l].uniqueDays)) : 1;
+
+  if (!allLocs.length) {
+    document.getElementById('locGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">📍</div><p>Nuk ka regjistrime.</p></div>`;
+    document.getElementById('drillPanel').innerHTML = '';
+    return;
+  }
+
+  if (!visibleLocs.length) {
+    const emptyMsg = locSubTab === 'progress'
+      ? 'Nuk ka vende në progres.<br><small>Të gjitha vendet janë të kompletuara! 🎉</small>'
+      : 'Nuk ka vende të kompletuara ende.<br><small>Klik ✓ te një vend për ta shënuar si të kompletuar.</small>';
+    document.getElementById('locGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">${locSubTab==='progress'?'🚧':'✅'}</div><p>${emptyMsg}</p></div>`;
+    document.getElementById('drillPanel').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('locGrid').innerHTML = visibleLocs.map(loc => {
+    const d = locMap[loc];
+    const pct = Math.round((d.uniqueDays/maxDays)*100);
+    const sel = selectedLoc === loc ? 'selected' : '';
+    const isCompleted = d.status === 'completed';
+    const locEsc = esc(loc).replace(/'/g,"\\'");
+    return `
+      <div class="loc-card ${sel} ${isCompleted?'completed':''}" onclick="selectLoc('${locEsc}')">
+        <div class="loc-card-actions" onclick="event.stopPropagation()">
+          <button class="loc-edit-btn" onclick="openEditLoc('${locEsc}')" title="Edito emrin">✎</button>
+          <button class="loc-status-btn" onclick="toggleLocStatus('${locEsc}')" title="${isCompleted?'Rikthe në Progres':'Shëno si të Kompletuar'}">
+            ${isCompleted?'↩':'✓'}
+          </button>
+        </div>
+        <div class="loc-name">${isCompleted?'✅':'🚧'} ${esc(loc)}</div>
+        <div class="loc-stats">
+          <div class="loc-stat"><div class="n">${d.uniqueDays}</div><div class="l">Ditë</div></div>
+          <div class="loc-stat"><div class="n">${d.uniqueWorkers}</div><div class="l">Punëtorë</div></div>
+        </div>
+        <div class="loc-bar"><div class="loc-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  if (selectedLoc && locMap[selectedLoc]) {
+    renderDrill(selectedLoc, locMap[selectedLoc]);
+  } else {
+    document.getElementById('drillPanel').innerHTML = '';
+  }
+}
+
+function toggleLocStatus(loc) {
+  const cur = locStatus[loc] || 'progress';
+  const newStatus = cur === 'progress' ? 'completed' : 'progress';
+  locStatus[loc] = newStatus;
+  save();
+  if (selectedLoc === loc) {
+    selectedLoc = null;
+    selectedDate = null;
+  }
+  renderHistory();
+  showToast(newStatus === 'completed' ? '✅ U kompletua!' : '🚧 U kthye në progres');
+}
+
+function openEditLoc(loc) {
+  document.getElementById('editLocOldName').value = loc;
+  document.getElementById('editLocNewName').value = loc;
+  document.getElementById('editLocModal').classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById('editLocNewName');
+    inp.focus(); inp.select();
+  }, 100);
+}
+
+function saveEditLoc() {
+  const oldName = document.getElementById('editLocOldName').value;
+  const newName = document.getElementById('editLocNewName').value.trim();
+  if (!newName) { showToast('⚠ Emri nuk mund të jetë bosh!'); return; }
+  if (newName === oldName) { document.getElementById('editLocModal').classList.remove('open'); return; }
+
+  // Update all entries with this location
+  entries.forEach(e => { if (e.location === oldName) e.location = newName; });
+
+  // Update locStatus key
+  if (locStatus[oldName] !== undefined) {
+    locStatus[newName] = locStatus[oldName];
+    delete locStatus[oldName];
+  }
+
+  // Update selectedLoc if it was the renamed one
+  if (selectedLoc === oldName) selectedLoc = newName;
+
+  save();
+  document.getElementById('editLocModal').classList.remove('open');
+  renderHistory();
+  showToast('✔ Vendi u riemërua!');
+}
+
+function switchLocSubTab(sub, btn) {
+  locSubTab = sub;
+  selectedLoc = null;
+  selectedDate = null;
+  document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+}
+
+function selectLoc(loc) {
+  selectedLoc = selectedLoc === loc ? null : loc;
+  selectedDate = null;
+  renderHistory();
+}
+
+function renderDrill(loc, data) {
+  // Group entries by date
+  const byDate = {};
+  data.entries.forEach(e => {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+  const sortedDates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
+  const locEscaped = esc(loc).replace(/'/g,"\\'");
+
+  // If a specific date is selected, show its details
+  if (selectedDate && byDate[selectedDate]) {
+    const dayEntries = byDate[selectedDate];
+    const isFullDay = dayEntries.some(e => e.dayType === 'full');
+    document.getElementById('drillPanel').innerHTML = `
+      <div class="drill-panel">
+        <div class="drill-header">
+          <div>
+            <div class="drill-title">📅 ${fmtDateLong(selectedDate)}</div>
+            <div class="drill-sub">📍 ${esc(loc)} · ${dayEntries.length} punëtor${dayEntries.length>1?'ë':''} · ${isFullDay ? 'Ditë e Plotë' : 'Gjysmë Ditë'}</div>
+          </div>
+          <button class="btn-sm" onclick="selectDate(null)">← Kthehu</button>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Punëtorët që Punuan</div>
+        <div class="drill-entries">
+          ${dayEntries.map(e => `
+            <div class="de-row">
+              <div class="dw-av" style="flex-shrink:0">${ini(e.workerName)}</div>
+              <div style="flex:1;min-width:0">
+                <div class="de-name">${esc(e.workerName)}</div>
+                <div class="de-desc">${esc(e.desc)}</div>
+              </div>
+              <div style="flex-shrink:0">${dayBadge(e)}</div>
+              <div class="entry-actions" style="flex-shrink:0" onclick="event.stopPropagation()">
+                <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
+                <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Default view: show list of days only
+  document.getElementById('drillPanel').innerHTML = `
+    <div class="drill-panel">
+      <div class="drill-header">
+        <div>
+          <div class="drill-title">📍 ${esc(loc)}</div>
+          <div class="drill-sub">${data.uniqueDays} ditë pune · ${data.uniqueWorkers} punëtorë gjithsej</div>
+        </div>
+        <button class="btn-sm" onclick="selectLoc('${locEscaped}')">✕ Mbyll</button>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Ditët e Punës (klik për detaje)</div>
+      <div class="day-list">
+        ${sortedDates.map(date => {
+          const dayEntries = byDate[date];
+          const hasFullDay = dayEntries.some(e => e.dayType === 'full');
+          const hasHalfDay = dayEntries.some(e => e.dayType === 'half');
+          const onlyExtra = !hasFullDay && !hasHalfDay;
+          const totalExtra = dayEntries.reduce((s,e)=>s+(e.extraHours||0),0);
+          let badge;
+          if (onlyExtra) badge = `<span class="badge badge-extra-only">⏰ ${totalExtra}h Ekstra</span>`;
+          else if (hasFullDay) badge = '<span class="badge badge-full">Plotë</span>';
+          else badge = '<span class="badge badge-half">Gjysmë</span>';
+          return `
+            <div class="day-row" onclick="selectDate('${date}')">
+              <div class="day-icon">📅</div>
+              <div class="day-info">
+                <div class="day-date">${fmtDateLong(date)}</div>
+                <div class="day-meta">${dayEntries.length} punëtor${dayEntries.length>1?'ë':''}${!onlyExtra && totalExtra>0?' · ⏰ '+totalExtra+'h ekstra':''}</div>
+                <div class="day-descs">
+                  ${[...new Set(dayEntries.map(e=>e.desc))].map(d=>`<span class="day-desc-chip">${esc(d)}</span>`).join('')}
+                </div>
+              </div>
+              <div style="flex-shrink:0">${badge}</div>
+              <div class="day-arrow">→</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function selectDate(date) {
+  selectedDate = date;
+  renderHistory();
+}
+
+// ── CHART TAB ──
+function renderChart(filtered) {
+  // Build worker map with full data
+  const wMap = {};
+  filtered.forEach(e => {
+    if (!wMap[e.workerName]) {
+      wMap[e.workerName] = {
+        workerId: e.workerId, workerName: e.workerName, role: e.workerRole,
+        full: 0, half: 0, extraOnly: 0, extraHours: 0, entries: [],
+        locations: {}, dates: new Set()
+      };
+    }
+    const w = wMap[e.workerName];
+    if (e.dayType === 'full') w.full++;
+    else if (e.dayType === 'half') w.half++;
+    else if (e.dayType === 'extra') w.extraOnly++;
+    w.extraHours += (e.extraHours || 0);
+    w.entries.push(e);
+    w.dates.add(e.date);
+    if (!w.locations[e.location]) w.locations[e.location] = { full: 0, half: 0, extraOnly: 0, extra: 0 };
+    if (e.dayType === 'full') w.locations[e.location].full++;
+    else if (e.dayType === 'half') w.locations[e.location].half++;
+    else if (e.dayType === 'extra') w.locations[e.location].extraOnly++;
+    w.locations[e.location].extra += (e.extraHours || 0);
+  });
+
+  const names = Object.keys(wMap).sort((a,b) => (wMap[b].full+wMap[b].half+wMap[b].extraOnly)-(wMap[a].full+wMap[a].half+wMap[a].extraOnly));
+  const maxVal = names.length ? Math.max(...names.map(n=>wMap[n].full+wMap[n].half+wMap[n].extraOnly)) : 1;
+
+  if (!names.length) {
+    document.getElementById('barChart').innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Nuk ka të dhëna.</p></div>`;
+    document.getElementById('workerDrillPanel').innerHTML = '';
+    return;
+  }
+
+  // Overall totals
+  const totalFull = filtered.filter(e=>e.dayType==='full').length;
+  const totalHalf = filtered.filter(e=>e.dayType==='half').length;
+  const totalExtraOnly = filtered.filter(e=>e.dayType==='extra').length;
+  const totalExtra = filtered.reduce((s,e)=>s+(e.extraHours||0),0);
+  const uniqueWorkers = names.length;
+  const uniqueLocs = new Set(filtered.map(e=>e.location)).size;
+  const uniqueDates = new Set(filtered.map(e=>e.date)).size;
+
+  document.getElementById('chartStats').innerHTML = `
+    <div class="chart-stat"><div class="cs-val">${uniqueWorkers}</div><div class="cs-lbl">Punëtorë</div></div>
+    <div class="chart-stat"><div class="cs-val">${uniqueDates}</div><div class="cs-lbl">Ditë</div></div>
+    <div class="chart-stat"><div class="cs-val">${uniqueLocs}</div><div class="cs-lbl">Vende</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:var(--green)">${totalFull}</div><div class="cs-lbl">Plota</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#d07a3a">${totalHalf}</div><div class="cs-lbl">Gjysëm</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#b06a30">${totalExtraOnly}</div><div class="cs-lbl">Vet. Ekstra</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#b06a30">${totalExtra}h</div><div class="cs-lbl">Orë Ekstra</div></div>
+  `;
+
+  document.getElementById('barChart').innerHTML = names.map(name => {
+    const d = wMap[name];
+    const total = d.full + d.half + d.extraOnly;
+    const fullW = Math.round((d.full/maxVal)*100);
+    const halfW = Math.round((d.half/maxVal)*100);
+    const extraOnlyW = Math.round((d.extraOnly/maxVal)*100);
+    const sel = selectedWorker === name ? 'selected' : '';
+    const nameEsc = esc(name).replace(/'/g,"\\'");
+    const extraText = d.extraHours > 0 ? ` · ⏰ ${d.extraHours}h ekstra` : '';
+    return `
+      <div class="bc-row clickable ${sel}" onclick="selectWorker('${nameEsc}')">
+        <div class="bc-label">
+          <div class="bc-av">${ini(name)}</div>
+          <div class="bc-name-text">${esc(name)}<small>${d.dates.size} ditë${extraText}</small></div>
+        </div>
+        <div class="bc-bars">
+          ${d.full ? `<div class="bc-bar-wrap"><div class="bc-bar full-bar" style="width:${fullW}%"></div><span class="bc-count">${d.full}</span></div>` : ''}
+          ${d.half ? `<div class="bc-bar-wrap"><div class="bc-bar half-bar" style="width:${halfW}%"></div><span class="bc-count">${d.half}</span></div>` : ''}
+          ${d.extraOnly ? `<div class="bc-bar-wrap"><div class="bc-bar extra-bar" style="width:${extraOnlyW}%"></div><span class="bc-count">${d.extraOnly}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Render drill-down if a worker is selected
+  if (selectedWorker && wMap[selectedWorker]) {
+    renderWorkerDrill(wMap[selectedWorker]);
+  } else {
+    document.getElementById('workerDrillPanel').innerHTML = '';
+  }
+}
+
+function selectWorker(name) {
+  selectedWorker = selectedWorker === name ? null : name;
+  renderHistory();
+}
+
+function renderWorkerDrill(w) {
+  const totalEntries = w.full + w.half + w.extraOnly;
+  const uniqueDays = w.dates.size;
+  const sortedEntries = w.entries.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const locArr = Object.entries(w.locations).sort((a,b) => (b[1].full+b[1].half+b[1].extraOnly) - (a[1].full+a[1].half+a[1].extraOnly));
+  const nameEsc = esc(w.workerName).replace(/'/g,"\\'");
+  const extraTxt = w.extraHours > 0 ? ` · ⏰ ${w.extraHours}h ekstra` : '';
+  const extraOnlyTxt = w.extraOnly > 0 ? ` · ${w.extraOnly} vetëm ekstra` : '';
+
+  document.getElementById('workerDrillPanel').innerHTML = `
+    <div class="drill-panel">
+      <div class="drill-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="dw-av" style="width:46px;height:46px;font-size:1rem">${ini(w.workerName)}</div>
+          <div>
+            <div class="drill-title">${esc(w.workerName)}</div>
+            <div class="drill-sub">${uniqueDays} ditë (${totalEntries} regjistrime) · ${w.full} plota · ${w.half} gjysëm${extraOnlyTxt}${extraTxt}</div>
+          </div>
+        </div>
+        <button class="btn-sm" onclick="selectWorker('${nameEsc}')">✕ Mbyll</button>
+      </div>
+
+      <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Vendet ku ka Punuar</div>
+      <div class="drill-workers" style="margin-bottom:18px">
+        ${locArr.map(([loc, stats]) => {
+          const isCompleted = (locStatus[loc] || 'progress') === 'completed';
+          const parts = [];
+          if (stats.full) parts.push(`${stats.full} plota`);
+          if (stats.half) parts.push(`${stats.half} gjysëm`);
+          if (stats.extraOnly) parts.push(`${stats.extraOnly} vet.ekstra`);
+          if (stats.extra > 0) parts.push(`⏰ ${stats.extra}h`);
+          return `
+            <div class="dw-card">
+              <div style="font-size:1.2rem">${isCompleted?'✅':'🚧'}</div>
+              <div class="dw-info">
+                <strong>${esc(loc)}</strong>
+                <small>${parts.join(' · ')}</small>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Të Gjitha Ditët e Punës</div>
+      <div class="drill-entries">
+        ${sortedEntries.map(e => `
+          <div class="de-row">
+            <div class="de-date">${fmtDate(e.date)}</div>
+            <div style="flex:1;min-width:0">
+              <div class="de-name" style="font-size:0.82rem">📍 ${esc(e.location)}</div>
+              <div class="de-desc">${esc(e.desc)}</div>
+            </div>
+            <div style="flex-shrink:0">${dayBadge(e)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── MONTHLY TAB ──
+function renderMonthly(filtered) {
+  // Populate month dropdown with all available months from ALL entries (not just filtered)
+  const allMonths = [...new Set(entries.map(e => e.date.slice(0,7)))].sort((a,b) => b.localeCompare(a));
+  const sel = document.getElementById('monthSelect');
+  if (sel) {
+    const currentVal = sel.value || selectedMonth;
+    sel.innerHTML = `<option value="">📅 Të gjithë muajt</option>` +
+      allMonths.map(ym => {
+        const [y,m] = ym.split('-');
+        const monthName = new Date(y, parseInt(m)-1, 1).toLocaleDateString('sq-AL',{month:'long',year:'numeric'});
+        return `<option value="${ym}" ${currentVal===ym?'selected':''}>${monthName}</option>`;
+      }).join('');
+    sel.value = currentVal;
+  }
+
+  // Filter entries by selectedMonth if set
+  let monthFiltered = filtered;
+  if (selectedMonth) {
+    monthFiltered = filtered.filter(e => e.date.startsWith(selectedMonth));
+  }
+
+  const monthMap = {};
+  monthFiltered.forEach(e => {
+    const ym = e.date.slice(0,7);
+    if (!monthMap[ym]) monthMap[ym] = {};
+    const wk = e.workerId;
+    if (!monthMap[ym][wk]) monthMap[ym][wk] = { name:e.workerName, role:e.workerRole, full:0, half:0, extraOnly:0, extra:0, dates: new Set() };
+    if (e.dayType==='full') monthMap[ym][wk].full++;
+    else if (e.dayType==='half') monthMap[ym][wk].half++;
+    else if (e.dayType==='extra') monthMap[ym][wk].extraOnly++;
+    monthMap[ym][wk].extra += (e.extraHours || 0);
+    monthMap[ym][wk].dates.add(e.date);
+  });
+
+  const months = Object.keys(monthMap).sort((a,b) => b.localeCompare(a));
+
+  if (!months.length) {
+    document.getElementById('monthlyContainer').innerHTML = `<div class="empty-state"><div class="big">🗓</div><p>${selectedMonth?'Nuk ka regjistrime për këtë muaj.':'Nuk ka regjistrime.'}</p></div>`;
+    return;
+  }
+
+  document.getElementById('monthlyContainer').innerHTML = months.map(ym => {
+    const wData = monthMap[ym];
+    const wks = Object.values(wData).sort((a,b) => (b.full+b.half+b.extraOnly)-(a.full+a.half+a.extraOnly));
+    const maxDays = Math.max(...wks.map(w=>w.full+w.half+w.extraOnly));
+    const totalFull = wks.reduce((s,w)=>s+w.full,0);
+    const totalHalf = wks.reduce((s,w)=>s+w.half,0);
+    const totalExtraOnly = wks.reduce((s,w)=>s+w.extraOnly,0);
+    const totalExtra = wks.reduce((s,w)=>s+w.extra,0);
+    const [y,m] = ym.split('-');
+    const monthName = new Date(y, parseInt(m)-1, 1).toLocaleDateString('sq-AL',{month:'long',year:'numeric'});
+
+    return `
+      <div class="month-section">
+        <div class="month-header">
+          <span>${monthName}</span>
+          <span class="month-total">${totalFull} plota · ${totalHalf} gjysëm${totalExtraOnly?' · '+totalExtraOnly+' vet.ekstra':''}${totalExtra>0?' · ⏰ '+totalExtra+'h':''}</span>
+        </div>
+        <table class="month-table">
+          <thead>
+            <tr>
+              <th>Punëtori</th>
+              <th>Plota</th>
+              <th>Gjysëm</th>
+              <th>Vet.Ekstra</th>
+              <th>Orë Ekstra</th>
+              <th>Gjithsej</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${wks.map(w => {
+              const total = w.full + w.half + w.extraOnly;
+              return `
+                <tr>
+                  <td><div class="td-name"><div class="mini-av">${ini(w.name)}</div>${esc(w.name)}</div></td>
+                  <td class="td-days td-full">${w.full}</td>
+                  <td class="td-days td-half">${w.half}</td>
+                  <td class="td-days" style="color:#b06a30;font-weight:700">${w.extraOnly>0?w.extraOnly:'-'}</td>
+                  <td class="td-days" style="color:#b06a30;font-weight:700">${w.extra>0?w.extra+'h':'-'}</td>
+                  <td class="td-total">${total}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+}
+
+function onMonthChange() {
+  selectedMonth = document.getElementById('monthSelect').value;
+  renderHistory();
+}
+
+// ── SALARY TAB ──
+function onSalaryMonthChange() {
+  selectedSalaryMonth = document.getElementById('salaryMonthSelect').value;
+  renderSalary();
+}
+
+function renderSalary() {
+  const allMonths = [...new Set(entries.map(e => e.date.slice(0,7)))].sort((a,b) => b.localeCompare(a));
+  const sel = document.getElementById('salaryMonthSelect');
+  if (sel) {
+    sel.innerHTML = '<option value="">📅 Të gjithë muajt</option>' +
+      allMonths.map(ym => {
+        const [y,m] = ym.split('-');
+        const mn = new Date(y, parseInt(m)-1, 1).toLocaleDateString('sq-AL',{month:'long',year:'numeric'});
+        return '<option value="'+ym+'" '+(selectedSalaryMonth===ym?'selected':'')+'>'+mn+'</option>';
+      }).join('');
+    sel.value = selectedSalaryMonth;
+  }
+
+  const filtered = selectedSalaryMonth
+    ? entries.filter(e => e.date.startsWith(selectedSalaryMonth))
+    : entries;
+
+  if (!filtered.length) {
+    document.getElementById('salaryContainer').innerHTML = '<div class="empty-state"><div class="big">💰</div><p>Nuk ka regjistrime.</p></div>';
+    return;
+  }
+
+  const monthMap = {};
+  filtered.forEach(e => {
+    const ym = e.date.slice(0,7);
+    if (!monthMap[ym]) monthMap[ym] = {};
+    const wk = e.workerId;
+    if (!monthMap[ym][wk]) {
+      const wo = workers.find(w => w.id === wk);
+      monthMap[ym][wk] = {
+        name: e.workerName, role: e.workerRole,
+        dailyWage: wo ? (wo.dailyWage || 0) : 0,
+        full: 0, half: 0, extraOnly: 0,
+        extraHours: 0, totalPay: 0
+      };
+    }
+    const wd = monthMap[ym][wk];
+    if (e.dayType === 'full') wd.full++;
+    else if (e.dayType === 'half') wd.half++;
+    else wd.extraOnly++;
+    wd.extraHours += (e.extraHours || 0);
+    const pay = calcEarnings(e, wd.dailyWage);
+    if (pay !== null) wd.totalPay += pay;
+  });
+
+  const months = Object.keys(monthMap).sort((a,b) => b.localeCompare(a));
+
+  document.getElementById('salaryContainer').innerHTML = months.map(ym => {
+    const wList = Object.values(monthMap[ym]).sort((a,b) => b.totalPay - a.totalPay);
+    const [y,m] = ym.split('-');
+    const monthName = new Date(y, parseInt(m)-1, 1).toLocaleDateString('sq-AL',{month:'long',year:'numeric'});
+    const totalPay = wList.reduce((s,w) => s + w.totalPay, 0);
+    const hasWage = wList.some(w => w.dailyWage > 0);
+
+    let html = '<div class="month-section">';
+    html += '<div class="month-header" style="background:var(--green)">';
+    html += '<span>💰 ' + monthName + '</span>';
+    html += '<span class="month-total">' + (hasWage ? 'Totali: ' + totalPay.toFixed(2) + '€' : 'Vendos rrogat') + '</span>';
+    html += '</div>';
+    html += '<div class="salary-grid">';
+
+    wList.forEach(w => {
+      const hourlyRate = w.dailyWage > 0 ? (w.dailyWage / 8) : 0;
+      const basePay = (w.full * w.dailyWage) + (w.half * w.dailyWage / 2);
+      const extraPay = w.extraHours * hourlyRate * 1.5;
+      const extraOnlyPay = w.extraOnly > 0 ? 0 : 0; // will be in extraPay since extraHours covers all
+      const hasW = w.dailyWage > 0;
+
+      html += '<div class="salary-card">';
+      html += '<div class="salary-header">';
+      html += '<div class="dw-av" style="width:40px;height:40px;font-size:0.9rem">' + ini(w.name) + '</div>';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.95rem">' + esc(w.name) + '</div>';
+      html += '<div style="font-size:0.75rem;color:var(--muted)">' + (hasW ? w.dailyWage + '€/ditë · ' + hourlyRate.toFixed(2) + '€/orë' : '⚠ Rroga nuk është vendosur') + '</div>';
+      html += '</div>';
+      if (hasW) {
+        html += '<div class="salary-total"><span style="font-family:Syne,sans-serif;font-weight:800;font-size:1.15rem;color:var(--green)">' + w.totalPay.toFixed(2) + '€</span></div>';
+      }
+      html += '</div>';
+
+      if (hasW) {
+        html += '<div class="salary-breakdown">';
+        if (w.full > 0) {
+          html += '<div class="sb-row"><span class="sb-lbl">☀️ ' + w.full + ' ditë plota</span><span class="sb-val">' + (w.full * w.dailyWage).toFixed(2) + '€</span></div>';
+        }
+        if (w.half > 0) {
+          html += '<div class="sb-row"><span class="sb-lbl">🌤 ' + w.half + ' gjysëm ditë</span><span class="sb-val">' + (w.half * w.dailyWage / 2).toFixed(2) + '€</span></div>';
+        }
+        if (w.extraHours > 0) {
+          html += '<div class="sb-row sb-extra">';
+          html += '<span class="sb-lbl">⏰ ' + w.extraHours + 'h ekstra (+50%)</span>';
+          html += '<span class="sb-val">' + extraPay.toFixed(2) + '€</span>';
+          html += '<span class="sb-formula">' + hourlyRate.toFixed(2) + '€/h × 1.5 × ' + w.extraHours + 'h = ' + extraPay.toFixed(2) + '€</span>';
+          html += '</div>';
+        }
+        html += '<div class="sb-row sb-total">';
+        html += '<span class="sb-lbl">💰 Totali</span>';
+        html += '<span class="sb-val" style="color:var(--green);font-size:1rem;font-weight:800">' + w.totalPay.toFixed(2) + '€</span>';
+        html += '</div>';
+        html += '</div>';
+      } else {
+        html += '<div style="font-size:0.82rem;color:var(--muted);padding:10px 0">Shto rrogën te seksioni "Punëtorët" → ✎ Edito.</div>';
+      }
+
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+    return html;
+  }).join('');
+}
+
+// ── LOCATION EDIT ──
+function openEditLoc(loc) {
+  document.getElementById('editLocOldName').value = loc;
+  document.getElementById('editLocNewName').value = loc;
+  document.getElementById('editLocModal').classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById('editLocNewName');
+    inp.focus(); inp.select();
+  }, 100);
+}
+
+function saveEditLoc() {
+  const oldName = document.getElementById('editLocOldName').value;
+  const newName = document.getElementById('editLocNewName').value.trim();
+  if (!newName) { showToast('⚠ Emri nuk mund të jetë bosh!'); return; }
+  if (newName === oldName) { document.getElementById('editLocModal').classList.remove('open'); return; }
+
+  entries.forEach(e => { if (e.location === oldName) e.location = newName; });
+  if (locStatus[oldName] !== undefined) {
+    locStatus[newName] = locStatus[oldName];
+    delete locStatus[oldName];
+  }
+  if (selectedLoc === oldName) selectedLoc = newName;
+
+  save();
+  document.getElementById('editLocModal').classList.remove('open');
+  renderHistory();
+  showToast('✔ Vendi u riemërua!');
+}
+
+// ── ALL TAB ──
+function renderAll(filtered) {
+  if (!filtered.length) {
+    document.getElementById('allContainer').innerHTML = `<div class="empty-state"><div class="big">📭</div><p>Nuk ka regjistrime.</p></div>`;
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(e => { (grouped[e.date]=grouped[e.date]||[]).push(e); });
+  const dates = Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+  document.getElementById('allContainer').innerHTML = dates.map(date => `
+    <div class="eg">
+      <div class="eg-date">${fmtDateLong(date)} — ${grouped[date].length} punëtor${grouped[date].length>1?'ë':''}</div>
+      ${grouped[date].map(e => `
+        <div class="ecard">
+          <div class="eav">${ini(e.workerName)}</div>
+          <div class="ei">
+            <strong>${esc(e.workerName)}</strong>
+            <div class="ei-meta"><span class="loc">${esc(e.location)}</span>${e.workerRole?`<span>· ${esc(e.workerRole)}</span>`:''}</div>
+            <div class="ei-desc">${esc(e.desc)}</div>
+          </div>
+          <div>${dayBadge(e)}</div>
+            <div class="entry-actions" onclick="event.stopPropagation()">
+              <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
+              <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
+            </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function delEntry(id) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  if (!confirm('Fshi këtë regjistrim?')) return;
+  const before = entries.length;
+  entries = entries.filter(e => String(e.id) !== String(id));
+  if (entries.length === before) {
+    showToast('⚠ Regjistrimi nuk u gjet!', true);
+    return;
+  }
+  save(); renderHistory();
+  showToast('🗑 Fshirë', true);
+}
+
+function openEditEntry(id) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  const e = entries.find(x => String(x.id) === String(id));
+  if (!e) { showToast('⚠ Regjistrimi nuk u gjet!', true); return; }
+  document.getElementById('editEntryId').value = e.id;
+  document.getElementById('editDate').value = e.date;
+  document.getElementById('editLocation').value = e.location;
+  document.getElementById('editDesc').value = e.desc;
+  document.getElementById('editExtraHours').value = e.extraHours || 0;
+  document.getElementById('editBtnFull').classList.toggle('active', e.dayType === 'full');
+  document.getElementById('editBtnHalf').classList.toggle('active', e.dayType === 'half');
+  // Populate location dropdown
+  populateEditLocDropdown();
+  document.getElementById('editEntryModal').classList.add('open');
+}
+
+function setEditDayType(t) {
+  document.getElementById('editBtnFull').classList.toggle('active', t === 'full');
+  document.getElementById('editBtnHalf').classList.toggle('active', t === 'half');
+  document.getElementById('editBtnExtra').classList.toggle('active', t === 'extra');
+}
+
+function saveEditEntry() {
+  const id = document.getElementById('editEntryId').value;
+  const e = entries.find(x => String(x.id) === String(id));
+  if (!e) return;
+  const date = document.getElementById('editDate').value;
+  const loc = document.getElementById('editLocation').value.trim();
+  const desc = document.getElementById('editDesc').value.trim();
+  const extraHours = Math.max(0, parseFloat(document.getElementById('editExtraHours').value) || 0);
+  const dayType = document.getElementById('editBtnFull').classList.contains('active') ? 'full' : 'half';
+  if (!date || !loc || !desc) { showToast('⚠ Plotëso të gjitha fushat!'); return; }
+  e.date = date;
+  e.location = loc;
+  e.desc = desc;
+  e.dayType = dayType;
+  e.extraHours = extraHours;
+  save(); renderHistory();
+  document.getElementById('editEntryModal').classList.remove('open');
+  showToast('✔ Regjistrimi u përditësua!');
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  if (!entries.length) { showToast('Nuk ka të dhëna!'); return; }
+  const rows = [['Punëtori','Roli','Data','Vendi','Lloji','Orë Ekstra','Puna']];
+  entries.forEach(e => {
+    const lloji = e.dayType==='full' ? 'Ditë Plotë' : (e.dayType==='half' ? 'Gjysmë Ditë' : 'Vetëm Ekstra');
+    rows.push([`"${e.workerName}"`,`"${e.workerRole||''}"`,`"${e.date}"`,`"${e.location}"`,`"${lloji}"`,`"${e.extraHours||0}"`,`"${e.desc.replace(/"/g,'""')}"`]);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = `regjistri-${todayStr}.csv`;
+  a.click();
+  showToast('📥 CSV u shkarkua!');
+}
+
+function copyAll() {
+  if (!entries.length) { showToast('Nuk ka të dhëna!'); return; }
+  navigator.clipboard.writeText(
+    entries.map(e=>`${e.date} | ${e.workerName} | ${e.location} | ${e.dayType==='full'?'Ditë Plotë':'Gjysmë Ditë'}${e.extraHours>0?' | +'+e.extraHours+'h':''} | ${e.desc}`).join('\n')
+  ).then(()=>showToast('📋 U kopjua!'));
+}
+
+// ── SAVE: Drive is the single source of truth ──
+function saveLocalCache() {
+  localStorage.setItem('pun_workers', JSON.stringify(workers));
+  localStorage.setItem('pun_entries', JSON.stringify(entries));
+  localStorage.setItem('pun_loc_status', JSON.stringify(locStatus));
+}
+
+function save() {
+  saveLocalCache(); // Update local cache
+  if (accessToken && driveFileId) {
+    // Push to Drive immediately (debounced)
+    if (autoSyncTimer) clearTimeout(autoSyncTimer);
+    autoSyncTimer = setTimeout(() => pushToDrive(), 1500);
+  } else if (!accessToken) {
+    // Not connected — warn user but save locally
+    setSyncStatus('error', 'Jo i lidhur — ruajtur lokalisht', 'Klik "Lidhu" për të sinkronizuar');
+  }
+}
+function ini(n) { return (n||'').split(' ').map(x=>x[0]||'').join('').slice(0,2).toUpperCase(); }
+
+// ── SALARY CALCULATION ──
+function calcEarnings(entry, dailyWage) {
+  if (!dailyWage || dailyWage <= 0) return null;
+  const hourlyRate = dailyWage / 8;
+  let base = 0;
+  if (entry.dayType === 'full') base = dailyWage;
+  else if (entry.dayType === 'half') base = dailyWage / 2;
+  const extraPay = (entry.extraHours || 0) * hourlyRate * 1.5;
+  return base + extraPay;
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function extraBadge(h) {
+  if (!h || h <= 0) return '';
+  const num = h % 1 === 0 ? h : h.toFixed(1);
+  return ` <span class="badge badge-extra">+${num}h</span>`;
+}
+function dayBadge(e) {
+  if (e.dayType === 'extra') {
+    const h = e.extraHours || 0;
+    const num = h % 1 === 0 ? h : h.toFixed(1);
+    return `<span class="badge badge-extra-only">⏰ ${num}h Vetëm Ekstra</span>`;
+  }
+  const base = e.dayType === 'full'
+    ? '<span class="badge badge-full">Plotë</span>'
+    : '<span class="badge badge-half">Gjysmë</span>';
+  return base + extraBadge(e.extraHours);
+}
+function escAttr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+function fmtDateLong(d) { return new Date(d+'T12:00:00').toLocaleDateString('sq-AL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+function showToast(msg, warn=false) {
+  const t = document.getElementById('toast');
+  t.style.background = warn ? '#c84b2f' : '#1a1714';
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+renderChecklist();
+
+// Show not-connected wall initially — will hide when Drive connects
+document.getElementById('notConnectedWall').classList.add('visible');
+document.getElementById('registerFormBody').style.display = 'none';
+
+// ═══════════════════════════════════════
+// GOOGLE DRIVE SYNC
+// ═══════════════════════════════════════
+const DRIVE_FILE_NAME = 'regjistri-pune-backup.json';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+// Client ID i paracaktuar — përdoruesit nuk kanë nevojë ta vendosin
+const DEFAULT_CLIENT_ID = '843359131456-qfr3m4o8pg6e38ra3imvohgflnmgmak1.apps.googleusercontent.com';
+let tokenClient = null;
+let accessToken = null;
+let driveFileId = null;
+let isSyncing = false;
+let autoSyncTimer = null;
+
+// Show origin URL in help modal
+document.addEventListener('DOMContentLoaded', () => {
+  const origEl = document.getElementById('originUrl');
+  if (origEl) origEl.textContent = window.location.origin;
+});
+
+function getClientId() {
+  // First check if user manually saved a different one, otherwise use default
+  return localStorage.getItem('gdrive_client_id') || DEFAULT_CLIENT_ID;
+}
+
+function setSyncStatus(state, text, sub) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  const sb = document.getElementById('syncSub');
+  dot.className = 'sync-dot ' + (state || '');
+  txt.firstChild.textContent = text;
+  if (sb) sb.textContent = sub || '';
+
+  const isOnline = state === 'online';
+  document.getElementById('btnConnect').style.display = isOnline ? 'none' : '';
+  document.getElementById('btnSyncNow').style.display = isOnline ? '' : 'none';
+  document.getElementById('btnDisconnect').style.display = isOnline ? '' : 'none';
+
+  // Show/hide register form vs not-connected wall
+  const wall = document.getElementById('notConnectedWall');
+  const form = document.getElementById('registerFormBody');
+  if (wall && form) {
+    wall.classList.toggle('visible', !isOnline);
+    form.style.display = isOnline ? '' : 'none';
+  }
+}
+
+function connectDrive() {
+  // Client ID i paracaktuar - shko direkt te Google login
+  const cid = getClientId();
+  startAuth(cid);
+}
+
+function saveConfig() {
+  const cid = document.getElementById('configClientId').value.trim();
+  if (!cid || !cid.includes('apps.googleusercontent.com')) {
+    showToast('⚠ Client ID i pavlefshëm!');
+    return;
+  }
+  localStorage.setItem('gdrive_client_id', cid);
+  document.getElementById('configModal').classList.remove('open');
+  startAuth(cid);
+}
+
+function startAuth(clientId, forceConsent = false) {
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    setSyncStatus('syncing', 'Duke ngarkuar Google API...', 'Ju lutem prisni');
+    let attempts = 0;
+    const maxAttempts = 50; // 10 seconds (50 * 200ms)
+    const checkInterval = setInterval(() => {
+      attempts++;
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+        clearInterval(checkInterval);
+        startAuth(clientId, forceConsent); // Retry now that API is loaded
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        setSyncStatus('error', 'Google API nuk u ngarkua', 'Kontrollo internetin dhe provo përsëri');
+        showToast('⚠ Google API nuk u ngarkua. Kontrollo internetin.', true);
+      }
+    }, 200);
+    return;
+  }
+  setSyncStatus('syncing', 'Duke u lidhur...', 'Ju lutem prisni');
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error) {
+          // If silent auth fails, try with consent screen
+          if (!forceConsent && resp.error === 'interaction_required') {
+            startAuth(clientId, true);
+            return;
+          }
+          setSyncStatus('', 'Klik "Lidhu" për t\'u lidhur', resp.error);
+          showToast('⚠ ' + resp.error, true);
+          return;
+        }
+        accessToken = resp.access_token;
+        localStorage.setItem('gdrive_token_time', Date.now().toString());
+        onAuthSuccess();
+      },
+    });
+    // First time: show consent. After that: silent (no popup)
+    tokenClient.requestAccessToken({ prompt: forceConsent ? 'consent' : '' });
+  } catch (e) {
+    setSyncStatus('error', 'Gabim', e.message);
+    showToast('⚠ ' + e.message, true);
+  }
+}
+
+async function onAuthSuccess() {
+  setSyncStatus('syncing', 'I lidhur', 'Duke marrë të dhënat nga Drive...');
+  try {
+    driveFileId = await findOrCreateDriveFile();
+    // ALWAYS pull from Drive first — Drive is the single source of truth
+    await pullFromDrive();
+    setSyncStatus('online', 'Sinkronizuar ✓', 'Drive është burimi i vetëm i të dhënave');
+    showToast('✔ Lidhur! Të dhënat u ngarkuan nga Drive.');
+    scheduleAutoSync();
+  } catch (e) {
+    setSyncStatus('error', 'Gabim', e.message);
+    showToast('⚠ ' + e.message, true);
+  }
+}
+
+function disconnectDrive() {
+  if (!confirm('Të shkëputesh nga Google Drive?\nTë dhënat lokale do të fshihen — do të rilidhesh kur të duash.')) return;
+  accessToken = null;
+  driveFileId = null;
+  workers = []; entries = []; locStatus = {};
+  saveLocalCache();
+  localStorage.removeItem('gdrive_token_time');
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  setSyncStatus('', 'Jo i lidhur me Google Drive', 'Klik "Lidhu" për të hyrë në të dhënat e tua');
+  renderChecklist(); renderWorkers();
+  showToast('Shkëputur nga Google Drive');
+}
+
+async function findOrCreateDriveFile() {
+  // Search for existing file
+  const searchRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILE_NAME}'%20and%20trashed%3Dfalse&spaces=drive&fields=files(id,name,modifiedTime)`,
+    { headers: { Authorization: 'Bearer ' + accessToken } }
+  );
+  if (!searchRes.ok) throw new Error('Drive search failed: ' + searchRes.status);
+  const searchData = await searchRes.json();
+  if (searchData.files && searchData.files.length > 0) {
+    return searchData.files[0].id;
+  }
+  // Create new file
+  const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
+  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata)
+  });
+  if (!createRes.ok) throw new Error('Drive create failed: ' + createRes.status);
+  const created = await createRes.json();
+  return created.id;
+}
+
+async function pullFromDrive() {
+  if (!driveFileId) return;
+  try {
+    setSyncStatus('syncing', 'Duke marrë të dhënat...', '');
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (!res.ok) {
+      if (res.status === 404) {
+        // File exists in index but has no content yet — push current data
+        await pushToDrive();
+        return;
+      }
+      throw new Error('Pull failed: ' + res.status);
+    }
+    const text = await res.text();
+    if (!text || !text.trim()) {
+      // Empty file — push current local data as initial
+      await pushToDrive();
+      return;
+    }
+    const data = JSON.parse(text);
+
+    // ── CLOUD IS THE SINGLE SOURCE OF TRUTH ──
+    // Always replace local data with Drive data (no merge, no confirm)
+    workers = data.workers || [];
+    entries = data.entries || [];
+    locStatus = data.locStatus || {};
+
+    // Migrate old IDs in pulled data
+    entries.forEach((e, i) => {
+      if (typeof e.id !== 'string') {
+        e.id = 'e' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,7);
+      }
+    });
+
+    saveLocalCache(); // Update local cache with Drive data
+    refreshUI();
+    const total = workers.length + entries.length;
+    setSyncStatus('online', 'Sinkronizuar ✓', 'Të dhënat u ngarkuan nga Drive');
+    if (total > 0) showToast('☁️ ' + entries.length + ' regjistrime u ngarkuan!');
+  } catch (e) {
+    setSyncStatus('error', 'Gabim ngarkimi', e.message);
+    console.error('Pull error:', e);
+  }
+}
+
+function refreshUI() {
+  renderChecklist();
+  if (document.getElementById('view-workers').classList.contains('active')) renderWorkers();
+  if (document.getElementById('view-history').classList.contains('active')) renderHistory();
+}
+
+async function pushToDrive() {
+  if (!driveFileId || !accessToken || isSyncing) return;
+  isSyncing = true;
+  try {
+    const payload = JSON.stringify({
+      workers, entries, locStatus,
+      lastSync: new Date().toISOString(),
+      version: 2
+    }, null, 2);
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: payload
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        // Token expired, re-auth
+        setSyncStatus('error', 'Sesioni mbaroi', 'Klik "Lidhu" për të rilidhur');
+        accessToken = null;
+      }
+      throw new Error('Push failed: ' + res.status);
+    }
+    setSyncStatus('online', 'Sinkronizuar ✓', 'Përditësuar: ' + new Date().toLocaleTimeString('sq-AL'));
+  } catch (e) {
+    setSyncStatus('error', 'Gabim sinkronizimi', e.message);
+    console.error('Push error:', e);
+  } finally {
+    isSyncing = false;
+  }
+}
+
+function scheduleAutoSync() {
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(() => {
+    if (accessToken) pushToDrive().then(() => scheduleAutoSync());
+  }, 30000); // Pull fresh every 30s to get changes from other devices
+}
+
+async function syncNow() {
+  if (!accessToken) { connectDrive(); return; }
+  setSyncStatus('syncing', 'Duke sinkronizuar...', '');
+  await pullFromDrive();
+}
+
+// Try to restore connection on load
+window.addEventListener('load', () => {
+  const cid = getClientId();
+  if (!cid) return; // First time — no Client ID yet
+
+  // Wait for Google API to load then auto-connect silently
+  let attempts = 0;
+  const waitForGoogle = setInterval(() => {
+    attempts++;
+    if (typeof google !== 'undefined' && google.accounts) {
+      clearInterval(waitForGoogle);
+      // Auto-connect without showing consent screen (silent)
+      setSyncStatus('syncing', 'Duke u lidhur automatikisht...', '');
+      try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: cid,
+          scope: SCOPES,
+          callback: (resp) => {
+            if (resp.error) {
+              setSyncStatus('', 'Klik "Lidhu" për t\'u lidhur', '');
+              return;
+            }
+            accessToken = resp.access_token;
+            localStorage.setItem('gdrive_token_time', Date.now().toString());
+            onAuthSuccess();
+          },
+        });
+        // prompt: '' means no consent screen if already authorized before
+        tokenClient.requestAccessToken({ prompt: '' });
+      } catch(e) {
+        setSyncStatus('', 'Klik "Lidhu" për t\'u lidhur', '');
+      }
+    }
+    if (attempts > 25) { // 5 seconds timeout
+      clearInterval(waitForGoogle);
+      setSyncStatus('', 'Klik "Lidhu" për t\'u lidhur', '');
+    }
+  }, 200);
+});
+
+// ── PWA: Register Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
