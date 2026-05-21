@@ -438,8 +438,8 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
   display: inline-block;
 }
 
-/* Adjust loc-name padding for two action buttons */
-.loc-name { padding-right: 72px; }
+/* Adjust loc-name padding for three action buttons */
+.loc-name { padding-right: 105px; }
 
 /* CHART STATS */
 .chart-stats-row {
@@ -523,6 +523,21 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
   color: var(--green); background: rgba(42,96,73,0.08);
   border: 1px solid rgba(42,96,73,0.2);
   border-radius: 20px; padding: 1px 8px; margin-top: 3px;
+}
+
+/* Price card (Tarifat) */
+#prGrid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.price-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--sh);
+  flex-wrap: wrap;
+}
+.price-card:hover { border-color: var(--green); }
+@media (max-width: 380px) {
+  .price-card { padding: 10px 11px; gap: 6px; }
+  .price-card > div:nth-child(2) { font-size: 0.92rem !important; }
 }
 
 /* Overview grid for Payments tab - responsive */
@@ -869,6 +884,7 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
   <div class="nav">
     <button class="nav-btn active" onclick="showView('register',this)">📝<span class="nav-txt"> Regjistro</span></button>
     <button class="nav-btn" onclick="showView('workers',this)">👷<span class="nav-txt"> Punëtorët</span></button>
+    <button class="nav-btn" onclick="showView('prices',this)">📐<span class="nav-txt"> Tarifat</span></button>
     <button class="nav-btn" onclick="showView('history',this)">📊<span class="nav-txt"> Historia</span></button>
   </div>
 </header>
@@ -947,6 +963,39 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
           <div><label>Roli (opsional)</label><input type="text" id="nwRole" placeholder="p.sh. Murator" onkeydown="if(event.key==='Enter')addWorker()"/></div>
           <div><label>Rroga Ditore (€/ditë, 8h)</label><input type="number" id="nwWage" placeholder="p.sh. 50" min="0" step="0.5" inputmode="decimal"/></div>
           <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addWorker()" style="width:100%">Shto</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TARIFAT (Çmimet e Punëve) ══ -->
+<div id="view-prices" class="view">
+  <div class="page">
+    <div class="stitle">Tarifat e Punëve <span id="prCount" class="chip">0</span></div>
+    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">Vendos çmimet për llojet e punëve që bën (p.sh. shtrim pllakash 15€/m²). Pastaj te çdo vend pune mund të shtosh sa metra/copa ke bërë.</div>
+
+    <div id="prGrid"></div>
+
+    <div class="card">
+      <div class="card-hd"><h3>➕ Shto Tarifë të Re</h3></div>
+      <div class="card-bd">
+        <div class="add-form">
+          <div><label>Emri i Punës</label><input type="text" id="npName" placeholder="p.sh. Shtrimi i pllakave"/></div>
+          <div><label>Njësia</label>
+            <select id="npUnit" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
+              <option value="m²">m² (metër katror)</option>
+              <option value="m">m (metër)</option>
+              <option value="m³">m³ (metër kub)</option>
+              <option value="copë">copë</option>
+              <option value="orë">orë</option>
+              <option value="ditë">ditë</option>
+              <option value="kg">kg</option>
+              <option value="punë">punë (total)</option>
+            </select>
+          </div>
+          <div><label>Çmimi për Njësi (€)</label><input type="number" id="npPrice" placeholder="p.sh. 15" min="0" step="0.01" inputmode="decimal"/></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addPriceItem()" style="width:100%">Shto</button></div>
         </div>
       </div>
     </div>
@@ -1139,6 +1188,80 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
   </div>
 </div>
 
+<!-- PROJECT WORKS MODAL -->
+<div class="modal-overlay" id="projectWorksModal">
+  <div class="modal" style="max-width:540px">
+    <h3>💼 Punët në <span id="pwLocLabel" style="color:var(--accent)"></span></h3>
+    <input type="hidden" id="pwLoc"/>
+
+    <div style="background:rgba(42,96,73,0.04);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">➕ Shto Punë të Re</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div>
+          <label style="font-size:0.74rem">Lloji i Punës</label>
+          <select id="pwPriceItem" style="width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;padding:9px 11px;outline:none;cursor:pointer">
+            <option value="">-- Zgjedh punën --</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:0.74rem">Sasia</label>
+            <input type="number" id="pwQty" placeholder="p.sh. 30" min="0" step="0.01" inputmode="decimal" style="font-size:0.92rem;padding:9px 11px"/>
+          </div>
+          <div>
+            <label style="font-size:0.74rem">Data</label>
+            <input type="date" id="pwDate" style="font-size:0.92rem;padding:9px 11px"/>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:0.74rem">Shënime (opsional)</label>
+          <input type="text" id="pwNotes" placeholder="p.sh. Bagno e dytë" style="font-size:0.88rem;padding:9px 11px"/>
+        </div>
+        <button class="btn-p" onclick="addProjectWork()" style="margin-top:4px">✔ Shto Punën</button>
+      </div>
+    </div>
+
+    <div id="pwListContainer" style="max-height:330px;overflow-y:auto;margin-bottom:14px"></div>
+
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('projectWorksModal').classList.remove('open')">Mbyll</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PRICE ITEM MODAL -->
+<div class="modal-overlay" id="editPriceModal">
+  <div class="modal">
+    <h3>✎ Edito Tarifën</h3>
+    <input type="hidden" id="editPrId"/>
+    <div style="margin-bottom:12px">
+      <label>Emri i Punës</label>
+      <input type="text" id="editPrName" onkeydown="if(event.key==='Enter')saveEditPriceItem()"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Njësia</label>
+      <select id="editPrUnit" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
+        <option value="m²">m² (metër katror)</option>
+        <option value="m">m (metër)</option>
+        <option value="m³">m³ (metër kub)</option>
+        <option value="copë">copë</option>
+        <option value="orë">orë</option>
+        <option value="ditë">ditë</option>
+        <option value="kg">kg</option>
+        <option value="punë">punë (total)</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Çmimi për Njësi (€)</label>
+      <input type="number" id="editPrPrice" min="0" step="0.01" inputmode="decimal"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('editPriceModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditPriceItem()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONTRACT MODAL -->
 <div class="modal-overlay" id="contractModal">
   <div class="modal">
@@ -1261,6 +1384,8 @@ let locStatus = {};
 let expenses = []; // Shpenzimet (materialet, transport, etj)
 let contracts = {}; // Kontrata per cdo vend pune {locName: {total, advance, client, phone, notes}}
 let payments = []; // Pagesat e punëtorëve [{id, workerId, workerName, date, amount, notes, location?}]
+let priceList = []; // Lista e tarifave [{id, name, unit, price}]  p.sh. {id, name: "Shtrimi i pllakave", unit: "m²", price: 15}
+let projectWorks = []; // Punët e bëra në çdo vend [{id, location, priceItemId, name, unit, pricePerUnit, quantity, date, notes}]
 
 // ── INIT: start empty, load from Drive after login ──
 // We keep a local cache only to survive page refresh while connected
@@ -1271,6 +1396,8 @@ function loadLocalCache() {
   expenses = JSON.parse(localStorage.getItem('pun_expenses')||'[]');
   contracts = JSON.parse(localStorage.getItem('pun_contracts')||'{}');
   payments = JSON.parse(localStorage.getItem('pun_payments')||'[]');
+  priceList = JSON.parse(localStorage.getItem('pun_pricelist')||'[]');
+  projectWorks = JSON.parse(localStorage.getItem('pun_projectworks')||'[]');
   // Migrate old IDs
   let migrated = false;
   entries.forEach((e, i) => {
@@ -1306,6 +1433,7 @@ function showView(name, btn) {
   btn.classList.add('active');
   if (name==='register') renderChecklist();
   if (name==='workers') renderWorkers();
+  if (name==='prices') renderPriceList();
   if (name==='history') renderHistory();
 }
 
@@ -1566,6 +1694,194 @@ function renderWorkers() {
   `).join('');
 }
 
+// ═══════════════════════════════════════
+// ── PRICE LIST (Tarifat e Punëve) ──
+// ═══════════════════════════════════════
+function addPriceItem() {
+  const name = document.getElementById('npName').value.trim();
+  const unit = document.getElementById('npUnit').value;
+  const price = parseFloat(document.getElementById('npPrice').value) || 0;
+  if (!name) { showToast('⚠ Shkruaj emrin e punës!'); return; }
+  if (price <= 0) { showToast('⚠ Vendos çmimin!'); return; }
+  priceList.push({
+    id: 'pr' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name, unit, price
+  });
+  save(); renderPriceList();
+  document.getElementById('npName').value = '';
+  document.getElementById('npPrice').value = '';
+  showToast('✔ Tarifa u shtua!');
+}
+
+function delPriceItem(id) {
+  if (!confirm('Fshi këtë tarifë?\nPunët e bëra në vende nuk do të preken.')) return;
+  priceList = priceList.filter(p => p.id !== id);
+  save(); renderPriceList();
+  showToast('🗑 Tarifa u fshi', true);
+}
+
+function editPriceItem(id) {
+  const p = priceList.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editPrId').value = id;
+  document.getElementById('editPrName').value = p.name;
+  document.getElementById('editPrUnit').value = p.unit;
+  document.getElementById('editPrPrice').value = p.price;
+  document.getElementById('editPriceModal').classList.add('open');
+  setTimeout(() => document.getElementById('editPrName').select(), 100);
+}
+
+function saveEditPriceItem() {
+  const id = document.getElementById('editPrId').value;
+  const p = priceList.find(x => x.id === id);
+  if (!p) return;
+  const name = document.getElementById('editPrName').value.trim();
+  const unit = document.getElementById('editPrUnit').value;
+  const price = parseFloat(document.getElementById('editPrPrice').value) || 0;
+  if (!name) { showToast('⚠ Emri nuk mund të jetë bosh!'); return; }
+  if (price <= 0) { showToast('⚠ Vendos çmimin!'); return; }
+  p.name = name; p.unit = unit; p.price = price;
+  // Also update existing projectWorks that reference this priceItem (just name/unit, not price)
+  projectWorks.forEach(pw => {
+    if (pw.priceItemId === id) {
+      pw.name = name;
+      pw.unit = unit;
+    }
+  });
+  save(); renderPriceList();
+  document.getElementById('editPriceModal').classList.remove('open');
+  showToast('✔ Tarifa u përditësua!');
+}
+
+function renderPriceList() {
+  const g = document.getElementById('prGrid');
+  document.getElementById('prCount').textContent = priceList.length;
+  if (!priceList.length) {
+    g.innerHTML = `<div class="empty-state"><div class="big">📐</div><p>Nuk ka tarifa ende.<br><small style="color:var(--muted)">Shto poshtë llojet e punëve që bën dhe çmimet e tyre.</small></p></div>`;
+    return;
+  }
+  g.innerHTML = priceList.map(p => `
+    <div class="price-card">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem">${esc(p.name)}</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">${esc(p.unit)}</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--green)">${p.price.toFixed(2)}€/${esc(p.unit)}</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn-edit" onclick="editPriceItem('${p.id}')" title="Edito">✎</button>
+        <button class="btn-xw" onclick="delPriceItem('${p.id}')" title="Fshi">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// ── PROJECT WORKS (Punët e Bëra në Çdo Vend) ──
+// ═══════════════════════════════════════
+function openProjectWorks(loc) {
+  document.getElementById('pwLoc').value = loc;
+  document.getElementById('pwLocLabel').textContent = loc;
+  renderProjectWorksModal(loc);
+  document.getElementById('projectWorksModal').classList.add('open');
+}
+
+function renderProjectWorksModal(loc) {
+  // Populate price item dropdown
+  const sel = document.getElementById('pwPriceItem');
+  if (priceList.length === 0) {
+    sel.innerHTML = '<option value="">-- Nuk ka tarifa. Shto te 📐 Tarifat --</option>';
+  } else {
+    sel.innerHTML = '<option value="">-- Zgjedh punën --</option>' +
+      priceList.map(p => `<option value="${p.id}">${esc(p.name)} (${p.price.toFixed(2)}€/${esc(p.unit)})</option>`).join('');
+  }
+
+  // Render existing works for this location
+  const locWorks = projectWorks.filter(pw => pw.location === loc).sort((a,b) => b.date.localeCompare(a.date));
+  const totalEarned = locWorks.reduce((s,w) => s + (w.quantity * w.pricePerUnit), 0);
+
+  const container = document.getElementById('pwListContainer');
+  if (!locWorks.length) {
+    container.innerHTML = '<div style="text-align:center;padding:18px;color:var(--muted);font-size:0.85rem">Nuk ka punë të regjistruara ende për këtë vend.</div>';
+  } else {
+    container.innerHTML = `
+      <div style="background:rgba(42,96,73,0.06);border:1.5px solid var(--green);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center">
+        <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Totali për këtë vend</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green)">${totalEarned.toFixed(2)}€</div>
+      </div>
+    ` + locWorks.map(w => {
+      const subTotal = w.quantity * w.pricePerUnit;
+      return `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:0.88rem">${esc(w.name)}</div>
+              <div style="font-size:0.74rem;color:var(--muted)">${w.quantity} ${esc(w.unit)} × ${w.pricePerUnit.toFixed(2)}€ · ${fmtDate(w.date)}</div>
+              ${w.notes ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px">📝 ${esc(w.notes)}</div>` : ''}
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--green);white-space:nowrap">${subTotal.toFixed(2)}€</div>
+            <button onclick="delProjectWork('${w.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 6px">🗑</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Set default date
+  const pwDate = document.getElementById('pwDate');
+  if (!pwDate.value) pwDate.value = todayStr;
+}
+
+function addProjectWork() {
+  const loc = document.getElementById('pwLoc').value;
+  const priceItemId = document.getElementById('pwPriceItem').value;
+  const quantity = parseFloat(document.getElementById('pwQty').value) || 0;
+  const date = document.getElementById('pwDate').value;
+  const notes = document.getElementById('pwNotes').value.trim();
+
+  if (!priceItemId) { showToast('⚠ Zgjedh punën!'); return; }
+  if (quantity <= 0) { showToast('⚠ Vendos sasinë!'); return; }
+  if (!date) { showToast('⚠ Zgjedh datën!'); return; }
+
+  const priceItem = priceList.find(p => p.id === priceItemId);
+  if (!priceItem) { showToast('⚠ Tarifa nuk u gjet!'); return; }
+
+  projectWorks.unshift({
+    id: 'pw' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    location: loc,
+    priceItemId,
+    name: priceItem.name,
+    unit: priceItem.unit,
+    pricePerUnit: priceItem.price,
+    quantity,
+    date,
+    notes
+  });
+  save();
+  document.getElementById('pwQty').value = '';
+  document.getElementById('pwNotes').value = '';
+  document.getElementById('pwPriceItem').value = '';
+  renderProjectWorksModal(loc);
+  if (activeTab === 'locations') renderHistory();
+  showToast('✔ Puna u shtua!');
+}
+
+function delProjectWork(id) {
+  if (!confirm('Fshi këtë punë?')) return;
+  const pw = projectWorks.find(x => x.id === id);
+  const loc = pw ? pw.location : '';
+  projectWorks = projectWorks.filter(x => x.id !== id);
+  save();
+  if (loc) renderProjectWorksModal(loc);
+  if (activeTab === 'locations') renderHistory();
+  showToast('🗑 Puna u fshi', true);
+}
+
+function calcLocWorkTotal(loc) {
+  return projectWorks
+    .filter(pw => pw.location === loc)
+    .reduce((s,w) => s + (w.quantity * w.pricePerUnit), 0);
+}
+
 // ── CHECKLIST ──
 function renderChecklist() {
   const cl = document.getElementById('checklist');
@@ -1733,9 +2049,11 @@ function renderLocations(filtered) {
     const sel = selectedLoc === loc ? 'selected' : '';
     const isCompleted = d.status === 'completed';
     const locEsc = esc(loc).replace(/'/g,"\\'");
+    const locWorkTotal = calcLocWorkTotal(loc);
     return `
       <div class="loc-card ${sel} ${isCompleted?'completed':''}" onclick="selectLoc('${locEsc}')">
         <div class="loc-card-actions" onclick="event.stopPropagation()">
+          <button class="loc-edit-btn" onclick="openProjectWorks('${locEsc}')" title="Punët e bëra" style="background:var(--green);color:#fff;border-color:var(--green)">💼</button>
           <button class="loc-edit-btn" onclick="openEditLoc('${locEsc}')" title="Edito emrin">✎</button>
           <button class="loc-status-btn" onclick="toggleLocStatus('${locEsc}')" title="${isCompleted?'Rikthe në Progres':'Shëno si të Kompletuar'}">
             ${isCompleted?'↩':'✓'}
@@ -1745,6 +2063,7 @@ function renderLocations(filtered) {
         <div class="loc-stats">
           <div class="loc-stat"><div class="n">${d.uniqueDays}</div><div class="l">Ditë</div></div>
           <div class="loc-stat"><div class="n">${d.uniqueWorkers}</div><div class="l">Punëtorë</div></div>
+          ${locWorkTotal > 0 ? `<div class="loc-stat"><div class="n" style="color:var(--green);font-size:0.95rem">${locWorkTotal.toFixed(0)}€</div><div class="l">Fituar</div></div>` : ''}
         </div>
         <div class="loc-bar"><div class="loc-bar-fill" style="width:${pct}%"></div></div>
       </div>
@@ -3091,6 +3410,8 @@ function saveLocalCache() {
   localStorage.setItem('pun_expenses', JSON.stringify(expenses));
   localStorage.setItem('pun_contracts', JSON.stringify(contracts));
   localStorage.setItem('pun_payments', JSON.stringify(payments));
+  localStorage.setItem('pun_pricelist', JSON.stringify(priceList));
+  localStorage.setItem('pun_projectworks', JSON.stringify(projectWorks));
 }
 
 function save() {
@@ -3278,7 +3599,7 @@ function disconnectDrive() {
   if (!confirm('Të shkëputesh nga Google Drive?\nTë dhënat lokale do të fshihen — do të rilidhesh kur të duash.')) return;
   accessToken = null;
   driveFileId = null;
-  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = [];
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = [];
   saveLocalCache();
   localStorage.removeItem('gdrive_token_time');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -3341,6 +3662,8 @@ async function pullFromDrive() {
     expenses = data.expenses || [];
     contracts = data.contracts || {};
     payments = data.payments || [];
+    priceList = data.priceList || [];
+    projectWorks = data.projectWorks || [];
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -3371,9 +3694,9 @@ async function pushToDrive() {
   isSyncing = true;
   try {
     const payload = JSON.stringify({
-      workers, entries, locStatus, expenses, contracts, payments,
+      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks,
       lastSync: new Date().toISOString(),
-      version: 4
+      version: 5
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
