@@ -18,6 +18,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
   --bg: #f5f2ec;
@@ -1033,6 +1035,9 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
         </div>
       </div>
       <div id="salaryContainer"></div>
+      <div class="export-row" style="margin-top:14px">
+        <button class="btn-o" onclick="exportSalaryPDF()">📄 Eksporto PDF</button>
+      </div>
     </div>
 
     <!-- PAYMENTS TAB -->
@@ -1070,6 +1075,9 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
         </div>
       </div>
       <div id="paymentsContainer"></div>
+      <div class="export-row" style="margin-top:14px">
+        <button class="btn-o" onclick="exportPaymentsPDF()">📄 Eksporto PDF</button>
+      </div>
     </div>
 
     <!-- ALL TAB -->
@@ -2863,6 +2871,216 @@ function copyAll() {
   navigator.clipboard.writeText(
     entries.map(e=>`${e.date} | ${e.workerName} | ${e.location} | ${e.dayType==='full'?'Ditë Plotë':'Gjysmë Ditë'}${e.extraHours>0?' | +'+e.extraHours+'h':''} | ${e.desc}`).join('\n')
   ).then(()=>showToast('📋 U kopjua!'));
+}
+
+// ═══════════════════════════════════════
+// ── PDF EXPORTS ──
+// ═══════════════════════════════════════
+function exportSalaryPDF() {
+  if (!window.jspdf) { showToast('⚠ PDF library nuk është gati. Provo prap.', true); return; }
+  if (!entries.length) { showToast('Nuk ka të dhëna!'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Filter by selected month
+  const filtered = selectedSalaryMonth
+    ? entries.filter(e => e.date.startsWith(selectedSalaryMonth))
+    : entries;
+
+  if (!filtered.length) { showToast('Nuk ka regjistrime!'); return; }
+
+  // Group by worker
+  const wMap = {};
+  filtered.forEach(e => {
+    const wId = e.workerId;
+    if (!wMap[wId]) {
+      const wo = workers.find(w => w.id === wId);
+      wMap[wId] = {
+        name: e.workerName, role: e.workerRole,
+        dailyWage: wo ? (wo.dailyWage || 0) : 0,
+        full: 0, half: 0, extraOnly: 0,
+        extraHours: 0, totalPay: 0
+      };
+    }
+    const wd = wMap[wId];
+    if (e.dayType === 'full') wd.full++;
+    else if (e.dayType === 'half') wd.half++;
+    else wd.extraOnly++;
+    wd.extraHours += (e.extraHours || 0);
+    const pay = calcEarnings(e, wd.dailyWage);
+    if (pay !== null) wd.totalPay += pay;
+  });
+
+  const wList = Object.values(wMap).sort((a,b) => b.totalPay - a.totalPay);
+  const grandTotal = wList.reduce((s,w) => s + w.totalPay, 0);
+
+  // Title
+  let monthStr = 'Të gjithë muajt';
+  if (selectedSalaryMonth) {
+    const [y,m] = selectedSalaryMonth.split('-');
+    monthStr = new Date(y, parseInt(m)-1, 1).toLocaleDateString('sq-AL',{month:'long',year:'numeric'});
+  }
+
+  doc.setFontSize(18);
+  doc.text('Raporti i Pagave', 14, 18);
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text('Periudha: ' + monthStr, 14, 26);
+  doc.text('Gjeneruar: ' + new Date().toLocaleDateString('sq-AL'), 14, 32);
+
+  // Table
+  const tableData = wList.map(w => {
+    const hr = w.dailyWage > 0 ? (w.dailyWage / 8) : 0;
+    const basePay = (w.full * w.dailyWage) + (w.half * w.dailyWage / 2);
+    const extraPay = w.extraHours * hr * 1.5;
+    return [
+      w.name,
+      w.dailyWage ? w.dailyWage.toFixed(2) + ' EUR' : '-',
+      w.full.toString(),
+      w.half.toString(),
+      w.extraOnly.toString(),
+      w.extraHours.toString() + 'h',
+      basePay.toFixed(2) + ' EUR',
+      extraPay.toFixed(2) + ' EUR',
+      w.totalPay.toFixed(2) + ' EUR'
+    ];
+  });
+
+  doc.autoTable({
+    head: [['Punetori', 'Rroga/Dite', 'Plota', 'Gjysem', 'Vet.Ekstra', 'Ore Ekstra', 'Paga Baze', 'Paga Ekstra', 'TOTALI']],
+    body: tableData,
+    startY: 38,
+    theme: 'grid',
+    headStyles: { fillColor: [42, 96, 73], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      8: { fontStyle: 'bold', textColor: [42, 96, 73] }
+    },
+    margin: { top: 38, left: 10, right: 10 },
+    foot: [['', '', '', '', '', '', '', 'TOTALI:', grandTotal.toFixed(2) + ' EUR']],
+    footStyles: { fillColor: [240, 235, 225], textColor: [42, 96, 73], fontStyle: 'bold', fontSize: 10 }
+  });
+
+  const fileName = 'Pagat-' + (selectedSalaryMonth || 'gjitha') + '.pdf';
+  doc.save(fileName);
+  showToast('📄 PDF u shkarkua!');
+}
+
+function exportPaymentsPDF() {
+  if (!window.jspdf) { showToast('⚠ PDF library nuk është gati. Provo prap.', true); return; }
+  if (!workers.length) { showToast('Nuk ka punëtorë!'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Calculate balance for each worker
+  const workerBalances = workers.map(w => {
+    const b = calcWorkerBalance(w.id);
+    return { ...w, ...b };
+  }).filter(w => w.earned > 0 || w.paid > 0);
+
+  if (!workerBalances.length) { showToast('Nuk ka të dhëna pagesash!'); return; }
+
+  workerBalances.sort((a,b) => b.balance - a.balance);
+
+  const totalEarned = workerBalances.reduce((s,w) => s + w.earned, 0);
+  const totalPaid = workerBalances.reduce((s,w) => s + w.paid, 0);
+  const totalDebt = totalEarned - totalPaid;
+
+  // Title
+  doc.setFontSize(18);
+  doc.text('Raporti i Pagesave', 14, 18);
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text('Gjeneruar: ' + new Date().toLocaleDateString('sq-AL'), 14, 26);
+
+  // Summary box
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text('PERMBLEDHJE:', 14, 36);
+  doc.setTextColor(80);
+  doc.text('Te fituara: ' + totalEarned.toFixed(2) + ' EUR', 14, 43);
+  doc.text('Te paguara: ' + totalPaid.toFixed(2) + ' EUR', 14, 49);
+  doc.setTextColor(totalDebt > 0 ? 200 : 42, totalDebt > 0 ? 75 : 96, totalDebt > 0 ? 47 : 73);
+  doc.setFont(undefined, 'bold');
+  doc.text('Borxhi: ' + totalDebt.toFixed(2) + ' EUR', 14, 55);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(0);
+
+  // Main balances table
+  const tableData = workerBalances.map(w => [
+    w.name,
+    w.dailyWage ? w.dailyWage.toFixed(2) + ' EUR' : '-',
+    w.earned.toFixed(2) + ' EUR',
+    w.paid.toFixed(2) + ' EUR',
+    w.balance.toFixed(2) + ' EUR',
+    w.balance <= 0 ? 'Paguar' : 'Borxh'
+  ]);
+
+  doc.autoTable({
+    head: [['Punetori', 'Rroga/Dite', 'Te Fituara', 'Te Paguara', 'Borxhi', 'Statusi']],
+    body: tableData,
+    startY: 62,
+    theme: 'grid',
+    headStyles: { fillColor: [42, 96, 73], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 9 },
+    columnStyles: {
+      4: { fontStyle: 'bold' },
+      5: { halign: 'center' }
+    },
+    didParseCell: function(data) {
+      // Color the balance and status columns
+      if (data.section === 'body' && data.column.index === 4) {
+        const val = parseFloat(data.cell.raw);
+        if (val > 0) data.cell.styles.textColor = [200, 75, 47];
+        else if (val <= 0) data.cell.styles.textColor = [42, 96, 73];
+      }
+      if (data.section === 'body' && data.column.index === 5) {
+        if (data.cell.raw === 'Borxh') data.cell.styles.textColor = [200, 75, 47];
+        else data.cell.styles.textColor = [42, 96, 73];
+      }
+    },
+    margin: { left: 10, right: 10 }
+  });
+
+  // Payment history for each worker (new page)
+  let firstPage = true;
+  workerBalances.forEach(w => {
+    const workerPayments = payments.filter(p => p.workerId === w.id).sort((a,b) => b.date.localeCompare(a.date));
+    if (!workerPayments.length) return;
+
+    if (!firstPage) doc.addPage();
+    else { doc.addPage(); firstPage = false; }
+
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text('Historiku i Pagesave: ' + w.name, 14, 18);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Totali i paguar: ' + w.paid.toFixed(2) + ' EUR · Numri: ' + workerPayments.length, 14, 25);
+
+    const payRows = workerPayments.map(p => [
+      fmtDate(p.date),
+      p.amount.toFixed(2) + ' EUR',
+      p.location || '-',
+      p.notes || '-'
+    ]);
+
+    doc.autoTable({
+      head: [['Data', 'Shuma', 'Vendi', 'Shenime']],
+      body: payRows,
+      startY: 32,
+      theme: 'striped',
+      headStyles: { fillColor: [42, 96, 73], textColor: 255, fontSize: 9 },
+      bodyStyles: { fontSize: 9 },
+      margin: { left: 10, right: 10 }
+    });
+  });
+
+  doc.save('Pagesat-' + new Date().toISOString().slice(0,10) + '.pdf');
+  showToast('📄 PDF u shkarkua!');
 }
 
 // ── SAVE: Drive is the single source of truth ──
