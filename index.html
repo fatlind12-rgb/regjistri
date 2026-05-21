@@ -929,6 +929,8 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
       <button class="tab-btn" onclick="switchTab('chart',this)">📊 Analiza</button>
       <button class="tab-btn" onclick="switchTab('monthly',this)">🗓 Mujore</button>
       <button class="tab-btn" onclick="switchTab('salary',this)">💰 Pagat</button>
+      <button class="tab-btn" onclick="switchTab('expenses',this)">🧾 Shpenzimet</button>
+      <button class="tab-btn" onclick="switchTab('profit',this)">💼 Fitimi</button>
       <button class="tab-btn" onclick="switchTab('all',this)">📋 Të Gjitha</button>
     </div>
 
@@ -990,6 +992,62 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
       <div id="salaryContainer"></div>
     </div>
 
+    <!-- EXPENSES TAB -->
+    <div id="tab-expenses" style="display:none">
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><h3>➕ Shto Shpenzim</h3></div>
+        <div class="card-bd">
+          <div class="grid2">
+            <div>
+              <label>Data</label>
+              <input type="date" id="expDate"/>
+            </div>
+            <div>
+              <label>Vendi (lidh me një vend pune)</label>
+              <select id="expLoc" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+                <option value="">-- Zgjedh vendin --</option>
+              </select>
+            </div>
+            <div>
+              <label>Kategoria</label>
+              <select id="expCat" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+                <option value="material">🧱 Materiale</option>
+                <option value="transport">🚛 Transport</option>
+                <option value="qira">🏠 Qira/Vegla</option>
+                <option value="ushqim">🍔 Ushqim/Kafe</option>
+                <option value="tjeter">📦 Tjetër</option>
+              </select>
+            </div>
+            <div>
+              <label>Shuma (€)</label>
+              <input type="number" id="expAmount" placeholder="p.sh. 250" min="0" step="0.01" inputmode="decimal"/>
+            </div>
+            <div style="grid-column:1/-1">
+              <label>Përshkrimi</label>
+              <input type="text" id="expDesc" placeholder="p.sh. 5 thes çimento + 200kg hekur"/>
+            </div>
+          </div>
+          <button class="btn-p" onclick="addExpense()">✔ Shto Shpenzimin</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-bd" style="padding:14px 20px">
+          <label style="margin-bottom:6px">Filtro</label>
+          <select id="expFilterLoc" onchange="renderExpenses()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+            <option value="">📍 Të gjitha vendet</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="expensesContainer"></div>
+    </div>
+
+    <!-- PROFIT TAB -->
+    <div id="tab-profit" style="display:none">
+      <div id="profitContainer"></div>
+    </div>
+
     <!-- ALL TAB -->
     <div id="tab-all" style="display:none">
       <div id="allContainer"></div>
@@ -1045,6 +1103,38 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
     <div class="row-end">
       <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
       <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTRACT MODAL -->
+<div class="modal-overlay" id="contractModal">
+  <div class="modal">
+    <h3>📋 Kontrata e Vendit</h3>
+    <input type="hidden" id="contractLoc"/>
+    <div style="margin-bottom:12px">
+      <label>💰 Çmimi Total i Kontratës (€)</label>
+      <input type="number" id="contractTotal" placeholder="p.sh. 5000" min="0" step="0.01" inputmode="decimal"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>💵 Akontacioni (sa para janë marrë para) (€)</label>
+      <input type="number" id="contractAdvance" placeholder="p.sh. 1500" min="0" step="0.01" inputmode="decimal"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>👤 Emri i Klientit</label>
+      <input type="text" id="contractClient" placeholder="p.sh. Arben Krasniqi"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>📞 Numri (opsional)</label>
+      <input type="text" id="contractPhone" placeholder="p.sh. +383 44 123 456"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>📝 Shënime (opsional)</label>
+      <input type="text" id="contractNotes" placeholder="p.sh. Pagesa në fund të muajit"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('contractModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveContract()">Ruaj</button>
     </div>
   </div>
 </div>
@@ -1136,6 +1226,8 @@ input:focus, textarea:focus { border-color: var(--text); background: #fff; }
 let workers = [];
 let entries = [];
 let locStatus = {};
+let expenses = []; // Shpenzimet (materialet, transport, etj)
+let contracts = {}; // Kontrata per cdo vend pune {locName: {total, advance, client, phone, notes}}
 
 // ── INIT: start empty, load from Drive after login ──
 // We keep a local cache only to survive page refresh while connected
@@ -1143,6 +1235,8 @@ function loadLocalCache() {
   workers = JSON.parse(localStorage.getItem('pun_workers')||'[]');
   entries = JSON.parse(localStorage.getItem('pun_entries')||'[]');
   locStatus = JSON.parse(localStorage.getItem('pun_loc_status')||'{}');
+  expenses = JSON.parse(localStorage.getItem('pun_expenses')||'[]');
+  contracts = JSON.parse(localStorage.getItem('pun_contracts')||'{}');
   // Migrate old IDs
   let migrated = false;
   entries.forEach((e, i) => {
@@ -1188,7 +1282,7 @@ function switchTab(tab, btn) {
   selectedWorker = null;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['locations','chart','monthly','salary','all'].forEach(t => {
+  ['locations','chart','monthly','salary','expenses','profit','all'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
   renderHistory();
@@ -1544,6 +1638,8 @@ function renderHistory() {
   if (activeTab==='chart')     renderChart(filtered);
   if (activeTab==='monthly')   renderMonthly(filtered);
   if (activeTab==='salary')    renderSalary();
+  if (activeTab==='expenses')  renderExpenses();
+  if (activeTab==='profit')    renderProfit();
   if (activeTab==='all')       renderAll(filtered);
 }
 
@@ -2148,6 +2244,288 @@ function renderSalary() {
   }).join('');
 }
 
+// ═══════════════════════════════════════
+// ── EXPENSES ──
+// ═══════════════════════════════════════
+function populateExpenseDropdowns() {
+  const allLocs = [...new Set(entries.map(e => e.location))].sort();
+  const expLoc = document.getElementById('expLoc');
+  const expFilterLoc = document.getElementById('expFilterLoc');
+  if (expLoc) {
+    const cur = expLoc.value;
+    expLoc.innerHTML = '<option value="">-- Zgjedh vendin --</option>' +
+      allLocs.map(l => `<option value="${esc(l)}" ${cur===l?'selected':''}>${esc(l)}</option>`).join('');
+  }
+  if (expFilterLoc) {
+    const cur = expFilterLoc.value;
+    expFilterLoc.innerHTML = '<option value="">📍 Të gjitha vendet</option>' +
+      allLocs.map(l => `<option value="${esc(l)}" ${cur===l?'selected':''}>${esc(l)}</option>`).join('');
+  }
+  // Set default date to today
+  const expDate = document.getElementById('expDate');
+  if (expDate && !expDate.value) expDate.value = todayStr;
+}
+
+function addExpense() {
+  const date = document.getElementById('expDate').value;
+  const loc = document.getElementById('expLoc').value;
+  const cat = document.getElementById('expCat').value;
+  const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+  const desc = document.getElementById('expDesc').value.trim();
+
+  if (!date) { showToast('⚠ Zgjedh datën!'); return; }
+  if (!loc) { showToast('⚠ Zgjedh vendin!'); return; }
+  if (amount <= 0) { showToast('⚠ Vendos shumën!'); return; }
+  if (!desc) { showToast('⚠ Shkruaj përshkrimin!'); return; }
+
+  expenses.unshift({
+    id: 'exp' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    date, location: loc, category: cat, amount, desc
+  });
+  save();
+  document.getElementById('expAmount').value = '';
+  document.getElementById('expDesc').value = '';
+  renderExpenses();
+  showToast('✔ Shpenzimi u shtua!');
+}
+
+function delExpense(id) {
+  if (!confirm('Fshi këtë shpenzim?')) return;
+  expenses = expenses.filter(e => e.id !== id);
+  save(); renderExpenses();
+  showToast('🗑 Shpenzimi u fshi', true);
+}
+
+function renderExpenses() {
+  populateExpenseDropdowns();
+  const filterLoc = document.getElementById('expFilterLoc')?.value || '';
+  let filtered = expenses.slice();
+  if (filterLoc) filtered = filtered.filter(e => e.location === filterLoc);
+
+  if (!filtered.length) {
+    document.getElementById('expensesContainer').innerHTML = '<div class="empty-state"><div class="big">🧾</div><p>Nuk ka shpenzime ende.</p></div>';
+    return;
+  }
+
+  // Group by location
+  const byLoc = {};
+  filtered.forEach(e => {
+    if (!byLoc[e.location]) byLoc[e.location] = { items: [], total: 0, byCat: {} };
+    byLoc[e.location].items.push(e);
+    byLoc[e.location].total += e.amount;
+    byLoc[e.location].byCat[e.category] = (byLoc[e.location].byCat[e.category] || 0) + e.amount;
+  });
+
+  const totalAll = filtered.reduce((s,e) => s + e.amount, 0);
+  const catIcons = { material: '🧱', transport: '🚛', qira: '🏠', ushqim: '🍔', tjeter: '📦' };
+  const catNames = { material: 'Materiale', transport: 'Transport', qira: 'Qira/Vegla', ushqim: 'Ushqim', tjeter: 'Tjetër' };
+
+  let html = `
+    <div class="card" style="margin-bottom:14px;background:rgba(200,75,47,0.05);border-color:var(--accent)">
+      <div class="card-bd" style="text-align:center;padding:18px">
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Totali i Shpenzimeve</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)">${totalAll.toFixed(2)}€</div>
+      </div>
+    </div>
+  `;
+
+  Object.keys(byLoc).sort((a,b) => byLoc[b].total - byLoc[a].total).forEach(loc => {
+    const d = byLoc[loc];
+    const items = d.items.slice().sort((a,b) => b.date.localeCompare(a.date));
+    html += `
+      <div class="month-section">
+        <div class="month-header" style="background:var(--accent)">
+          <span>📍 ${esc(loc)}</span>
+          <span class="month-total">${d.total.toFixed(2)}€</span>
+        </div>
+        <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);border-bottom:1px solid var(--border)">
+          ${Object.entries(d.byCat).map(([cat, amt]) => `
+            <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:0.74rem">${catIcons[cat]||'📦'} ${catNames[cat]||cat}: ${amt.toFixed(2)}€</span>
+          `).join('')}
+        </div>
+        <div style="background:var(--surface)">
+          ${items.map(e => `
+            <div style="padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+              <div style="font-size:1.2rem">${catIcons[e.category]||'📦'}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.86rem;font-weight:600">${esc(e.desc)}</div>
+                <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
+              </div>
+              <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(2)}€</div>
+              <button onclick="delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px">🗑</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('expensesContainer').innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// ── CONTRACTS & PROFIT ──
+// ═══════════════════════════════════════
+function openEditContract(loc) {
+  const c = contracts[loc] || { total: 0, advance: 0, client: '', phone: '', notes: '' };
+  document.getElementById('contractLoc').value = loc;
+  document.getElementById('contractTotal').value = c.total || '';
+  document.getElementById('contractAdvance').value = c.advance || '';
+  document.getElementById('contractClient').value = c.client || '';
+  document.getElementById('contractPhone').value = c.phone || '';
+  document.getElementById('contractNotes').value = c.notes || '';
+  document.getElementById('contractModal').classList.add('open');
+}
+
+function saveContract() {
+  const loc = document.getElementById('contractLoc').value;
+  if (!loc) return;
+  const total = parseFloat(document.getElementById('contractTotal').value) || 0;
+  const advance = parseFloat(document.getElementById('contractAdvance').value) || 0;
+  const client = document.getElementById('contractClient').value.trim();
+  const phone = document.getElementById('contractPhone').value.trim();
+  const notes = document.getElementById('contractNotes').value.trim();
+
+  if (total === 0 && advance === 0 && !client) {
+    delete contracts[loc];
+  } else {
+    contracts[loc] = { total, advance, client, phone, notes };
+  }
+  save();
+  document.getElementById('contractModal').classList.remove('open');
+  if (activeTab === 'profit') renderProfit();
+  showToast('✔ Kontrata u ruajt!');
+}
+
+function calcLocProfit(loc) {
+  // Calculate total wages paid for workers in this location
+  const locEntries = entries.filter(e => e.location === loc);
+  let totalWages = 0;
+  locEntries.forEach(e => {
+    const w = workers.find(x => x.id === e.workerId);
+    const wage = w ? (w.dailyWage || 0) : 0;
+    const pay = calcEarnings(e, wage);
+    if (pay !== null) totalWages += pay;
+  });
+
+  // Calculate total expenses for this location
+  const totalExpenses = expenses
+    .filter(e => e.location === loc)
+    .reduce((s,e) => s + e.amount, 0);
+
+  // Contract info
+  const c = contracts[loc] || { total: 0, advance: 0 };
+  const contractTotal = c.total || 0;
+  const advance = c.advance || 0;
+  const remaining = contractTotal - advance;
+  const profit = contractTotal - totalWages - totalExpenses;
+
+  return { totalWages, totalExpenses, contractTotal, advance, remaining, profit, client: c.client || '', phone: c.phone || '', notes: c.notes || '' };
+}
+
+function renderProfit() {
+  const allLocs = [...new Set(entries.map(e => e.location).concat(Object.keys(contracts)))].sort();
+
+  if (!allLocs.length) {
+    document.getElementById('profitContainer').innerHTML = '<div class="empty-state"><div class="big">💼</div><p>Nuk ka vende pune ende.</p></div>';
+    return;
+  }
+
+  // Calculate overall totals
+  let totalContracts = 0, totalWagesAll = 0, totalExpensesAll = 0, totalProfit = 0;
+  const locData = {};
+  allLocs.forEach(loc => {
+    const p = calcLocProfit(loc);
+    locData[loc] = p;
+    totalContracts += p.contractTotal;
+    totalWagesAll += p.totalWages;
+    totalExpensesAll += p.totalExpenses;
+    totalProfit += p.profit;
+  });
+
+  let html = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-bd" style="padding:18px 20px">
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;text-align:center;font-family:'Syne',sans-serif;font-weight:700">📊 Pamje e Përgjithshme</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <div style="background:rgba(42,96,73,0.06);border:1px solid rgba(42,96,73,0.2);border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase">Kontrata</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--green)">${totalContracts.toFixed(2)}€</div>
+          </div>
+          <div style="background:rgba(200,75,47,0.05);border:1px solid rgba(200,75,47,0.2);border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase">Shpenzime</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent)">${(totalWagesAll + totalExpensesAll).toFixed(2)}€</div>
+          </div>
+        </div>
+        <div style="background:${totalProfit >= 0 ? 'rgba(42,96,73,0.1)' : 'rgba(200,75,47,0.1)'};border:2px solid ${totalProfit >= 0 ? 'var(--green)' : 'var(--accent)'};border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Fitimi Total</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:${totalProfit >= 0 ? 'var(--green)' : 'var(--accent)'}">${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}€</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Sort by profit descending
+  allLocs.sort((a,b) => locData[b].profit - locData[a].profit).forEach(loc => {
+    const p = locData[loc];
+    const isCompleted = (locStatus[loc] || 'progress') === 'completed';
+    const locEsc = esc(loc).replace(/'/g,"\\'");
+    const profitColor = p.profit >= 0 ? 'var(--green)' : 'var(--accent)';
+
+    html += `
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-bd">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+              <span style="font-size:1.1rem">${isCompleted?'✅':'🚧'}</span>
+              <strong style="font-size:0.98rem">${esc(loc)}</strong>
+            </div>
+            <button onclick="openEditContract('${locEsc}')" class="btn-sm" style="padding:6px 12px;font-size:0.78rem">✎ Kontrata</button>
+          </div>
+
+          ${p.client ? `<div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">👤 ${esc(p.client)}${p.phone ? ' · 📞 '+esc(p.phone) : ''}</div>` : ''}
+
+          <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.86rem">
+              <span style="color:var(--muted)">💰 Çmimi Kontratës</span>
+              <span style="font-family:'DM Mono',monospace;font-weight:700">${p.contractTotal.toFixed(2)}€</span>
+            </div>
+            ${p.advance > 0 ? `
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.82rem;color:var(--muted)">
+                <span>↳ Akontacioni</span>
+                <span style="font-family:'DM Mono',monospace">${p.advance.toFixed(2)}€</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.82rem">
+                <span style="color:var(--muted)">↳ Mbetet për t'u arkëtuar</span>
+                <span style="font-family:'DM Mono',monospace;color:#b06a30;font-weight:600">${p.remaining.toFixed(2)}€</span>
+              </div>
+            ` : ''}
+            <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.86rem">
+                <span style="color:var(--muted)">👷 Pagat</span>
+                <span style="font-family:'DM Mono',monospace;color:var(--accent)">-${p.totalWages.toFixed(2)}€</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.86rem">
+                <span style="color:var(--muted)">🧾 Shpenzime</span>
+                <span style="font-family:'DM Mono',monospace;color:var(--accent)">-${p.totalExpenses.toFixed(2)}€</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:${p.profit >= 0 ? 'rgba(42,96,73,0.08)' : 'rgba(200,75,47,0.08)'};border:1.5px solid ${profitColor};border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem">FITIMI</span>
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:${profitColor}">${p.profit >= 0 ? '+' : ''}${p.profit.toFixed(2)}€</span>
+          </div>
+
+          ${p.notes ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:8px">📝 ${esc(p.notes)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('profitContainer').innerHTML = html;
+}
+
 // ── LOCATION EDIT ──
 function openEditLoc(loc) {
   document.getElementById('editLocOldName').value = loc;
@@ -2292,6 +2670,8 @@ function saveLocalCache() {
   localStorage.setItem('pun_workers', JSON.stringify(workers));
   localStorage.setItem('pun_entries', JSON.stringify(entries));
   localStorage.setItem('pun_loc_status', JSON.stringify(locStatus));
+  localStorage.setItem('pun_expenses', JSON.stringify(expenses));
+  localStorage.setItem('pun_contracts', JSON.stringify(contracts));
 }
 
 function save() {
@@ -2479,7 +2859,7 @@ function disconnectDrive() {
   if (!confirm('Të shkëputesh nga Google Drive?\nTë dhënat lokale do të fshihen — do të rilidhesh kur të duash.')) return;
   accessToken = null;
   driveFileId = null;
-  workers = []; entries = []; locStatus = {};
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {};
   saveLocalCache();
   localStorage.removeItem('gdrive_token_time');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -2539,6 +2919,8 @@ async function pullFromDrive() {
     workers = data.workers || [];
     entries = data.entries || [];
     locStatus = data.locStatus || {};
+    expenses = data.expenses || [];
+    contracts = data.contracts || {};
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -2569,9 +2951,9 @@ async function pushToDrive() {
   isSyncing = true;
   try {
     const payload = JSON.stringify({
-      workers, entries, locStatus,
+      workers, entries, locStatus, expenses, contracts,
       lastSync: new Date().toISOString(),
-      version: 2
+      version: 3
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
