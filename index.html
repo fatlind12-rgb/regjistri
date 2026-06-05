@@ -22,160 +22,247 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
-  --bg: #f5f2ec;
-  --surface: #ffffff;
-  --surface2: #f0ece4;
-  --border: #ddd8ce;
-  --accent: #c84b2f;
-  --accent-light: #e06b50;
-  --accent-dark: #a83a22;
-  --green: #2a6049;
-  --green-light: #3d7e62;
-  --green-dark: #1d4a37;
-  --text: #1a1714;
-  --muted: #8a8178;
+  --bg: #0e0c14;
+  --bg-deep: #06050a;
+  --surface: #15131c;
+  --surface2: #1d1a26;
+  --surface3: #25212f;
+  --border: #2c2738;
+  --border-bright: #3d3650;
+  --accent: #ff6b35;
+  --accent-light: #ff8c5a;
+  --accent-glow: rgba(255,107,53,0.4);
+  --green: #00d4a4;
+  --green-light: #2ee5b8;
+  --green-glow: rgba(0,212,164,0.35);
+  --blue: #4d9fff;
+  --blue-glow: rgba(77,159,255,0.35);
+  --purple: #a855f7;
+  --purple-glow: rgba(168,85,247,0.35);
+  --yellow: #fbbf24;
+  --red: #ef4444;
+  --text: #e8e4f0;
+  --text-bright: #ffffff;
+  --muted: #8a8295;
   --r: 16px;
   --r-sm: 10px;
   --r-lg: 22px;
-  --sh: 0 2px 14px rgba(26,23,20,0.06);
-  --sh-md: 0 6px 24px rgba(26,23,20,0.09);
-  --sh-lg: 0 14px 40px rgba(26,23,20,0.14);
-  --sh-accent: 0 8px 24px rgba(200,75,47,0.22);
-  --sh-green: 0 8px 24px rgba(42,96,73,0.22);
-  --grad-accent: linear-gradient(135deg, #d85a3c 0%, #c84b2f 50%, #a83a22 100%);
-  --grad-green: linear-gradient(135deg, #2f6f53 0%, #2a6049 50%, #1d4a37 100%);
-  --grad-dark: linear-gradient(135deg, #2a2521 0%, #1a1714 50%, #100d0a 100%);
-  --grad-warm: linear-gradient(135deg, #f7f3eb 0%, #f0ece4 100%);
+  --sh: 0 4px 16px rgba(0,0,0,0.4);
+  --sh-md: 0 8px 28px rgba(0,0,0,0.5);
+  --sh-lg: 0 16px 48px rgba(0,0,0,0.6);
+  --sh-accent: 0 8px 32px rgba(255,107,53,0.35);
+  --sh-green: 0 8px 32px rgba(0,212,164,0.35);
+  --grad-accent: linear-gradient(135deg, #ff6b35 0%, #ff4f1a 50%, #e6391a 100%);
+  --grad-green: linear-gradient(135deg, #00d4a4 0%, #00b894 50%, #009378 100%);
+  --grad-blue: linear-gradient(135deg, #4d9fff 0%, #2d7eff 50%, #1a5dd9 100%);
+  --grad-purple: linear-gradient(135deg, #a855f7 0%, #8b3edb 50%, #7028c4 100%);
+  --grad-dark: linear-gradient(135deg, #25212f 0%, #1d1a26 50%, #15131c 100%);
+  --grad-card: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  --grad-glow: radial-gradient(circle at 50% 0%, rgba(255,107,53,0.15) 0%, transparent 70%);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 *::selection { background: var(--accent); color: #fff; }
 body {
-  background: var(--bg);
+  background: var(--bg-deep);
   background-image:
-    radial-gradient(at 0% 0%, rgba(200,75,47,0.04) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(42,96,73,0.04) 0px, transparent 50%);
+    radial-gradient(at 20% 0%, rgba(255,107,53,0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(0,212,164,0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(168,85,247,0.04) 0px, transparent 50%);
   background-attachment: fixed;
   color: var(--text); font-family: 'DM Sans', sans-serif;
-  min-height: 100vh; -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+/* Animated grid overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+  animation: gridMove 30s linear infinite;
+}
+@keyframes gridMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
 }
 
 /* Smooth scrolling */
 html { scroll-behavior: smooth; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* HEADER - more elegant gradient */
+/* HEADER - futuristic */
 header {
-  background: var(--grad-dark);
-  color: var(--bg);
-  padding: 0 32px; height: 64px;
+  background: linear-gradient(180deg, rgba(15,13,20,0.98) 0%, rgba(15,13,20,0.92) 100%);
+  color: var(--text-bright);
+  padding: 0 28px; height: 68px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 200;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
-  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--green), transparent);
+  opacity: 0.5;
 }
 .logo {
-  font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800;
+  font-family: 'Syne', sans-serif; font-size: 1.18rem; font-weight: 800;
   letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 0%, #c8c0dc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(255,255,255,0.2);
 }
 .logo-dot {
   color: var(--accent);
+  -webkit-text-fill-color: var(--accent);
   display: inline-block;
-  animation: pulse 2.5s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
+  text-shadow: 0 0 12px var(--accent-glow);
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.15); }
+  50% { opacity: 0.6; transform: scale(1.2); }
 }
-.nav { display: flex; gap: 5px; }
+.nav { display: flex; gap: 4px; }
 .nav-btn {
-  padding: 8px 14px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.7);
-  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
-  cursor: pointer; transition: all 0.25s var(--ease);
-  backdrop-filter: blur(10px);
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  position: relative;
+  overflow: hidden;
 }
-.nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; transform: translateY(-1px); }
-.nav-btn:active { transform: translateY(0); }
+.nav-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-bright);
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
 .nav-btn.active {
   background: var(--grad-accent);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 4px 14px rgba(200,75,47,0.4);
+  box-shadow: var(--sh-accent), inset 0 1px 0 rgba(255,255,255,0.2);
+  font-weight: 600;
 }
 
 /* VIEWS */
-.view { display: none; animation: fadeIn 0.35s var(--ease); }
+.view { display: none; animation: fadeIn 0.4s var(--ease); position: relative; z-index: 1; }
 .view.active { display: block; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.page { max-width: 1060px; margin: 0 auto; padding: 30px 22px; }
+.page { max-width: 1060px; margin: 0 auto; padding: 30px 22px; position: relative; }
 
-/* SECTION TITLE */
+/* SECTION TITLE - holographic */
 .stitle {
-  font-family: 'Syne', sans-serif; font-size: 1.45rem; font-weight: 800;
+  font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
   margin-bottom: 22px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   letter-spacing: -0.5px;
+  color: var(--text-bright);
 }
 .stitle .chip {
-  font-size: 0.75rem; font-family: 'DM Mono', monospace;
-  color: var(--muted); font-weight: 400;
-  background: var(--surface);
+  font-size: 0.78rem; font-family: 'DM Mono', monospace;
+  color: var(--accent); font-weight: 600;
+  background: rgba(255,107,53,0.1);
   padding: 4px 11px;
-  border-radius: 20px; border: 1px solid var(--border);
-  box-shadow: var(--sh);
+  border-radius: 20px;
+  border: 1px solid rgba(255,107,53,0.3);
+  box-shadow: 0 0 12px rgba(255,107,53,0.15);
 }
 
-/* CARD - more refined */
+/* CARD - glassmorphism futuristic */
 .card {
-  background: var(--surface);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: var(--r);
   box-shadow: var(--sh);
   overflow: hidden;
   margin-bottom: 18px;
-  transition: box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
+  transition: all 0.3s var(--ease);
+  position: relative;
 }
-.card:hover { box-shadow: var(--sh-md); }
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+}
+.card:hover {
+  border-color: var(--border-bright);
+  box-shadow: var(--sh-md);
+}
 .card-hd {
   padding: 16px 22px;
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
-  background: linear-gradient(to bottom, var(--surface) 0%, var(--surface2) 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 100%);
 }
 .card-hd h3 {
   font-family: 'Syne', sans-serif; font-size: 0.92rem; font-weight: 700;
   letter-spacing: -0.2px;
+  color: var(--text-bright);
 }
 .card-bd { padding: 22px; }
 
-/* FORM */
+/* FORM - futuristic inputs */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
 @media(max-width:560px) { .grid2 { grid-template-columns: 1fr; } }
 label {
   display: block; font-size: 0.74rem; font-weight: 600;
   color: var(--muted); text-transform: uppercase;
-  letter-spacing: 0.7px; margin-bottom: 7px;
+  letter-spacing: 0.8px; margin-bottom: 7px;
 }
 input, textarea, select {
-  width: 100%; background: var(--surface2);
+  width: 100%;
+  background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: var(--r-sm);
-  color: var(--text); font-family: 'DM Sans', sans-serif;
-  font-size: 0.92rem; padding: 11px 13px; outline: none;
+  color: var(--text-bright);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  padding: 11px 14px;
+  outline: none;
   transition: all 0.22s var(--ease);
 }
+input::placeholder, textarea::placeholder { color: var(--muted); }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(200,75,47,0.1);
+  background: var(--surface2);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238a8295' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
 }
 
 .toggle-group { display: flex; gap: 7px; }
@@ -332,33 +419,34 @@ input:focus, textarea:focus, select:focus {
 }
 .extra-hours input:focus { border-color: #d07a3a; background: #fff; }
 
-/* BUTTONS - elegant gradients */
+/* BUTTONS - futuristic with glow */
 .btn-p {
   padding: 13px 26px;
   border-radius: var(--r-sm);
   border: none;
-  background: var(--grad-dark);
-  color: var(--bg);
+  background: var(--grad-accent);
+  color: #fff;
   font-family: 'Syne', sans-serif;
   font-size: 0.93rem; font-weight: 700;
-  letter-spacing: -0.2px;
+  letter-spacing: 0.3px;
   cursor: pointer;
   transition: all 0.25s var(--ease);
-  box-shadow: 0 4px 14px rgba(26,23,20,0.18);
+  box-shadow: var(--sh-accent);
   position: relative;
   overflow: hidden;
+  text-transform: uppercase;
 }
 .btn-p::before {
   content: '';
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
   transition: left 0.55s var(--ease);
 }
 .btn-p:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(26,23,20,0.28);
+  box-shadow: 0 12px 32px rgba(255,107,53,0.5);
 }
 .btn-p:hover::before { left: 100%; }
 .btn-p:active { transform: translateY(0); }
@@ -370,28 +458,30 @@ input:focus, textarea:focus, select:focus {
   background: var(--surface);
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.84rem; font-weight: 500;
+  font-size: 0.84rem; font-weight: 600;
   cursor: pointer;
   transition: all 0.2s var(--ease);
 }
 .btn-o:hover {
-  border-color: var(--text);
-  background: var(--surface2);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255,107,53,0.15);
 }
 .btn-o:active { transform: translateY(0); }
 
 .btn-sm {
   padding: 6px 13px;
   border-radius: 8px;
-  border: none;
-  background: var(--surface2);
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--muted);
   font-family: 'DM Sans', sans-serif;
   font-size: 0.78rem; font-weight: 500;
   cursor: pointer;
   transition: all 0.18s var(--ease);
 }
+.btn-sm:hover { border-color: var(--border-bright); color: var(--text); }
 .btn-sm:hover { background: var(--border); color: var(--text); }
 
 /* WORKERS VIEW */
@@ -860,6 +950,241 @@ input:focus, textarea:focus, select:focus {
   .price-card > div:nth-child(2) { font-size: 0.92rem !important; }
 }
 
+/* ═══════════════════════════════════════
+   PLANNED JOBS - Futuristic Cards
+   ═══════════════════════════════════════ */
+#plannedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+@media (max-width: 560px) {
+  #plannedGrid { grid-template-columns: 1fr; }
+}
+
+.planned-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 18px 14px 16px;
+  box-shadow: var(--sh);
+  transition: all 0.3s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+.planned-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle at top right, rgba(200,75,47,0.08), transparent 70%);
+  pointer-events: none;
+}
+.planned-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-md);
+  border-color: var(--accent);
+}
+.planned-card.done {
+  opacity: 0.85;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(42,96,73,0.04) 100%);
+}
+.planned-card.done .pc-name { text-decoration: line-through; color: var(--muted); }
+
+.pc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pc-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+.pc-client {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.pc-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.pc-desc {
+  font-size: 0.88rem;
+  background: var(--surface2);
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  border-left: 3px solid var(--accent);
+}
+.pc-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pc-notes {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: rgba(240,160,96,0.06);
+  border-radius: 8px;
+  border-left: 2px solid #d07a3a;
+  font-style: italic;
+}
+.pc-day-info {
+  margin: 8px 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.day-warn {
+  color: var(--accent);
+  background: rgba(200,75,47,0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  animation: pulseWarn 1.5s infinite;
+}
+@keyframes pulseWarn {
+  0%, 100% { background: rgba(200,75,47,0.1); }
+  50% { background: rgba(200,75,47,0.25); }
+}
+.day-today {
+  color: #fff;
+  background: var(--grad-accent);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(200,75,47,0.3);
+}
+.day-soon {
+  color: #d07a3a;
+  background: rgba(240,160,96,0.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+.day-far {
+  color: var(--green);
+  background: rgba(42,96,73,0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+.pc-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.pc-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+.pc-status-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.btn-status {
+  flex: 1;
+  min-width: 88px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+.btn-status:hover {
+  border-color: var(--text);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+.btn-status.active:hover {
+  background: linear-gradient(135deg, #2196f3, #1565c0);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-status.done:hover {
+  background: var(--grad-green);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Sub-tab bar with counts */
+.sub-tab-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.sub-tab-btn {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.sub-tab-btn:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+.sub-tab-btn.active {
+  background: var(--grad-dark);
+  color: var(--bg);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(26,23,20,0.2);
+}
+.badge-count {
+  background: rgba(0,0,0,0.08);
+  color: inherit;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  min-width: 22px;
+  text-align: center;
+}
+.sub-tab-btn.active .badge-count {
+  background: rgba(255,255,255,0.18);
+}
+
 /* Overview grid for Payments tab - responsive */
 .overview-grid {
   display: grid;
@@ -1238,6 +1563,230 @@ input:focus, textarea:focus, select:focus {
   button, .chk-lbl, .loc-card, .nav-btn, .tab-btn { min-height: 40px; }
   .btn-p { min-height: 48px; }
 }
+
+/* ═══════════════════════════════════════
+   PLANNED JOBS - Futuristic Cards
+═══════════════════════════════════════ */
+.plan-filters {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.plan-filter {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.plan-filter:hover {
+  color: var(--text-bright);
+  border-color: var(--border-bright);
+}
+.plan-filter.active {
+  background: var(--grad-accent);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--sh-accent);
+}
+.filter-count {
+  background: rgba(0,0,0,0.25);
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+.plan-filter:not(.active) .filter-count {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+#planList {
+  display: flex; flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.plan-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.28s var(--ease);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--sh);
+}
+.plan-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--border-bright);
+  transition: all 0.28s var(--ease);
+}
+.plan-card.priority-urgent::before { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+.plan-card.priority-high::before { background: #e07347; }
+.plan-card.priority-normal::before { background: var(--blue); }
+.plan-card.priority-low::before { background: var(--green); }
+.plan-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-glow);
+}
+.plan-card:hover::before { width: 6px; }
+
+.plan-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.plan-priority {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.4px;
+  border: 1px solid currentColor;
+}
+.plan-status {
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.plan-card-body { margin-bottom: 12px; }
+.plan-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.plan-client, .plan-address, .plan-description, .plan-notes {
+  font-size: 0.83rem;
+  color: var(--text);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.plan-client { color: var(--text); }
+.plan-address { color: var(--muted); font-size: 0.78rem; }
+.plan-description {
+  color: var(--text-bright);
+  font-weight: 500;
+  background: var(--surface);
+  padding: 8px 11px;
+  border-radius: 8px;
+  border-left: 2px solid var(--accent);
+  margin-top: 8px;
+}
+.plan-notes {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.plan-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.plan-dates {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  flex: 1;
+  min-width: 0;
+}
+.plan-actions { display: flex; gap: 6px; }
+.plan-action-btn {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.plan-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: scale(1.08);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+/* Floating Action Button */
+.btn-floating {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: var(--grad-accent);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12px 28px var(--accent-glow), 0 4px 12px rgba(0,0,0,0.4);
+  transition: all 0.28s var(--ease-bounce);
+  z-index: 100;
+}
+.btn-floating:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 18px 38px rgba(255,107,53,0.5), 0 4px 12px rgba(0,0,0,0.4);
+}
+.btn-floating:active { transform: scale(0.95) rotate(90deg); }
+
+/* Empty State - improved */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+}
+.empty-state .big { font-size: 3.5rem; margin-bottom: 14px; opacity: 0.6; }
+.empty-state p { font-size: 0.92rem; }
+.empty-state strong { color: var(--accent); }
+
+/* Dark theme overrides for badges */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px;
+}
+.badge-full { background: rgba(0,212,164,0.12); color: var(--green-light); border: 1px solid rgba(0,212,164,0.3); }
+.badge-half { background: rgba(255,107,53,0.12); color: var(--accent-light); border: 1px solid rgba(255,107,53,0.3); }
+.badge-extra-only { background: var(--grad-accent); color: #fff; }
+.badge-extra { background: rgba(255,107,53,0.15); color: var(--accent-light); }
+
+/* Dark theme — text-muted updates */
+.muted, .text-muted { color: var(--muted); }
+small { color: var(--muted); }
+
+/* Force readable text in dark theme */
+body, p, div, span, label, td, th { color: var(--text); }
+strong, h1, h2, h3, h4 { color: var(--text-bright); }
 </style>
 </head>
 <body>
@@ -1246,8 +1795,10 @@ input:focus, textarea:focus, select:focus {
   <div class="logo">Regjistri<span class="logo-dot">.</span>Punës</div>
   <div class="nav">
     <button class="nav-btn active" onclick="showView('register',this)">📝<span class="nav-txt"> Regjistro</span></button>
+    <button class="nav-btn" onclick="showView('planned',this)">🗓<span class="nav-txt"> Plani</span></button>
     <button class="nav-btn" onclick="showView('workers',this)">👷<span class="nav-txt"> Punëtorët</span></button>
     <button class="nav-btn" onclick="showView('prices',this)">📐<span class="nav-txt"> Tarifat</span></button>
+    <button class="nav-btn" onclick="showView('planned',this)">📋<span class="nav-txt"> Pune Radhe</span></button>
     <button class="nav-btn" onclick="showView('history',this)">📊<span class="nav-txt"> Historia</span></button>
   </div>
 </header>
@@ -1332,6 +1883,28 @@ input:focus, textarea:focus, select:focus {
   </div>
 </div>
 
+<!-- ══ PLANI I PUNËVE TË RADHËS ══ -->
+<div id="view-planned" class="view">
+  <div class="page">
+    <div class="stitle">Plani i Punëve <span id="plCount" class="chip">0</span></div>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Regjistro punët e radhës — ku, kur, çfarë. Klik mbi çdo punë për detaje ose ndryshime.</div>
+
+    <!-- Filter buttons -->
+    <div class="plan-filters">
+      <button class="plan-filter active" onclick="filterPlanned('all',this)">📋 Të Gjitha <span class="filter-count" id="plnAll">0</span></button>
+      <button class="plan-filter" onclick="filterPlanned('upcoming',this)">⏳ Të Radhës <span class="filter-count" id="plnUp">0</span></button>
+      <button class="plan-filter" onclick="filterPlanned('active',this)">🔵 Në Vazhdim <span class="filter-count" id="plnAc">0</span></button>
+      <button class="plan-filter" onclick="filterPlanned('done',this)">✅ Të Përfunduara <span class="filter-count" id="plnDn">0</span></button>
+    </div>
+
+    <div id="planList"></div>
+
+    <button class="btn-floating" onclick="openPlannedModal()" title="Shto Punë të Re">
+      <span style="font-size:1.4rem">+</span>
+    </button>
+  </div>
+</div>
+
 <!-- ══ TARIFAT (Çmimet e Punëve) ══ -->
 <div id="view-prices" class="view">
   <div class="page">
@@ -1360,6 +1933,83 @@ input:focus, textarea:focus, select:focus {
           <div><label>Çmimi për Njësi (€)</label><input type="number" id="npPrice" placeholder="p.sh. 15" min="0" step="0.01" inputmode="decimal"/></div>
           <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addPriceItem()" style="width:100%">Shto</button></div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PUNË RADHE (Planned Jobs) ══ -->
+<div id="view-planned" class="view">
+  <div class="page">
+    <div class="stitle">📋 Pune të Radhës <span id="plCount" class="chip">0</span></div>
+    <div style="font-size:0.84rem;color:var(--muted);margin-bottom:18px">Planifiko punët që duhen bërë në të ardhmen. Vendos datat, klientët, prioritetin dhe çfarë duhet bërë.</div>
+
+    <!-- Sub-tabs for status filter -->
+    <div class="sub-tab-bar" style="margin-bottom:18px">
+      <button class="sub-tab-btn active" id="plTab-all" onclick="switchPlannedTab('all',this)">🗂 Të Gjitha <span class="badge-count" id="plCntAll">0</span></button>
+      <button class="sub-tab-btn" id="plTab-pending" onclick="switchPlannedTab('pending',this)">⏳ Pa Filluar <span class="badge-count" id="plCntPending">0</span></button>
+      <button class="sub-tab-btn" id="plTab-active" onclick="switchPlannedTab('active',this)">🔨 Në Punë <span class="badge-count" id="plCntActive">0</span></button>
+      <button class="sub-tab-btn" id="plTab-done" onclick="switchPlannedTab('done',this)">✅ Përfunduar <span class="badge-count" id="plCntDone">0</span></button>
+    </div>
+
+    <div id="plannedGrid"></div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="card-hd">
+        <h3>➕ Shto Punë të Re në Plan</h3>
+      </div>
+      <div class="card-bd">
+        <div class="grid2">
+          <div style="grid-column:1/-1">
+            <label>📍 Emri i Vendit / Projekti</label>
+            <input type="text" id="plName" placeholder="p.sh. Shtëpia e re - Prishtinë"/>
+          </div>
+          <div>
+            <label>👤 Klienti</label>
+            <input type="text" id="plClient" placeholder="p.sh. Arben Krasniqi"/>
+          </div>
+          <div>
+            <label>📞 Numri i Klientit</label>
+            <input type="text" id="plPhone" placeholder="p.sh. +383 44 123 456"/>
+          </div>
+          <div style="grid-column:1/-1">
+            <label>🗺 Adresa (opsional)</label>
+            <input type="text" id="plAddress" placeholder="p.sh. Rr. Dëshmorët e Kombit, Prishtinë"/>
+          </div>
+          <div>
+            <label>📅 Data e Fillimit</label>
+            <input type="date" id="plStartDate"/>
+          </div>
+          <div>
+            <label>📅 Data e Mbarimit (planifikuar)</label>
+            <input type="date" id="plEndDate"/>
+          </div>
+          <div>
+            <label>🔥 Prioriteti</label>
+            <select id="plPriority">
+              <option value="low">🟢 Normal</option>
+              <option value="medium" selected>🟡 Mesatar</option>
+              <option value="high">🔴 Urgjent</option>
+            </select>
+          </div>
+          <div>
+            <label>📊 Statusi</label>
+            <select id="plStatus">
+              <option value="pending" selected>⏳ Pa Filluar</option>
+              <option value="active">🔨 Në Punë</option>
+              <option value="done">✅ Përfunduar</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label>🧱 Çfarë Duhet Bërë</label>
+            <input type="text" id="plDesc" placeholder="p.sh. Shtrim pllakash banjo + kuzhinë (~45m²)"/>
+          </div>
+          <div style="grid-column:1/-1">
+            <label>📝 Shënime (opsional)</label>
+            <input type="text" id="plNotes" placeholder="p.sh. Klienti dëshiron pllaka të mëdha, ngjyrë gri"/>
+          </div>
+        </div>
+        <button class="btn-p" onclick="addPlannedJob()">✔ Shto Punën</button>
       </div>
     </div>
   </div>
@@ -1547,6 +2197,83 @@ input:focus, textarea:focus, select:focus {
     <div class="row-end">
       <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
       <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLANNED JOB MODAL -->
+<div class="modal-overlay" id="plannedModal">
+  <div class="modal" style="max-width:520px">
+    <h3 id="plannedModalTitle">📋 Shto Punë të Re</h3>
+    <input type="hidden" id="plJobId"/>
+
+    <div style="margin-bottom:12px">
+      <label>📍 Emri i Vendit/Projektit *</label>
+      <input type="text" id="plLocation" placeholder="p.sh. Banesa Krasniqi - Prishtinë"/>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label>👤 Klienti</label>
+        <input type="text" id="plClient" placeholder="Emri i klientit"/>
+      </div>
+      <div>
+        <label>📞 Telefoni</label>
+        <input type="tel" id="plPhone" placeholder="+383..."/>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label>🏠 Adresa</label>
+      <input type="text" id="plAddress" placeholder="Rruga, qyteti..."/>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label>📅 Data Fillimit *</label>
+        <input type="date" id="plStartDate"/>
+      </div>
+      <div>
+        <label>🏁 Data e Mbarimit</label>
+        <input type="date" id="plEndDate"/>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label>🔥 Prioriteti</label>
+        <select id="plPriority">
+          <option value="normal">📘 Normal</option>
+          <option value="high">🔴 I Lartë</option>
+          <option value="urgent">🚨 Urgjent</option>
+          <option value="low">🟢 I Ulët</option>
+        </select>
+      </div>
+      <div>
+        <label>📊 Statusi</label>
+        <select id="plStatus">
+          <option value="upcoming">⏳ Të Radhës</option>
+          <option value="active">🔵 Në Vazhdim</option>
+          <option value="done">✅ Përfunduar</option>
+          <option value="paused">⏸ Pauzuar</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label>💼 Çfarë Duhet të Bëhet *</label>
+      <textarea id="plDescription" placeholder="p.sh. Shtrim pllakash banjo + kuzhinë, rreth 35m²" rows="3" style="resize:vertical"></textarea>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label>📝 Shënime (opsional)</label>
+      <textarea id="plNotes" placeholder="Detaje shtesë..." rows="2" style="resize:vertical"></textarea>
+    </div>
+
+    <div class="row-end">
+      <button class="btn-sync" id="plDeleteBtn" onclick="deletePlannedJob()" style="display:none;background:var(--accent);color:#fff;border-color:var(--accent)">🗑 Fshi</button>
+      <button class="btn-sync" onclick="document.getElementById('plannedModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="savePlannedJob()">💾 Ruaj</button>
     </div>
   </div>
 </div>
@@ -1747,8 +2474,9 @@ let locStatus = {};
 let expenses = []; // Shpenzimet (materialet, transport, etj)
 let contracts = {}; // Kontrata per cdo vend pune {locName: {total, advance, client, phone, notes}}
 let payments = []; // Pagesat e punëtorëve [{id, workerId, workerName, date, amount, notes, location?}]
-let priceList = []; // Lista e tarifave [{id, name, unit, price}]  p.sh. {id, name: "Shtrimi i pllakave", unit: "m²", price: 15}
-let projectWorks = []; // Punët e bëra në çdo vend [{id, location, priceItemId, name, unit, pricePerUnit, quantity, date, notes}]
+let priceList = []; // Lista e tarifave [{id, name, unit, price}]
+let projectWorks = []; // Punët e bëra në çdo vend
+let plannedJobs = []; // Punët e radhës [{id, location, client, phone, startDate, endDate, priority, status, description, address, notes}]
 
 // ── INIT: start empty, load from Drive after login ──
 // We keep a local cache only to survive page refresh while connected
@@ -1761,6 +2489,7 @@ function loadLocalCache() {
   payments = JSON.parse(localStorage.getItem('pun_payments')||'[]');
   priceList = JSON.parse(localStorage.getItem('pun_pricelist')||'[]');
   projectWorks = JSON.parse(localStorage.getItem('pun_projectworks')||'[]');
+  plannedJobs = JSON.parse(localStorage.getItem('pun_plannedjobs')||'[]');
   // Migrate old IDs
   let migrated = false;
   entries.forEach((e, i) => {
@@ -1797,6 +2526,7 @@ function showView(name, btn) {
   if (name==='register') renderChecklist();
   if (name==='workers') renderWorkers();
   if (name==='prices') renderPriceList();
+  if (name==='planned') renderPlannedJobs();
   if (name==='history') renderHistory();
 }
 
@@ -2058,6 +2788,237 @@ function renderWorkers() {
 }
 
 // ═══════════════════════════════════════
+// ── PLANNED JOBS (Punët e Radhës) ──
+// ═══════════════════════════════════════
+let plannedFilter = 'all';
+
+function filterPlanned(filter, btn) {
+  plannedFilter = filter;
+  document.querySelectorAll('.plan-filter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPlanned();
+}
+
+function openPlannedModal(jobId) {
+  const today = todayStr;
+  if (jobId) {
+    const j = plannedJobs.find(x => x.id === jobId);
+    if (!j) return;
+    document.getElementById('plannedModalTitle').textContent = '✎ Edito Punën';
+    document.getElementById('plJobId').value = jobId;
+    document.getElementById('plLocation').value = j.location || '';
+    document.getElementById('plClient').value = j.client || '';
+    document.getElementById('plPhone').value = j.phone || '';
+    document.getElementById('plAddress').value = j.address || '';
+    document.getElementById('plStartDate').value = j.startDate || today;
+    document.getElementById('plEndDate').value = j.endDate || '';
+    document.getElementById('plPriority').value = j.priority || 'normal';
+    document.getElementById('plStatus').value = j.status || 'upcoming';
+    document.getElementById('plDescription').value = j.description || '';
+    document.getElementById('plNotes').value = j.notes || '';
+    document.getElementById('plDeleteBtn').style.display = '';
+  } else {
+    document.getElementById('plannedModalTitle').textContent = '📋 Shto Punë të Re';
+    document.getElementById('plJobId').value = '';
+    document.getElementById('plLocation').value = '';
+    document.getElementById('plClient').value = '';
+    document.getElementById('plPhone').value = '';
+    document.getElementById('plAddress').value = '';
+    document.getElementById('plStartDate').value = today;
+    document.getElementById('plEndDate').value = '';
+    document.getElementById('plPriority').value = 'normal';
+    document.getElementById('plStatus').value = 'upcoming';
+    document.getElementById('plDescription').value = '';
+    document.getElementById('plNotes').value = '';
+    document.getElementById('plDeleteBtn').style.display = 'none';
+  }
+  document.getElementById('plannedModal').classList.add('open');
+  setTimeout(() => document.getElementById('plLocation').focus(), 100);
+}
+
+function savePlannedJob() {
+  const id = document.getElementById('plJobId').value;
+  const location = document.getElementById('plLocation').value.trim();
+  const description = document.getElementById('plDescription').value.trim();
+  const startDate = document.getElementById('plStartDate').value;
+
+  if (!location) { showToast('⚠ Vendos emrin e vendit!'); return; }
+  if (!description) { showToast('⚠ Përshkruaj çfarë duhet të bëhet!'); return; }
+  if (!startDate) { showToast('⚠ Zgjedh datën e fillimit!'); return; }
+
+  const job = {
+    id: id || 'pj' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    location,
+    client: document.getElementById('plClient').value.trim(),
+    phone: document.getElementById('plPhone').value.trim(),
+    address: document.getElementById('plAddress').value.trim(),
+    startDate,
+    endDate: document.getElementById('plEndDate').value,
+    priority: document.getElementById('plPriority').value,
+    status: document.getElementById('plStatus').value,
+    description,
+    notes: document.getElementById('plNotes').value.trim(),
+    createdAt: id ? plannedJobs.find(x=>x.id===id)?.createdAt : new Date().toISOString()
+  };
+
+  if (id) {
+    const idx = plannedJobs.findIndex(x => x.id === id);
+    if (idx >= 0) plannedJobs[idx] = job;
+  } else {
+    plannedJobs.unshift(job);
+  }
+
+  save();
+  document.getElementById('plannedModal').classList.remove('open');
+  renderPlanned();
+  showToast(id ? '✔ Puna u përditësua!' : '✔ Puna u shtua!');
+}
+
+function deletePlannedJob() {
+  const id = document.getElementById('plJobId').value;
+  if (!id) return;
+  if (!confirm('Fshi këtë punë nga plani?')) return;
+  plannedJobs = plannedJobs.filter(x => x.id !== id);
+  save();
+  document.getElementById('plannedModal').classList.remove('open');
+  renderPlanned();
+  showToast('🗑 Puna u fshi', true);
+}
+
+function quickStatusChange(id, newStatus, event) {
+  if (event) event.stopPropagation();
+  const j = plannedJobs.find(x => x.id === id);
+  if (!j) return;
+  j.status = newStatus;
+  save();
+  renderPlanned();
+  const labels = { upcoming: '⏳ Të Radhës', active: '🔵 Në Vazhdim', done: '✅ Përfunduar', paused: '⏸ Pauzuar' };
+  showToast('✔ ' + labels[newStatus]);
+}
+
+function callClient(phone, event) {
+  if (event) event.stopPropagation();
+  if (!phone) return;
+  window.location.href = 'tel:' + phone.replace(/\s/g, '');
+}
+
+function renderPlanned() {
+  document.getElementById('plCount').textContent = plannedJobs.length;
+  const container = document.getElementById('planList');
+
+  // Sort: urgent first, then by start date asc
+  const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+  const statusOrder = { active: 0, upcoming: 1, paused: 2, done: 3 };
+
+  // Counters
+  const counts = {
+    all: plannedJobs.length,
+    upcoming: plannedJobs.filter(j => j.status === 'upcoming').length,
+    active: plannedJobs.filter(j => j.status === 'active').length,
+    done: plannedJobs.filter(j => j.status === 'done').length
+  };
+  document.getElementById('plnAll').textContent = counts.all;
+  document.getElementById('plnUp').textContent = counts.upcoming;
+  document.getElementById('plnAc').textContent = counts.active;
+  document.getElementById('plnDn').textContent = counts.done;
+
+  let jobs = plannedJobs.slice();
+  if (plannedFilter !== 'all') {
+    jobs = jobs.filter(j => j.status === plannedFilter);
+  }
+
+  jobs.sort((a, b) => {
+    const sa = statusOrder[a.status] || 99;
+    const sb = statusOrder[b.status] || 99;
+    if (sa !== sb) return sa - sb;
+    const pa = priorityOrder[a.priority] || 99;
+    const pb = priorityOrder[b.priority] || 99;
+    if (pa !== pb) return pa - pb;
+    return (a.startDate || '').localeCompare(b.startDate || '');
+  });
+
+  if (!jobs.length) {
+    container.innerHTML = `<div class="empty-state"><div class="big">🗓</div><p>${plannedFilter === 'all' ? 'Nuk ka punë të planifikuara ende.' : 'Asnjë punë në këtë kategori.'}<br><small style="color:var(--muted)">Klik butonin <strong>+</strong> poshtë djathtas për të shtuar.</small></p></div>`;
+    return;
+  }
+
+  const priorityLabels = {
+    urgent: { txt: '🚨 URGJENT', color: '#c84b2f', bg: 'rgba(200,75,47,0.12)' },
+    high: { txt: '🔴 I Lartë', color: '#e07347', bg: 'rgba(224,115,71,0.12)' },
+    normal: { txt: '📘 Normal', color: '#5a7c9b', bg: 'rgba(90,124,155,0.1)' },
+    low: { txt: '🟢 I Ulët', color: '#5a8a6a', bg: 'rgba(90,138,106,0.1)' }
+  };
+  const statusLabels = {
+    upcoming: { txt: '⏳ Të Radhës', color: '#8a8178' },
+    active: { txt: '🔵 Në Vazhdim', color: '#2a6049' },
+    done: { txt: '✅ Përfunduar', color: '#2a6049' },
+    paused: { txt: '⏸ Pauzuar', color: '#e0a040' }
+  };
+
+  container.innerHTML = jobs.map(j => {
+    const p = priorityLabels[j.priority] || priorityLabels.normal;
+    const s = statusLabels[j.status] || statusLabels.upcoming;
+    const idEsc = j.id;
+    const phoneEsc = (j.phone || '').replace(/'/g, "\\'");
+
+    // Calculate days until/since
+    let dateInfo = '';
+    if (j.startDate) {
+      const today = new Date(todayStr);
+      const start = new Date(j.startDate);
+      const diffDays = Math.round((start - today) / (1000 * 60 * 60 * 24));
+      if (j.status === 'done') {
+        dateInfo = `<span style="color:var(--green);font-weight:600">✓ Përfunduar</span>`;
+      } else if (j.status === 'active') {
+        dateInfo = `<span style="color:#2a6049;font-weight:700">▶ Aktiv tani</span>`;
+      } else if (diffDays === 0) {
+        dateInfo = `<span style="color:var(--accent);font-weight:700">🔥 Fillon SOT</span>`;
+      } else if (diffDays === 1) {
+        dateInfo = `<span style="color:#e0a040;font-weight:700">⚡ Fillon NESËR</span>`;
+      } else if (diffDays > 1 && diffDays <= 7) {
+        dateInfo = `<span style="color:#5a7c9b;font-weight:600">📅 Pas ${diffDays} ditëve</span>`;
+      } else if (diffDays > 7) {
+        dateInfo = `<span style="color:var(--muted)">📅 Pas ${diffDays} ditëve</span>`;
+      } else if (diffDays < 0) {
+        dateInfo = `<span style="color:var(--accent);font-weight:700">⚠ Vonesë ${Math.abs(diffDays)}d</span>`;
+      }
+    }
+
+    return `
+      <div class="plan-card priority-${j.priority}" onclick="openPlannedModal('${idEsc}')">
+        <div class="plan-card-header">
+          <div class="plan-priority" style="background:${p.bg};color:${p.color}">${p.txt}</div>
+          <div class="plan-status" style="color:${s.color}">${s.txt}</div>
+        </div>
+
+        <div class="plan-card-body">
+          <div class="plan-title">📍 ${esc(j.location)}</div>
+          ${j.client ? `<div class="plan-client">👤 ${esc(j.client)}${j.phone ? ` · <a href="tel:${esc(j.phone)}" onclick="callClient('${phoneEsc}',event)" style="color:var(--accent);text-decoration:none;font-weight:600">📞 ${esc(j.phone)}</a>` : ''}</div>` : ''}
+          ${j.address ? `<div class="plan-address">🏠 ${esc(j.address)}</div>` : ''}
+          <div class="plan-description">💼 ${esc(j.description)}</div>
+          ${j.notes ? `<div class="plan-notes">📝 ${esc(j.notes)}</div>` : ''}
+        </div>
+
+        <div class="plan-card-footer">
+          <div class="plan-dates">
+            📅 ${fmtDate(j.startDate)}${j.endDate ? ' → ' + fmtDate(j.endDate) : ''}
+            ${dateInfo ? ' · ' + dateInfo : ''}
+          </div>
+
+          <div class="plan-actions" onclick="event.stopPropagation()">
+            ${j.status === 'upcoming' ? `<button class="plan-action-btn" onclick="quickStatusChange('${idEsc}','active',event)" title="Fillo">▶</button>` : ''}
+            ${j.status === 'active' ? `<button class="plan-action-btn" onclick="quickStatusChange('${idEsc}','done',event)" title="Përfundo" style="background:var(--green);color:#fff;border-color:var(--green)">✓</button>` : ''}
+            ${j.status === 'active' ? `<button class="plan-action-btn" onclick="quickStatusChange('${idEsc}','paused',event)" title="Pauzo">⏸</button>` : ''}
+            ${j.status === 'paused' ? `<button class="plan-action-btn" onclick="quickStatusChange('${idEsc}','active',event)" title="Vazhdo">▶</button>` : ''}
+            ${j.status === 'done' ? `<button class="plan-action-btn" onclick="quickStatusChange('${idEsc}','active',event)" title="Rifillo">↩</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
 // ── PRICE LIST (Tarifat e Punëve) ──
 // ═══════════════════════════════════════
 function addPriceItem() {
@@ -2137,6 +3098,7 @@ function renderPriceList() {
     </div>
   `).join('');
 }
+
 
 // ═══════════════════════════════════════
 // ── PROJECT WORKS (Punët e Bëra në Çdo Vend) ──
@@ -3775,6 +4737,7 @@ function saveLocalCache() {
   localStorage.setItem('pun_payments', JSON.stringify(payments));
   localStorage.setItem('pun_pricelist', JSON.stringify(priceList));
   localStorage.setItem('pun_projectworks', JSON.stringify(projectWorks));
+  localStorage.setItem('pun_plannedjobs', JSON.stringify(plannedJobs));
 }
 
 function save() {
@@ -3962,7 +4925,7 @@ function disconnectDrive() {
   if (!confirm('Të shkëputesh nga Google Drive?\nTë dhënat lokale do të fshihen — do të rilidhesh kur të duash.')) return;
   accessToken = null;
   driveFileId = null;
-  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = [];
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = [];
   saveLocalCache();
   localStorage.removeItem('gdrive_token_time');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -4027,6 +4990,7 @@ async function pullFromDrive() {
     payments = data.payments || [];
     priceList = data.priceList || [];
     projectWorks = data.projectWorks || [];
+    plannedJobs = data.plannedJobs || [];
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -4057,9 +5021,9 @@ async function pushToDrive() {
   isSyncing = true;
   try {
     const payload = JSON.stringify({
-      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks,
+      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs,
       lastSync: new Date().toISOString(),
-      version: 5
+      version: 6
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
