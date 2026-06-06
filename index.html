@@ -1889,6 +1889,19 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div class="stitle">Plani i Punëve <span id="plCount" class="chip">0</span></div>
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Regjistro punët e radhës — ku, kur, çfarë. Klik mbi çdo punë për detaje ose ndryshime.</div>
 
+    <!-- Reminder banner -->
+    <div id="reminderBanner" style="display:none;background:linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,107,53,0.05));border:1.5px solid var(--accent);border-radius:14px;padding:14px 18px;margin-bottom:16px;box-shadow:0 0 24px rgba(255,107,53,0.2)">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        🔔 <span>Reminder Aktiv</span>
+      </div>
+      <div id="reminderList" style="font-size:0.85rem;color:var(--text);line-height:1.6"></div>
+    </div>
+
+    <!-- Import button -->
+    <button onclick="importLocationsToPlanned()" style="width:100%;padding:11px;background:transparent;border:1.5px dashed var(--border);border-radius:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;margin-bottom:18px;transition:all 0.2s">
+      📥 Importo Vendet ekzistuese nga Historia
+    </button>
+
     <!-- Filter buttons -->
     <div class="plan-filters">
       <button class="plan-filter active" onclick="filterPlanned('all',this)">📋 Të Gjitha <span class="filter-count" id="plnAll">0</span></button>
@@ -1933,83 +1946,6 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
           <div><label>Çmimi për Njësi (€)</label><input type="number" id="npPrice" placeholder="p.sh. 15" min="0" step="0.01" inputmode="decimal"/></div>
           <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addPriceItem()" style="width:100%">Shto</button></div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PUNË RADHE (Planned Jobs) ══ -->
-<div id="view-planned" class="view">
-  <div class="page">
-    <div class="stitle">📋 Pune të Radhës <span id="plCount" class="chip">0</span></div>
-    <div style="font-size:0.84rem;color:var(--muted);margin-bottom:18px">Planifiko punët që duhen bërë në të ardhmen. Vendos datat, klientët, prioritetin dhe çfarë duhet bërë.</div>
-
-    <!-- Sub-tabs for status filter -->
-    <div class="sub-tab-bar" style="margin-bottom:18px">
-      <button class="sub-tab-btn active" id="plTab-all" onclick="switchPlannedTab('all',this)">🗂 Të Gjitha <span class="badge-count" id="plCntAll">0</span></button>
-      <button class="sub-tab-btn" id="plTab-pending" onclick="switchPlannedTab('pending',this)">⏳ Pa Filluar <span class="badge-count" id="plCntPending">0</span></button>
-      <button class="sub-tab-btn" id="plTab-active" onclick="switchPlannedTab('active',this)">🔨 Në Punë <span class="badge-count" id="plCntActive">0</span></button>
-      <button class="sub-tab-btn" id="plTab-done" onclick="switchPlannedTab('done',this)">✅ Përfunduar <span class="badge-count" id="plCntDone">0</span></button>
-    </div>
-
-    <div id="plannedGrid"></div>
-
-    <div class="card" style="margin-top:18px">
-      <div class="card-hd">
-        <h3>➕ Shto Punë të Re në Plan</h3>
-      </div>
-      <div class="card-bd">
-        <div class="grid2">
-          <div style="grid-column:1/-1">
-            <label>📍 Emri i Vendit / Projekti</label>
-            <input type="text" id="plName" placeholder="p.sh. Shtëpia e re - Prishtinë"/>
-          </div>
-          <div>
-            <label>👤 Klienti</label>
-            <input type="text" id="plClient" placeholder="p.sh. Arben Krasniqi"/>
-          </div>
-          <div>
-            <label>📞 Numri i Klientit</label>
-            <input type="text" id="plPhone" placeholder="p.sh. +383 44 123 456"/>
-          </div>
-          <div style="grid-column:1/-1">
-            <label>🗺 Adresa (opsional)</label>
-            <input type="text" id="plAddress" placeholder="p.sh. Rr. Dëshmorët e Kombit, Prishtinë"/>
-          </div>
-          <div>
-            <label>📅 Data e Fillimit</label>
-            <input type="date" id="plStartDate"/>
-          </div>
-          <div>
-            <label>📅 Data e Mbarimit (planifikuar)</label>
-            <input type="date" id="plEndDate"/>
-          </div>
-          <div>
-            <label>🔥 Prioriteti</label>
-            <select id="plPriority">
-              <option value="low">🟢 Normal</option>
-              <option value="medium" selected>🟡 Mesatar</option>
-              <option value="high">🔴 Urgjent</option>
-            </select>
-          </div>
-          <div>
-            <label>📊 Statusi</label>
-            <select id="plStatus">
-              <option value="pending" selected>⏳ Pa Filluar</option>
-              <option value="active">🔨 Në Punë</option>
-              <option value="done">✅ Përfunduar</option>
-            </select>
-          </div>
-          <div style="grid-column:1/-1">
-            <label>🧱 Çfarë Duhet Bërë</label>
-            <input type="text" id="plDesc" placeholder="p.sh. Shtrim pllakash banjo + kuzhinë (~45m²)"/>
-          </div>
-          <div style="grid-column:1/-1">
-            <label>📝 Shënime (opsional)</label>
-            <input type="text" id="plNotes" placeholder="p.sh. Klienti dëshiron pllaka të mëdha, ngjyrë gri"/>
-          </div>
-        </div>
-        <button class="btn-p" onclick="addPlannedJob()">✔ Shto Punën</button>
       </div>
     </div>
   </div>
@@ -2258,6 +2194,19 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
           <option value="paused">⏸ Pauzuar</option>
         </select>
       </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label>🔔 Kujto Para Fillimit</label>
+      <select id="plReminder">
+        <option value="0">Pa Reminder</option>
+        <option value="1">1 ditë para</option>
+        <option value="3">3 ditë para</option>
+        <option value="7" selected>1 javë para (7 ditë)</option>
+        <option value="10">10 ditë para</option>
+        <option value="14">2 javë para</option>
+        <option value="30">1 muaj para</option>
+      </select>
     </div>
 
     <div style="margin-bottom:12px">
@@ -2816,6 +2765,7 @@ function openPlannedModal(jobId) {
     document.getElementById('plStatus').value = j.status || 'upcoming';
     document.getElementById('plDescription').value = j.description || '';
     document.getElementById('plNotes').value = j.notes || '';
+    document.getElementById('plReminder').value = j.reminderDays !== undefined ? j.reminderDays : 7;
     document.getElementById('plDeleteBtn').style.display = '';
   } else {
     document.getElementById('plannedModalTitle').textContent = '📋 Shto Punë të Re';
@@ -2830,6 +2780,7 @@ function openPlannedModal(jobId) {
     document.getElementById('plStatus').value = 'upcoming';
     document.getElementById('plDescription').value = '';
     document.getElementById('plNotes').value = '';
+    document.getElementById('plReminder').value = 7;
     document.getElementById('plDeleteBtn').style.display = 'none';
   }
   document.getElementById('plannedModal').classList.add('open');
@@ -2858,6 +2809,7 @@ function savePlannedJob() {
     status: document.getElementById('plStatus').value,
     description,
     notes: document.getElementById('plNotes').value.trim(),
+    reminderDays: parseInt(document.getElementById('plReminder').value) || 0,
     createdAt: id ? plannedJobs.find(x=>x.id===id)?.createdAt : new Date().toISOString()
   };
 
@@ -2905,6 +2857,9 @@ function callClient(phone, event) {
 function renderPlanned() {
   document.getElementById('plCount').textContent = plannedJobs.length;
   const container = document.getElementById('planList');
+
+  // Check reminders first
+  checkReminders();
 
   // Sort: urgent first, then by start date asc
   const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
@@ -2997,6 +2952,7 @@ function renderPlanned() {
           ${j.address ? `<div class="plan-address">🏠 ${esc(j.address)}</div>` : ''}
           <div class="plan-description">💼 ${esc(j.description)}</div>
           ${j.notes ? `<div class="plan-notes">📝 ${esc(j.notes)}</div>` : ''}
+          ${j.reminderDays && j.reminderDays > 0 && j.status !== 'done' ? `<div style="display:inline-block;margin-top:8px;padding:3px 10px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:8px;font-size:0.74rem;color:var(--accent-light);font-weight:600">🔔 Reminder ${j.reminderDays} ditë para</div>` : ''}
         </div>
 
         <div class="plan-card-footer">
@@ -3016,6 +2972,94 @@ function renderPlanned() {
       </div>
     `;
   }).join('');
+}
+
+// ═══════════════════════════════════════
+// ── REMINDERS & IMPORT ──
+// ═══════════════════════════════════════
+function checkReminders() {
+  const banner = document.getElementById('reminderBanner');
+  const list = document.getElementById('reminderList');
+  if (!banner || !list) return;
+
+  const today = new Date(todayStr);
+  const active = [];
+
+  plannedJobs.forEach(j => {
+    if (j.status === 'done' || j.status === 'paused') return;
+    if (!j.startDate || !j.reminderDays || j.reminderDays === 0) return;
+    const start = new Date(j.startDate);
+    const diffDays = Math.round((start - today) / (1000 * 60 * 60 * 24));
+    if (diffDays <= j.reminderDays && diffDays >= 0) {
+      active.push({ job: j, diffDays });
+    } else if (diffDays < 0 && j.status === 'upcoming') {
+      // Overdue
+      active.push({ job: j, diffDays });
+    }
+  });
+
+  if (!active.length) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'block';
+  list.innerHTML = active.map(({ job, diffDays }) => {
+    let msg = '';
+    if (diffDays < 0) {
+      msg = `⚠ <strong style="color:var(--accent)">VONESË ${Math.abs(diffDays)} ditë</strong>`;
+    } else if (diffDays === 0) {
+      msg = `🔥 <strong style="color:var(--accent)">Fillon SOT!</strong>`;
+    } else if (diffDays === 1) {
+      msg = `⚡ <strong style="color:#fbbf24">Fillon NESËR</strong>`;
+    } else {
+      msg = `📅 Fillon pas <strong style="color:var(--accent)">${diffDays} ditëve</strong>`;
+    }
+    return `<div style="padding:6px 0;border-bottom:1px solid rgba(255,107,53,0.15);cursor:pointer" onclick="openPlannedModal('${job.id}')">📍 ${esc(job.location)} — ${msg}</div>`;
+  }).join('');
+}
+
+function importLocationsToPlanned() {
+  // Get unique locations from entries that don't already exist in plannedJobs
+  const existingPlanLocs = new Set(plannedJobs.map(j => j.location.toLowerCase()));
+  const entryLocs = [...new Set(entries.map(e => e.location))]
+    .filter(loc => !existingPlanLocs.has(loc.toLowerCase()));
+
+  if (!entryLocs.length) {
+    showToast('ℹ Të gjitha vendet ekzistuese janë në plan');
+    return;
+  }
+
+  if (!confirm(`Do të importohen ${entryLocs.length} vende nga Historia:\n\n${entryLocs.slice(0,5).join('\n')}${entryLocs.length > 5 ? '\n...' : ''}\n\nVazhdo?`)) return;
+
+  entryLocs.forEach(loc => {
+    // Determine status from locStatus
+    const status = (locStatus[loc] || 'progress') === 'completed' ? 'done' : 'active';
+    // Get first entry date for this location
+    const locEntries = entries.filter(e => e.location === loc).sort((a,b) => a.date.localeCompare(b.date));
+    const firstDate = locEntries[0]?.date || todayStr;
+    const lastDate = locEntries[locEntries.length - 1]?.date || '';
+
+    plannedJobs.push({
+      id: 'pj' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      location: loc,
+      client: '',
+      phone: '',
+      address: '',
+      startDate: firstDate,
+      endDate: status === 'done' ? lastDate : '',
+      priority: 'normal',
+      status,
+      description: `Punë e importuar nga Historia · ${locEntries.length} regjistrime`,
+      notes: '',
+      reminderDays: 0,
+      createdAt: new Date().toISOString()
+    });
+  });
+
+  save();
+  renderPlanned();
+  showToast(`✔ U importuan ${entryLocs.length} vende!`);
 }
 
 // ═══════════════════════════════════════
