@@ -357,17 +357,17 @@ select {
 }
 .chk-item input:checked + .chk-lbl {
   border-color: var(--green);
-  background: linear-gradient(135deg, rgba(42,96,73,0.06) 0%, rgba(42,96,73,0.12) 100%);
-  box-shadow: 0 4px 12px rgba(42,96,73,0.15);
+  background: linear-gradient(135deg, rgba(0,212,164,0.06) 0%, rgba(0,212,164,0.12) 100%);
+  box-shadow: 0 4px 12px rgba(0,212,164,0.15);
 }
 .chk-box {
   width: 22px; height: 22px;
   border-radius: 7px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-bright);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: all 0.22s var(--ease-bounce);
-  background: #fff;
+  background: var(--surface2);
 }
 .chk-item input:checked + .chk-lbl .chk-box {
   background: var(--grad-green);
@@ -389,8 +389,8 @@ select {
 /* Extra Hours Input */
 .chk-wrap { display: flex; flex-direction: column; gap: 5px; }
 .extra-hours {
-  background: rgba(240,160,96,0.08);
-  border: 1.5px solid rgba(240,160,96,0.3);
+  background: rgba(251,191,36,0.08);
+  border: 1.5px solid rgba(251,191,36,0.3);
   border-radius: 10px;
   padding: 8px 12px;
   display: flex; align-items: center; gap: 10px;
@@ -399,7 +399,7 @@ select {
 @keyframes slideDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 .extra-hours label {
   font-size: 0.78rem;
-  color: #b06a30;
+  color: var(--yellow);
   font-weight: 600;
   margin: 0;
   text-transform: none;
@@ -408,16 +408,16 @@ select {
 }
 .extra-hours input {
   flex: 1; min-width: 60px; max-width: 90px;
-  background: #fff;
-  border: 1.5px solid rgba(240,160,96,0.4);
+  background: var(--surface2);
+  border: 1.5px solid rgba(251,191,36,0.4);
   border-radius: 7px;
   font-size: 0.95rem;
   font-weight: 700;
   padding: 7px 10px;
   text-align: center;
-  color: #b06a30;
+  color: var(--yellow);
 }
-.extra-hours input:focus { border-color: #d07a3a; background: #fff; }
+.extra-hours input:focus { border-color: var(--yellow); background: var(--surface3); }
 
 /* BUTTONS - futuristic with glow */
 .btn-p {
@@ -667,7 +667,7 @@ select {
 }
 .loc-card.selected {
   border-color: var(--accent);
-  background: linear-gradient(135deg, rgba(200,75,47,0.03) 0%, rgba(200,75,47,0.08) 100%);
+  background: linear-gradient(135deg, rgba(255,107,53,0.03) 0%, rgba(255,107,53,0.08) 100%);
 }
 .loc-card::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
@@ -736,7 +736,7 @@ select {
 }
 .dw-av {
   width: 36px; height: 36px; border-radius: 50%;
-  background: var(--text); color: var(--bg);
+  background: var(--grad-accent); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; flex-shrink: 0;
 }
@@ -791,12 +791,12 @@ select {
   font-size: 0.73rem; font-weight: 700;
   border: 1px solid var(--border); min-width: 22px; text-align: center;
 }
-.sub-tab-btn.active .sub-count { background: var(--text); color: var(--bg); border-color: var(--text); }
+.sub-tab-btn.active .sub-count { background: var(--grad-accent); color: #fff; border-color: var(--text); }
 
 /* Completed location styling */
 .loc-card.completed {
-  background: rgba(42,96,73,0.04);
-  border-color: rgba(42,96,73,0.25);
+  background: rgba(0,212,164,0.04);
+  border-color: rgba(0,212,164,0.25);
   opacity: 0.92;
 }
 .loc-card.completed::before { background: var(--green); }
@@ -827,7 +827,7 @@ select {
   transition: all 0.16s; padding: 0;
 }
 .loc-status-btn:hover, .loc-status-btn:active { background: var(--green); color: #fff; border-color: var(--green); transform: scale(1.08); }
-.loc-card.completed .loc-status-btn:hover { background: #d07a3a; border-color: #d07a3a; }
+.loc-card.completed .loc-status-btn:hover { background: #fbbf24; border-color: #fbbf24; }
 
 /* Day descriptions shown under date */
 .day-descs {
@@ -871,11 +871,11 @@ select {
 .bc-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; transition: all 0.16s; border: 1.5px solid transparent; }
 .bc-row.clickable { cursor: pointer; }
 .bc-row.clickable:hover, .bc-row.clickable:active { background: var(--surface2); }
-.bc-row.selected { background: rgba(200,75,47,0.06); border-color: var(--accent); }
+.bc-row.selected { background: rgba(255,107,53,0.06); border-color: var(--accent); }
 .bc-label { font-size: 0.85rem; font-weight: 500; min-width: 130px; max-width: 160px; color: var(--text); display: flex; align-items: center; gap: 9px; }
 .bc-av {
   width: 30px; height: 30px; border-radius: 50%;
-  background: var(--text); color: var(--bg);
+  background: var(--grad-accent); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
 }
@@ -886,7 +886,7 @@ select {
 .bc-bar { height: 10px; border-radius: 3px; min-width: 2px; transition: width 0.5s ease; }
 .bc-bar.full-bar { background: var(--green); }
 .bc-bar.half-bar { background: #f0a060; }
-.bc-bar.extra-bar { background: #b06a30; }
+.bc-bar.extra-bar { background: #fbbf24; }
 .bc-count { font-size: 0.72rem; font-family: 'DM Mono', monospace; color: var(--muted); white-space: nowrap; }
 
 .chart-legend { display: flex; gap: 16px; margin-top: 14px; }
@@ -897,9 +897,12 @@ select {
 .month-section { margin-bottom: 28px; }
 .month-header {
   font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
-  padding: 12px 16px; background: var(--text); color: var(--bg);
+  padding: 12px 16px;
+  background: var(--grad-accent);
+  color: #fff;
   border-radius: 10px; margin-bottom: 12px;
   display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(255,107,53,0.25);
 }
 .month-total { font-size: 0.78rem; font-family: 'DM Mono', monospace; color: rgba(255,255,255,0.6); font-weight: 400; }
 .month-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh); }
@@ -915,13 +918,13 @@ select {
 .td-name { font-weight: 600; display: flex; align-items: center; gap: 9px; }
 .mini-av {
   width: 28px; height: 28px; border-radius: 50%;
-  background: var(--text); color: var(--bg);
+  background: var(--grad-accent); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
 }
 .td-days { font-family: 'DM Mono', monospace; font-size: 0.88rem; }
 .td-full { color: var(--green); font-weight: 600; }
-.td-half { color: #d07a3a; font-weight: 600; }
+.td-half { color: #fbbf24; font-weight: 600; }
 .td-total { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 800; }
 .progress-cell { min-width: 100px; }
 .mini-prog { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
@@ -930,8 +933,8 @@ select {
 /* Wage badge */
 .wage-badge {
   display: inline-block; font-size: 0.72rem; font-weight: 600;
-  color: var(--green); background: rgba(42,96,73,0.08);
-  border: 1px solid rgba(42,96,73,0.2);
+  color: var(--green); background: rgba(0,212,164,0.08);
+  border: 1px solid rgba(0,212,164,0.2);
   border-radius: 20px; padding: 1px 8px; margin-top: 3px;
 }
 
@@ -978,7 +981,7 @@ select {
   position: absolute;
   top: 0; right: 0;
   width: 80px; height: 80px;
-  background: radial-gradient(circle at top right, rgba(200,75,47,0.08), transparent 70%);
+  background: radial-gradient(circle at top right, rgba(255,107,53,0.08), transparent 70%);
   pointer-events: none;
 }
 .planned-card:hover {
@@ -988,7 +991,7 @@ select {
 }
 .planned-card.done {
   opacity: 0.85;
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(42,96,73,0.04) 100%);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(0,212,164,0.04) 100%);
 }
 .planned-card.done .pc-name { text-decoration: line-through; color: var(--muted); }
 
@@ -1039,7 +1042,7 @@ select {
   padding: 7px 10px;
   background: rgba(240,160,96,0.06);
   border-radius: 8px;
-  border-left: 2px solid #d07a3a;
+  border-left: 2px solid #fbbf24;
   font-style: italic;
 }
 .pc-day-info {
@@ -1049,15 +1052,15 @@ select {
 }
 .day-warn {
   color: var(--accent);
-  background: rgba(200,75,47,0.1);
+  background: rgba(255,107,53,0.1);
   padding: 4px 10px;
   border-radius: 20px;
   display: inline-block;
   animation: pulseWarn 1.5s infinite;
 }
 @keyframes pulseWarn {
-  0%, 100% { background: rgba(200,75,47,0.1); }
-  50% { background: rgba(200,75,47,0.25); }
+  0%, 100% { background: rgba(255,107,53,0.1); }
+  50% { background: rgba(255,107,53,0.25); }
 }
 .day-today {
   color: #fff;
@@ -1066,10 +1069,10 @@ select {
   border-radius: 20px;
   display: inline-block;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(200,75,47,0.3);
+  box-shadow: 0 4px 12px rgba(255,107,53,0.3);
 }
 .day-soon {
-  color: #d07a3a;
+  color: #fbbf24;
   background: rgba(240,160,96,0.15);
   padding: 4px 10px;
   border-radius: 20px;
@@ -1077,7 +1080,7 @@ select {
 }
 .day-far {
   color: var(--green);
-  background: rgba(42,96,73,0.08);
+  background: rgba(0,212,164,0.08);
   padding: 4px 10px;
   border-radius: 20px;
   display: inline-block;
@@ -1244,7 +1247,7 @@ select {
 .sb-formula { font-size: 0.73rem; color: var(--muted); font-family: 'DM Mono', monospace; width: 100%; }
 .sb-val { font-size: 0.88rem; font-weight: 700; font-family: 'DM Mono', monospace; margin-left: auto; }
 .sb-extra { background: rgba(240,160,96,0.06); border-radius: 6px; padding: 6px 8px; }
-.sb-total { background: rgba(42,96,73,0.05); border-radius: 6px; padding: 8px; margin-top: 6px; border: 1px solid rgba(42,96,73,0.15) !important; }
+.sb-total { background: rgba(0,212,164,0.05); border-radius: 6px; padding: 8px; margin-top: 6px; border: 1px solid rgba(0,212,164,0.15) !important; }
 .sb-total .sb-lbl { font-weight: 700; color: var(--green); }
 
 /* Location edit button */
@@ -1264,10 +1267,10 @@ select {
 
 /* BADGES */
 .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
-.badge-full { background: rgba(42,96,73,0.1); color: var(--green); border: 1px solid rgba(42,96,73,0.22); }
-.badge-half { background: rgba(200,75,47,0.08); color: var(--accent); border: 1px solid rgba(200,75,47,0.2); }
-.badge-extra { background: rgba(240,160,96,0.15); color: #b06a30; border: 1px solid rgba(240,160,96,0.4); font-family: 'DM Mono', monospace; }
-.badge-extra-only { background: #b06a30; color: #fff; border: 1px solid #b06a30; font-family: 'DM Sans', sans-serif; font-weight: 700; }
+.badge-full { background: rgba(0,212,164,0.1); color: var(--green); border: 1px solid rgba(0,212,164,0.22); }
+.badge-half { background: rgba(255,107,53,0.08); color: var(--accent); border: 1px solid rgba(255,107,53,0.2); }
+.badge-extra { background: rgba(240,160,96,0.15); color: #fbbf24; border: 1px solid rgba(240,160,96,0.4); font-family: 'DM Mono', monospace; }
+.badge-extra-only { background: #fbbf24; color: #fff; border: 1px solid #fbbf24; font-family: 'DM Sans', sans-serif; font-weight: 700; }
 
 /* HISTORY ENTRIES (all tab) */
 .eg { margin-bottom: 20px; }
@@ -1279,7 +1282,7 @@ select {
   gap: 12px; align-items: start; transition: border-color 0.15s;
 }
 .ecard:hover { border-color: #bbb; }
-.eav { width: 34px; height: 34px; border-radius: 50%; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
+.eav { width: 34px; height: 34px; border-radius: 50%; background: var(--grad-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
 .ei strong { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 2px; }
 .ei-meta { font-size: 0.77rem; color: var(--muted); display: flex; gap: 7px; flex-wrap: wrap; }
 .ei-meta .loc::before { content: '📍 '; }
@@ -1330,14 +1333,14 @@ select {
 }
 .sync-dot.online {
   background: var(--green);
-  box-shadow: 0 0 0 4px rgba(42,96,73,0.18);
+  box-shadow: 0 0 0 4px rgba(0,212,164,0.18);
   animation: syncPulse 2s infinite;
 }
 .sync-dot.syncing { background: #e0a040; animation: syncPulse 1s infinite; }
 .sync-dot.error { background: var(--accent); }
 @keyframes syncPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(42,96,73,0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(42,96,73,0); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,212,164,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(0,212,164,0); }
 }
 .sync-text {
   font-size: 0.84rem; font-weight: 500;
@@ -1795,7 +1798,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
   <div class="logo">Regjistri<span class="logo-dot">.</span>Punës</div>
   <div class="nav">
     <button class="nav-btn active" onclick="showView('register',this)">📝<span class="nav-txt"> Regjistro</span></button>
-    <button class="nav-btn" onclick="showView('planned',this)">🗓<span class="nav-txt"> Plani</span></button>
+    <button class="nav-btn" onclick="showView('planned',this)" style="position:relative">🗓<span class="nav-txt"> Plani</span><span id="planNavBadge" style="position:absolute;top:-5px;right:-5px;background:var(--grad-accent);color:#fff;font-size:0.62rem;font-weight:800;min-width:18px;height:18px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 8px rgba(255,107,53,0.5);font-family:'DM Mono',monospace">0</span></button>
     <button class="nav-btn" onclick="showView('workers',this)">👷<span class="nav-txt"> Punëtorët</span></button>
     <button class="nav-btn" onclick="showView('prices',this)">📐<span class="nav-txt"> Tarifat</span></button>
     <button class="nav-btn" onclick="showView('history',this)">📊<span class="nav-txt"> Historia</span></button>
@@ -1998,7 +2001,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
             <div class="chart-legend">
               <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div> Ditë Plotë</div>
               <div class="leg-item"><div class="leg-dot" style="background:#f0a060"></div> Gjysmë</div>
-              <div class="leg-item"><div class="leg-dot" style="background:#b06a30"></div> Vetëm Ekstra</div>
+              <div class="leg-item"><div class="leg-dot" style="background:#fbbf24"></div> Vetëm Ekstra</div>
             </div>
           </div>
         </div>
@@ -2232,7 +2235,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <h3>💼 Punët në <span id="pwLocLabel" style="color:var(--accent)"></span></h3>
     <input type="hidden" id="pwLoc"/>
 
-    <div style="background:rgba(42,96,73,0.04);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+    <div style="background:rgba(0,212,164,0.04);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
       <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">➕ Shto Punë të Re</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div>
@@ -2822,6 +2825,7 @@ function savePlannedJob() {
   save();
   document.getElementById('plannedModal').classList.remove('open');
   renderPlanned();
+  notifyUpcomingJobs();
   showToast(id ? '✔ Puna u përditësua!' : '✔ Puna u shtua!');
 }
 
@@ -2897,7 +2901,7 @@ function renderPlanned() {
   }
 
   const priorityLabels = {
-    urgent: { txt: '🚨 URGJENT', color: '#c84b2f', bg: 'rgba(200,75,47,0.12)' },
+    urgent: { txt: '🚨 URGJENT', color: '#c84b2f', bg: 'rgba(255,107,53,0.12)' },
     high: { txt: '🔴 I Lartë', color: '#e07347', bg: 'rgba(224,115,71,0.12)' },
     normal: { txt: '📘 Normal', color: '#5a7c9b', bg: 'rgba(90,124,155,0.1)' },
     low: { txt: '🟢 I Ulët', color: '#5a8a6a', bg: 'rgba(90,138,106,0.1)' }
@@ -3172,7 +3176,7 @@ function renderProjectWorksModal(loc) {
     container.innerHTML = '<div style="text-align:center;padding:18px;color:var(--muted);font-size:0.85rem">Nuk ka punë të regjistruara ende për këtë vend.</div>';
   } else {
     container.innerHTML = `
-      <div style="background:rgba(42,96,73,0.06);border:1.5px solid var(--green);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center">
+      <div style="background:rgba(0,212,164,0.06);border:1.5px solid var(--green);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center">
         <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Totali për këtë vend</div>
         <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green)">${totalEarned.toFixed(2)}€</div>
       </div>
@@ -3648,9 +3652,9 @@ function renderChart(filtered) {
     <div class="chart-stat"><div class="cs-val">${uniqueDates}</div><div class="cs-lbl">Ditë</div></div>
     <div class="chart-stat"><div class="cs-val">${uniqueLocs}</div><div class="cs-lbl">Vende</div></div>
     <div class="chart-stat"><div class="cs-val" style="color:var(--green)">${totalFull}</div><div class="cs-lbl">Plota</div></div>
-    <div class="chart-stat"><div class="cs-val" style="color:#d07a3a">${totalHalf}</div><div class="cs-lbl">Gjysëm</div></div>
-    <div class="chart-stat"><div class="cs-val" style="color:#b06a30">${totalExtraOnly}</div><div class="cs-lbl">Vet. Ekstra</div></div>
-    <div class="chart-stat"><div class="cs-val" style="color:#b06a30">${totalExtra}h</div><div class="cs-lbl">Orë Ekstra</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#fbbf24">${totalHalf}</div><div class="cs-lbl">Gjysëm</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#fbbf24">${totalExtraOnly}</div><div class="cs-lbl">Vet. Ekstra</div></div>
+    <div class="chart-stat"><div class="cs-val" style="color:#fbbf24">${totalExtra}h</div><div class="cs-lbl">Orë Ekstra</div></div>
   `;
 
   document.getElementById('barChart').innerHTML = names.map(name => {
@@ -3828,8 +3832,8 @@ function renderMonthly(filtered) {
                   <td><div class="td-name"><div class="mini-av">${ini(w.name)}</div>${esc(w.name)}</div></td>
                   <td class="td-days td-full">${w.full}</td>
                   <td class="td-days td-half">${w.half}</td>
-                  <td class="td-days" style="color:#b06a30;font-weight:700">${w.extraOnly>0?w.extraOnly:'-'}</td>
-                  <td class="td-days" style="color:#b06a30;font-weight:700">${w.extra>0?w.extra+'h':'-'}</td>
+                  <td class="td-days" style="color:#fbbf24;font-weight:700">${w.extraOnly>0?w.extraOnly:'-'}</td>
+                  <td class="td-days" style="color:#fbbf24;font-weight:700">${w.extra>0?w.extra+'h':'-'}</td>
                   <td class="td-total">${total}</td>
                 </tr>
               `;
@@ -4063,15 +4067,15 @@ function renderPayments() {
       <div class="card-bd" style="padding:14px 10px">
         <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;text-align:center;font-family:'Syne',sans-serif;font-weight:700">📊 Pamje e Përgjithshme</div>
         <div class="overview-grid">
-          <div class="overview-box" style="background:rgba(42,96,73,0.06);border:1px solid rgba(42,96,73,0.2)">
+          <div class="overview-box" style="background:rgba(0,212,164,0.06);border:1px solid rgba(0,212,164,0.2)">
             <div class="ov-lbl">Të fituara</div>
             <div class="ov-val" style="color:var(--green)">${totalEarned.toFixed(2)}€</div>
           </div>
-          <div class="overview-box" style="background:rgba(42,96,73,0.04);border:1px solid var(--border)">
+          <div class="overview-box" style="background:rgba(0,212,164,0.04);border:1px solid var(--border)">
             <div class="ov-lbl">Të paguara</div>
             <div class="ov-val">${totalPaid.toFixed(2)}€</div>
           </div>
-          <div class="overview-box" style="background:${totalDebt > 0 ? 'rgba(200,75,47,0.08)' : 'rgba(42,96,73,0.06)'};border:1.5px solid ${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">
+          <div class="overview-box" style="background:${totalDebt > 0 ? 'rgba(255,107,53,0.08)' : 'rgba(0,212,164,0.06)'};border:1.5px solid ${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">
             <div class="ov-lbl">Borxhi</div>
             <div class="ov-val" style="color:${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">${totalDebt.toFixed(2)}€</div>
           </div>
@@ -4216,7 +4220,7 @@ function renderExpenses() {
   const catNames = { material: 'Materiale', transport: 'Transport', qira: 'Qira/Vegla', ushqim: 'Ushqim', tjeter: 'Tjetër' };
 
   let html = `
-    <div class="card" style="margin-bottom:14px;background:rgba(200,75,47,0.05);border-color:var(--accent)">
+    <div class="card" style="margin-bottom:14px;background:rgba(255,107,53,0.05);border-color:var(--accent)">
       <div class="card-bd" style="text-align:center;padding:18px">
         <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Totali i Shpenzimeve</div>
         <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)">${totalAll.toFixed(2)}€</div>
@@ -4343,16 +4347,16 @@ function renderProfit() {
       <div class="card-bd" style="padding:18px 20px">
         <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;text-align:center;font-family:'Syne',sans-serif;font-weight:700">📊 Pamje e Përgjithshme</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <div style="background:rgba(42,96,73,0.06);border:1px solid rgba(42,96,73,0.2);border-radius:10px;padding:11px;text-align:center">
+          <div style="background:rgba(0,212,164,0.06);border:1px solid rgba(0,212,164,0.2);border-radius:10px;padding:11px;text-align:center">
             <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase">Kontrata</div>
             <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--green)">${totalContracts.toFixed(2)}€</div>
           </div>
-          <div style="background:rgba(200,75,47,0.05);border:1px solid rgba(200,75,47,0.2);border-radius:10px;padding:11px;text-align:center">
+          <div style="background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.2);border-radius:10px;padding:11px;text-align:center">
             <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase">Shpenzime</div>
             <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent)">${(totalWagesAll + totalExpensesAll).toFixed(2)}€</div>
           </div>
         </div>
-        <div style="background:${totalProfit >= 0 ? 'rgba(42,96,73,0.1)' : 'rgba(200,75,47,0.1)'};border:2px solid ${totalProfit >= 0 ? 'var(--green)' : 'var(--accent)'};border-radius:10px;padding:14px;text-align:center">
+        <div style="background:${totalProfit >= 0 ? 'rgba(0,212,164,0.1)' : 'rgba(255,107,53,0.1)'};border:2px solid ${totalProfit >= 0 ? 'var(--green)' : 'var(--accent)'};border-radius:10px;padding:14px;text-align:center">
           <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Fitimi Total</div>
           <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:${totalProfit >= 0 ? 'var(--green)' : 'var(--accent)'}">${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}€</div>
         </div>
@@ -4392,7 +4396,7 @@ function renderProfit() {
               </div>
               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.82rem">
                 <span style="color:var(--muted)">↳ Mbetet për t'u arkëtuar</span>
-                <span style="font-family:'DM Mono',monospace;color:#b06a30;font-weight:600">${p.remaining.toFixed(2)}€</span>
+                <span style="font-family:'DM Mono',monospace;color:#fbbf24;font-weight:600">${p.remaining.toFixed(2)}€</span>
               </div>
             ` : ''}
             <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
@@ -4407,7 +4411,7 @@ function renderProfit() {
             </div>
           </div>
 
-          <div style="background:${p.profit >= 0 ? 'rgba(42,96,73,0.08)' : 'rgba(200,75,47,0.08)'};border:1.5px solid ${profitColor};border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="background:${p.profit >= 0 ? 'rgba(0,212,164,0.08)' : 'rgba(255,107,53,0.08)'};border:1.5px solid ${profitColor};border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center">
             <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem">FITIMI</span>
             <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:${profitColor}">${p.profit >= 0 ? '+' : ''}${p.profit.toFixed(2)}€</span>
           </div>
@@ -5047,9 +5051,50 @@ async function pullFromDrive() {
     const total = workers.length + entries.length;
     setSyncStatus('online', 'Sinkronizuar ✓', 'Të dhënat u ngarkuan nga Drive');
     if (total > 0) showToast('☁️ ' + entries.length + ' regjistrime u ngarkuan!');
+    // Check for upcoming job reminders on startup
+    setTimeout(notifyUpcomingJobs, 2500);
   } catch (e) {
     setSyncStatus('error', 'Gabim ngarkimi', e.message);
     console.error('Pull error:', e);
+  }
+}
+
+// Show toast notification for upcoming planned jobs (runs after Drive sync)
+let remindersNotified = false;
+function notifyUpcomingJobs() {
+  const today = new Date(todayStr);
+  const urgent = [];
+  plannedJobs.forEach(j => {
+    if (j.status === 'done' || j.status === 'paused') return;
+    if (!j.startDate || !j.reminderDays || j.reminderDays === 0) return;
+    const start = new Date(j.startDate);
+    const diffDays = Math.round((start - today) / (1000 * 60 * 60 * 24));
+    if (diffDays >= 0 && diffDays <= j.reminderDays) {
+      urgent.push({ loc: j.location, diffDays });
+    }
+  });
+
+  // Update nav badge
+  const badge = document.getElementById('planNavBadge');
+  if (badge) {
+    if (urgent.length) {
+      badge.textContent = urgent.length;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (urgent.length && !remindersNotified) {
+    remindersNotified = true;
+    urgent.sort((a,b) => a.diffDays - b.diffDays);
+    const first = urgent[0];
+    let msg = '';
+    if (first.diffDays === 0) msg = `🔥 "${first.loc}" fillon SOT!`;
+    else if (first.diffDays === 1) msg = `⚡ "${first.loc}" fillon NESËR!`;
+    else msg = `🔔 "${first.loc}" fillon pas ${first.diffDays} ditëve`;
+    if (urgent.length > 1) msg += ` (+${urgent.length - 1} të tjera)`;
+    showToast(msg);
   }
 }
 
@@ -5057,6 +5102,8 @@ function refreshUI() {
   renderChecklist();
   if (document.getElementById('view-workers').classList.contains('active')) renderWorkers();
   if (document.getElementById('view-history').classList.contains('active')) renderHistory();
+  if (document.getElementById('view-planned').classList.contains('active')) renderPlanned();
+  if (document.getElementById('view-prices').classList.contains('active')) renderPriceList();
 }
 
 async function pushToDrive() {
