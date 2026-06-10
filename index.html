@@ -811,11 +811,8 @@ select {
 /* DRILL-DOWN PANEL */
 .drill-panel {
   background: var(--surface);
-  border: 2px solid var(--accent);
   border-radius: var(--r);
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: var(--sh-lg);
+  padding: 22px;
   animation: slideIn 0.3s var(--ease);
 }
 @keyframes slideIn {
@@ -2102,7 +2099,12 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         <button class="sub-tab-btn" onclick="switchLocSubTab('completed',this)">✅ Të Kompletuara <span class="sub-count" id="subTabCompletedCount">0</span></button>
       </div>
       <div class="loc-grid" id="locGrid"></div>
-      <div id="drillPanel"></div>
+      <!-- Location details modal -->
+      <div class="modal-overlay" id="drillModal" onclick="if(event.target===this)closeDrillModal()">
+        <div class="modal" style="max-width:560px;padding:0;overflow:hidden">
+          <div id="drillPanel" style="max-height:85vh;overflow-y:auto"></div>
+        </div>
+      </div>
     </div>
 
     <!-- CHART TAB -->
@@ -2602,6 +2604,8 @@ function switchTab(tab, btn) {
   selectedLoc = null;
   selectedDate = null;
   selectedWorker = null;
+  const dm = document.getElementById('drillModal');
+  if (dm) dm.classList.remove('open');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   ['locations','chart','monthly','salary','payments','all'].forEach(t => {
@@ -3624,6 +3628,18 @@ function switchLocSubTab(sub, btn) {
 function selectLoc(loc) {
   selectedLoc = selectedLoc === loc ? null : loc;
   selectedDate = null;
+  if (selectedLoc) {
+    renderHistory();
+    document.getElementById('drillModal').classList.add('open');
+  } else {
+    closeDrillModal();
+  }
+}
+
+function closeDrillModal() {
+  selectedLoc = null;
+  selectedDate = null;
+  document.getElementById('drillModal').classList.remove('open');
   renderHistory();
 }
 
@@ -3680,7 +3696,7 @@ function renderDrill(loc, data) {
           <div class="drill-title">📍 ${esc(loc)}</div>
           <div class="drill-sub">${data.uniqueDays} ditë pune · ${data.uniqueWorkers} punëtorë gjithsej</div>
         </div>
-        <button class="btn-sm" onclick="selectLoc('${locEscaped}')">✕ Mbyll</button>
+        <button class="btn-sm" onclick="closeDrillModal()">✕ Mbyll</button>
       </div>
       <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Ditët e Punës (klik për detaje)</div>
       <div class="day-list">
