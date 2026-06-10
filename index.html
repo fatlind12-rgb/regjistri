@@ -102,72 +102,131 @@ html { scroll-behavior: smooth; }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* HEADER - futuristic */
+/* HEADER - futuristic glass */
 header {
-  background: linear-gradient(180deg, rgba(15,13,20,0.98) 0%, rgba(15,13,20,0.92) 100%);
+  background: linear-gradient(180deg, rgba(10,8,15,0.97) 0%, rgba(14,12,20,0.94) 100%);
   color: var(--text-bright);
-  padding: 0 28px; height: 68px;
+  padding: 0 20px;
+  height: 64px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 200;
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 header::after {
   content: '';
   position: absolute;
-  bottom: -1px; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), var(--green), transparent);
-  opacity: 0.5;
+  bottom: -1px; left: 0; right: 0; height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--green) 70%, transparent 100%);
+  opacity: 0.6;
 }
 .logo {
-  font-family: 'Syne', sans-serif; font-size: 1.18rem; font-weight: 800;
+  font-family: 'Syne', sans-serif; font-size: 1.12rem; font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #fff 0%, #c8c0dc 100%);
+  color: var(--text-bright);
+  display: flex; align-items: center; gap: 2px;
+  white-space: nowrap;
+}
+.logo-icon {
+  color: var(--accent);
+  font-size: 1rem;
+  margin-right: 5px;
+  text-shadow: 0 0 16px var(--accent-glow);
+  animation: pulse 3s ease-in-out infinite;
+}
+.logo-dot { color: var(--accent); text-shadow: 0 0 12px var(--accent-glow); }
+.logo-sub {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--green) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(255,255,255,0.2);
-}
-.logo-dot {
-  color: var(--accent);
-  -webkit-text-fill-color: var(--accent);
-  display: inline-block;
-  animation: pulse 2s ease-in-out infinite;
-  text-shadow: 0 0 12px var(--accent-glow);
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.2); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
-.nav { display: flex; gap: 4px; }
+
+/* NAV - desktop: top bar */
+.nav { display: flex; gap: 3px; }
 .nav-btn {
-  padding: 8px 13px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.8rem; font-weight: 500;
+  font-size: 0.8rem; font-weight: 600;
   cursor: pointer;
   transition: all 0.25s var(--ease);
-  position: relative;
-  overflow: hidden;
+  display: flex; align-items: center; gap: 7px;
 }
+.nav-ico { width: 18px; height: 18px; flex-shrink: 0; }
 .nav-btn:hover {
   background: rgba(255,255,255,0.05);
   color: var(--text-bright);
-  border-color: var(--border-bright);
-  transform: translateY(-1px);
 }
 .nav-btn.active {
+  background: linear-gradient(135deg, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0.08) 100%);
+  border-color: rgba(255,107,53,0.4);
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(255,107,53,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.nav-badge {
+  position: absolute;
+  top: -4px; right: -4px;
   background: var(--grad-accent);
-  border-color: transparent;
   color: #fff;
-  box-shadow: var(--sh-accent), inset 0 1px 0 rgba(255,255,255,0.2);
-  font-weight: 600;
+  font-size: 0.6rem; font-weight: 800;
+  min-width: 17px; height: 17px;
+  border-radius: 9px;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 2px 10px rgba(255,107,53,0.6);
+  font-family: 'DM Mono', monospace;
+  border: 1.5px solid var(--bg-deep);
 }
 
+/* MOBILE: bottom navigation bar (app-like) */
+@media (max-width: 640px) {
+  header { padding: 0 16px; height: 56px; }
+  .logo { font-size: 1rem; }
+  .nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(14,12,20,0.97) 0%, rgba(8,6,12,0.99) 100%);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-around;
+    gap: 2px;
+    z-index: 300;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+  }
+  .nav::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0; right: 0; height: 1.5px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--green) 70%, transparent 100%);
+    opacity: 0.5;
+  }
+  .nav-btn {
+    flex-direction: column;
+    gap: 4px;
+    padding: 7px 10px;
+    font-size: 0.62rem;
+    flex: 1;
+    max-width: 84px;
+    border-radius: 14px;
+  }
+  .nav-ico { width: 21px; height: 21px; }
+  .nav-badge { top: 0; right: 8px; }
+  /* Body padding so content not hidden behind bottom nav */
+  body { padding-bottom: 76px; }
+  .btn-floating { bottom: 92px !important; }
+}
 /* VIEWS */
 .view { display: none; animation: fadeIn 0.4s var(--ease); position: relative; z-index: 1; }
 .view.active { display: block; }
@@ -175,7 +234,9 @@ header::after {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.page { max-width: 1060px; margin: 0 auto; padding: 30px 22px; position: relative; }
+.page { max-width: 1060px; margin: 0 auto; padding: 28px 20px; position: relative; }
+@media (max-width: 640px) { .page { padding: 20px 14px; } }
+@media (max-width: 380px) { .page { padding: 16px 10px; } }
 
 /* SECTION TITLE - holographic */
 .stitle {
@@ -192,6 +253,21 @@ header::after {
   border-radius: 20px;
   border: 1px solid rgba(255,107,53,0.3);
   box-shadow: 0 0 12px rgba(255,107,53,0.15);
+}
+.stitle-ico {
+  color: var(--accent);
+  font-size: 1rem;
+  text-shadow: 0 0 14px var(--accent-glow);
+}
+.ssubtitle {
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: -14px 0 20px 0;
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .stitle { font-size: 1.25rem; }
+  .ssubtitle { font-size: 0.8rem; margin-bottom: 16px; }
 }
 
 /* CARD - glassmorphism futuristic */
@@ -584,7 +660,8 @@ select {
 .stats4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 22px; }
 @media(max-width:560px) { .stats4 { grid-template-columns: repeat(2,1fr); } }
 .sbox {
-  background: var(--surface);
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 16px 18px;
@@ -595,65 +672,86 @@ select {
 }
 .sbox::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--grad-dark);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 0.4s var(--ease);
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--green));
+  opacity: 0.5;
 }
-.sbox:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
-.sbox:hover::before { transform: scaleX(1); }
+.sbox:nth-child(1)::before { background: var(--accent); }
+.sbox:nth-child(2)::before { background: var(--green); }
+.sbox:nth-child(3)::before { background: var(--blue); }
+.sbox:nth-child(4)::before { background: var(--purple); }
+.sbox:hover { transform: translateY(-2px); box-shadow: var(--sh-md); border-color: var(--border-bright); }
 .sval {
   font-family: 'Syne', sans-serif;
   font-size: 1.85rem; font-weight: 800;
   line-height: 1;
   letter-spacing: -1px;
+  color: var(--text-bright);
 }
+.sbox:nth-child(1) .sval { color: var(--accent); text-shadow: 0 0 24px rgba(255,107,53,0.3); }
+.sbox:nth-child(2) .sval { color: var(--green); text-shadow: 0 0 24px rgba(0,212,164,0.3); }
+.sbox:nth-child(3) .sval { color: var(--blue); text-shadow: 0 0 24px rgba(77,159,255,0.3); }
+.sbox:nth-child(4) .sval { color: var(--purple); text-shadow: 0 0 24px rgba(168,85,247,0.3); }
 .slbl {
-  font-size: 0.7rem; color: var(--muted);
+  font-size: 0.68rem; color: var(--muted);
   margin-top: 6px;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.7px;
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .sval { font-size: 1.5rem; }
+  .sbox { padding: 13px 14px; }
 }
 
 /* FILTER */
 .frow { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 .frow input { flex: 1; min-width: 130px; }
 
-/* TAB SWITCHER */
-.tab-bar { display: flex; gap: 7px; margin-bottom: 22px; flex-wrap: wrap; }
+/* TAB SWITCHER - scrollable on mobile */
+.tab-bar {
+  display: flex; gap: 7px; margin-bottom: 22px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .tab-bar { flex-wrap: wrap; overflow-x: visible; } }
 .tab-btn {
-  padding: 10px 20px;
+  padding: 10px 18px;
   border-radius: var(--r-sm);
   border: 1.5px solid var(--border);
   background: var(--surface);
   color: var(--muted);
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem; font-weight: 500;
+  font-size: 0.84rem; font-weight: 600;
   cursor: pointer;
   transition: all 0.22s var(--ease);
   box-shadow: var(--sh);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tab-btn:hover {
-  border-color: var(--text);
-  color: var(--text);
+  border-color: rgba(255,107,53,0.4);
+  color: var(--text-bright);
   transform: translateY(-1px);
-  box-shadow: var(--sh-md);
 }
 .tab-btn.active {
-  background: var(--grad-dark);
-  color: var(--bg);
-  border-color: transparent;
+  background: linear-gradient(135deg, rgba(255,107,53,0.2) 0%, rgba(255,107,53,0.08) 100%);
+  color: var(--accent);
+  border-color: rgba(255,107,53,0.5);
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(26,23,20,0.25);
+  box-shadow: 0 0 20px rgba(255,107,53,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 /* LOCATION CARDS - more visual */
 .loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 14px; margin-bottom: 20px; }
 .loc-card {
-  background: var(--surface);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(16px);
   border: 1.5px solid var(--border);
   border-radius: var(--r);
-  padding: 20px 22px;
+  padding: 18px 20px;
   box-shadow: var(--sh);
   cursor: pointer;
   transition: all 0.28s var(--ease);
@@ -1397,7 +1495,6 @@ select {
   from { opacity: 0; transform: scale(0.9) translateY(20px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-}
 .modal h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
 .modal p { font-size: 0.86rem; color: var(--muted); margin-bottom: 14px; line-height: 1.55; }
 .modal code {
@@ -1764,7 +1861,7 @@ select {
   border-radius: var(--r-lg);
   color: var(--muted);
 }
-.empty-state .big { font-size: 3.5rem; margin-bottom: 14px; opacity: 0.6; }
+.empty-state .big { font-size: 3.5rem; margin-bottom: 14px; opacity: 0.6; filter: grayscale(0.3); }
 .empty-state p { font-size: 0.92rem; }
 .empty-state strong { color: var(--accent); }
 
@@ -1795,13 +1892,29 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <body>
 
 <header>
-  <div class="logo">Regjistri<span class="logo-dot">.</span>Punës</div>
-  <div class="nav">
-    <button class="nav-btn active" onclick="showView('register',this)">📝<span class="nav-txt"> Regjistro</span></button>
-    <button class="nav-btn" onclick="showView('planned',this)" style="position:relative">🗓<span class="nav-txt"> Plani</span><span id="planNavBadge" style="position:absolute;top:-5px;right:-5px;background:var(--grad-accent);color:#fff;font-size:0.62rem;font-weight:800;min-width:18px;height:18px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 8px rgba(255,107,53,0.5);font-family:'DM Mono',monospace">0</span></button>
-    <button class="nav-btn" onclick="showView('workers',this)">👷<span class="nav-txt"> Punëtorët</span></button>
-    <button class="nav-btn" onclick="showView('prices',this)">📐<span class="nav-txt"> Tarifat</span></button>
-    <button class="nav-btn" onclick="showView('history',this)">📊<span class="nav-txt"> Historia</span></button>
+  <div class="logo"><span class="logo-icon">◢</span>Regjistri<span class="logo-dot">.</span><span class="logo-sub">Punës</span></div>
+  <div class="nav" id="mainNav">
+    <button class="nav-btn active" data-view="register" onclick="showView('register',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span class="nav-txt">Regjistro</span>
+    </button>
+    <button class="nav-btn" data-view="planned" onclick="showView('planned',this)" style="position:relative">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="nav-txt">Plani</span>
+      <span id="planNavBadge" class="nav-badge">0</span>
+    </button>
+    <button class="nav-btn" data-view="workers" onclick="showView('workers',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="nav-txt">Punëtorët</span>
+    </button>
+    <button class="nav-btn" data-view="prices" onclick="showView('prices',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span class="nav-txt">Tarifat</span>
+    </button>
+    <button class="nav-btn" data-view="history" onclick="showView('history',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span class="nav-txt">Historia</span>
+    </button>
   </div>
 </header>
 
@@ -1829,7 +1942,8 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     </div>
 
     <div id="registerFormBody">
-      <div class="stitle">Regjistrim i Ri <span id="todayLabel"></span></div>
+      <div class="stitle"><span class="stitle-ico">✦</span>Regjistrim i Ri <span id="todayLabel"></span></div>
+    <div class="ssubtitle">Shëno ditën e punës për punëtorët — kush punoi, ku dhe sa.</div>
       <div class="card">
         <div class="card-hd"><h3>📅 Detajet e Ditës</h3></div>
       <div class="card-bd">
@@ -1869,7 +1983,8 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <!-- ══ PUNËTORËT ══ -->
 <div id="view-workers" class="view">
   <div class="page">
-    <div class="stitle">Punëtorët <span id="wCount" class="chip">0</span></div>
+    <div class="stitle"><span class="stitle-ico">✦</span>Punëtorët <span id="wCount" class="chip">0</span></div>
+    <div class="ssubtitle">Menaxho skuadrën — shto punëtorë dhe vendos rrogat ditore.</div>
     <div id="wgrid"></div>
     <div class="card">
       <div class="card-hd"><h3>➕ Shto Punëtor</h3></div>
@@ -1888,7 +2003,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <!-- ══ PLANI I PUNËVE TË RADHËS ══ -->
 <div id="view-planned" class="view">
   <div class="page">
-    <div class="stitle">Plani i Punëve <span id="plCount" class="chip">0</span></div>
+    <div class="stitle"><span class="stitle-ico">✦</span>Plani i Punëve <span id="plCount" class="chip">0</span></div>
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Regjistro punët e radhës — ku, kur, çfarë. Klik mbi çdo punë për detaje ose ndryshime.</div>
 
     <!-- Reminder banner -->
@@ -1923,7 +2038,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <!-- ══ TARIFAT (Çmimet e Punëve) ══ -->
 <div id="view-prices" class="view">
   <div class="page">
-    <div class="stitle">Tarifat e Punëve <span id="prCount" class="chip">0</span></div>
+    <div class="stitle"><span class="stitle-ico">✦</span>Çmimorja <span id="prCount" class="chip">0</span></div>
     <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">Vendos çmimet për llojet e punëve që bën (p.sh. shtrim pllakash 15€/m²). Pastaj te çdo vend pune mund të shtosh sa metra/copa ke bërë.</div>
 
     <div id="prGrid"></div>
@@ -1956,7 +2071,8 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <!-- ══ HISTORIA ══ -->
 <div id="view-history" class="view">
   <div class="page">
-    <div class="stitle">Historia e Punës</div>
+    <div class="stitle"><span class="stitle-ico">✦</span>Historia &amp; Statistikat</div>
+    <div class="ssubtitle">Të gjitha regjistrimet, pagat, pagesat dhe analizat në një vend.</div>
 
     <div class="stats4">
       <div class="sbox"><div class="sval" id="hS1">0</div><div class="slbl">Regjistrime</div></div>
