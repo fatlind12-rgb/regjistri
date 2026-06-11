@@ -20,6 +20,7 @@
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<script src="fonts.js" defer></script>
 <style>
 :root {
   --bg: #0e0c14;
@@ -2954,6 +2955,14 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
       </div>
     </div>
 
+    <div style="margin-bottom:12px">
+      <label>🌐 Gjuha e Ofertës</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button type="button" class="tbtn active" id="ofLangSq" onclick="setOfferLang('sq')">🇦🇱 Shqip</button>
+        <button type="button" class="tbtn" id="ofLangMk" onclick="setOfferLang('mk')">🇲🇰 Македонски</button>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div>
         <label>👤 Klienti *</label>
@@ -3953,6 +3962,94 @@ async function importLocationsToPlanned() {
 // ── OFERTAT PËR KLIENTË (PDF Generator) ──
 // ═══════════════════════════════════════
 let offerItems = []; // Items in the offer being built
+let offerLang = 'sq'; // 'sq' or 'mk'
+
+// ── PDF Label Translations ──
+const OFFER_T = {
+  sq: {
+    title: 'OFERTË',
+    headerSub: 'Shtrim pllakash & punime ndërtimi',
+    nr: 'Nr', date: 'Data', validUntil: 'Vlefshme deri',
+    forClient: 'Për', tel: 'Tel', project: 'Projekti',
+    thNum: '#', thDesc: 'Përshkrimi i punës', thQty: 'Sasia', thPrice: 'Çmimi/njësi', thTotal: 'Totali',
+    subtotal: 'Nëntotali', discount: 'Zbritje', total: 'TOTALI',
+    note: 'Shënim', validity: (d) => `Oferta vlen ${d} ditë nga data e lëshimit. Çmimet janë për punën e kryer.`,
+    sigFirm: 'Për firmën', sigClient: 'Klienti'
+  },
+  mk: {
+    title: 'ПОНУДА',
+    headerSub: 'Поставување плочки и градежни работи',
+    nr: 'Бр', date: 'Датум', validUntil: 'Важи до',
+    forClient: 'За', tel: 'Тел', project: 'Проект',
+    thNum: '#', thDesc: 'Опис на работата', thQty: 'Количина', thPrice: 'Цена/единица', thTotal: 'Вкупно',
+    subtotal: 'Меѓузбир', discount: 'Попуст', total: 'ВКУПНО',
+    note: 'Забелешка', validity: (d) => `Понудата важи ${d} дена од датумот на издавање. Цените се за извршената работа.`,
+    sigFirm: 'За фирмата', sigClient: 'Клиент'
+  }
+};
+
+// ── Auto-translate common tile-work terms (sq → mk) ──
+const WORK_DICT_MK = {
+  'pllaka': 'плочки', 'pllakë': 'плочка', 'pllakave': 'плочки', 'pllakash': 'плочки',
+  'shtrim': 'поставување', 'shtrimi': 'поставување', 'shtrimin': 'поставување',
+  'bordura': 'первази', 'bordurë': 'перваз',
+  'montim': 'монтажа', 'montimi': 'монтажа',
+  'izolim': 'изолација', 'izolimi': 'изолација',
+  'suvatim': 'малтерисување', 'suvatimi': 'малтерисување',
+  'nivelim': 'нивелирање', 'nivelimi': 'нивелирање',
+  'banjo': 'бања', 'banja': 'бања', 'banjos': 'бања',
+  'kuzhinë': 'кујна', 'kuzhina': 'кујна', 'kuzhine': 'кујна',
+  'shkallë': 'скали', 'shkalle': 'скали', 'shkallët': 'скали',
+  'mur': 'ѕид', 'muri': 'ѕид', 'mure': 'ѕидови',
+  'dysheme': 'под', 'dyshemeja': 'под',
+  'fugim': 'фугирање', 'fugimi': 'фугирање', 'fuga': 'фуги', 'fugat': 'фуги',
+  'gres': 'гранитни плочки', 'granit': 'гранит', 'mermer': 'мермер',
+  'hidroizolim': 'хидроизолација', 'hidroizolimi': 'хидроизолација',
+  'prishje': 'кршење', 'prishja': 'кршење',
+  'transport': 'транспорт', 'transporti': 'транспорт',
+  'material': 'материјал', 'materiali': 'материјал', 'materialet': 'материјали',
+  'punë': 'работа', 'pune': 'работа', 'puna': 'работа',
+  'kuti': 'кутија', 'butona': 'копчиња', 'buton': 'копче',
+  'të': '', 'te': '', 'i': '', 'e': '', 'me': 'со', 'dhe': 'и', 'për': 'за', 'per': 'за',
+  'fshehura': 'скриени', 'fshehur': 'скриен',
+  'i madh': 'голем', 'e madhe': 'голема', 'të mëdha': 'големи',
+  'i vogël': 'мал', 'e vogël': 'мала'
+};
+const UNIT_MK = { 'm²': 'м²', 'm': 'м', 'm³': 'м³', 'copë': 'парче', 'orë': 'час', 'ditë': 'ден', 'kg': 'кг', 'punë': 'работа' };
+
+function translateWorkName(name) {
+  // Word-by-word translation using dictionary; unknown words stay
+  return name.split(/\s+/).map(word => {
+    const clean = word.toLowerCase();
+    if (WORK_DICT_MK.hasOwnProperty(clean)) {
+      const tr = WORK_DICT_MK[clean];
+      return tr; // may be '' for dropped particles
+    }
+    return word;
+  }).filter(w => w !== '').join(' ');
+}
+
+function setOfferLang(lang) {
+  offerLang = lang;
+  document.getElementById('ofLangSq').classList.toggle('active', lang === 'sq');
+  document.getElementById('ofLangMk').classList.toggle('active', lang === 'mk');
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function registerCyrillicFont(doc) {
+  // Register DejaVu (Cyrillic-capable) font if loaded
+  if (typeof DEJAVU_NORMAL === 'undefined') return false;
+  try {
+    doc.addFileToVFS('DejaVuSub.ttf', DEJAVU_NORMAL);
+    doc.addFont('DejaVuSub.ttf', 'DejaVu', 'normal');
+    doc.addFileToVFS('DejaVuSubBold.ttf', DEJAVU_BOLD);
+    doc.addFont('DejaVuSubBold.ttf', 'DejaVu', 'bold');
+    return true;
+  } catch (e) {
+    console.error('Font registration failed:', e);
+    return false;
+  }
+}
 
 function openOfferModal() {
   if (!priceList.length) {
@@ -3960,6 +4057,7 @@ function openOfferModal() {
     return;
   }
   offerItems = [];
+  setOfferLang('sq');
   // Pre-fill firm info from localStorage
   document.getElementById('ofFirmName').value = localStorage.getItem('pun_firm_name') || '';
   document.getElementById('ofFirmPhone').value = localStorage.getItem('pun_firm_phone') || '';
@@ -4057,7 +4155,8 @@ function saveOfferAndPDF() {
     items: offerItems.slice(),
     subtotal, discount, total,
     notes, validDays,
-    firmName, firmPhone
+    firmName, firmPhone,
+    lang: offerLang
   };
   offers.unshift(offer);
   save();
@@ -4073,53 +4172,76 @@ function generateOfferPDF(o) {
   const doc = new jsPDF();
   const W = doc.internal.pageSize.getWidth();
 
+  const lang = o.lang || 'sq';
+  const T = OFFER_T[lang];
+  const isMk = lang === 'mk';
+
+  // For Macedonian (Cyrillic) we need the embedded DejaVu font
+  let FONT = 'helvetica';
+  if (isMk) {
+    if (registerCyrillicFont(doc)) {
+      FONT = 'DejaVu';
+    } else {
+      showToast('⚠ Fonti për cirilik nuk u ngarkua — provo rifresko faqen.', true);
+      return;
+    }
+  }
+
+  // Translate item names + units if Macedonian
+  const items = o.items.map(it => ({
+    name: isMk ? translateWorkName(it.name) : it.name,
+    unit: isMk ? (UNIT_MK[it.unit] || it.unit) : it.unit,
+    qty: it.qty,
+    price: it.price
+  }));
+
   // ── HEADER BAND ──
   doc.setFillColor(20, 17, 26);
   doc.rect(0, 0, W, 34, 'F');
   doc.setFillColor(255, 107, 53);
   doc.rect(0, 34, W, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(17);
   doc.text(o.firmName, 14, 15);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(200, 200, 210);
-  let headerSub = 'Shtrim pllakash & punime ndertimi';
-  if (o.firmPhone) headerSub += '  ·  Tel: ' + o.firmPhone;
+  let headerSub = T.headerSub;
+  if (o.firmPhone) headerSub += '  ·  ' + T.tel + ': ' + o.firmPhone;
   doc.text(headerSub, 14, 23);
 
-  // ── OFERTË title + meta ──
+  // ── TITLE + meta ──
   doc.setTextColor(255, 107, 53);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(22);
-  doc.text('OFERTË', 14, 50);
-  doc.setFont('helvetica', 'normal');
+  doc.text(T.title, 14, 50);
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(10);
   doc.setTextColor(90, 90, 100);
-  doc.text('Nr: ' + o.number, W - 14, 44, { align: 'right' });
-  doc.text('Data: ' + fmtDate(o.date), W - 14, 50, { align: 'right' });
+  doc.text(T.nr + ': ' + o.number, W - 14, 44, { align: 'right' });
+  doc.text(T.date + ': ' + fmtDate(o.date), W - 14, 50, { align: 'right' });
   const validUntil = new Date(o.date);
   validUntil.setDate(validUntil.getDate() + o.validDays);
-  doc.text('Vlefshme deri: ' + fmtDate(validUntil.toISOString().slice(0, 10)), W - 14, 56, { align: 'right' });
+  doc.text(T.validUntil + ': ' + fmtDate(validUntil.toISOString().slice(0, 10)), W - 14, 56, { align: 'right' });
 
   // ── CLIENT ──
   doc.setFillColor(245, 243, 248);
   doc.roundedRect(14, 58, W - 28, 20, 2, 2, 'F');
   doc.setTextColor(40, 40, 50);
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Për: ' + o.client, 19, 66);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'bold');
+  doc.text(T.forClient + ': ' + o.client, 19, 66);
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(90, 90, 100);
   let clientLine2 = [];
-  if (o.phone) clientLine2.push('Tel: ' + o.phone);
-  if (o.project) clientLine2.push('Projekti: ' + o.project);
+  if (o.phone) clientLine2.push(T.tel + ': ' + o.phone);
+  if (o.project) clientLine2.push(T.project + ': ' + o.project);
   if (clientLine2.length) doc.text(clientLine2.join('   ·   '), 19, 73);
 
   // ── ITEMS TABLE ──
-  const rows = o.items.map((it, i) => [
+  const rows = items.map((it, i) => [
     String(i + 1),
     it.name,
     it.qty + ' ' + it.unit,
@@ -4128,12 +4250,13 @@ function generateOfferPDF(o) {
   ]);
 
   doc.autoTable({
-    head: [['#', 'Përshkrimi i punës', 'Sasia', 'Çmimi/njësi', 'Totali']],
+    head: [[T.thNum, T.thDesc, T.thQty, T.thPrice, T.thTotal]],
     body: rows,
     startY: 84,
     theme: 'striped',
-    headStyles: { fillColor: [20, 17, 26], textColor: [255, 255, 255], fontSize: 9.5, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 9.5, textColor: [40, 40, 50] },
+    styles: { font: FONT },
+    headStyles: { fillColor: [20, 17, 26], textColor: [255, 255, 255], fontSize: 9.5, fontStyle: 'bold', font: FONT },
+    bodyStyles: { fontSize: 9.5, textColor: [40, 40, 50], font: FONT },
     alternateRowStyles: { fillColor: [248, 246, 251] },
     columnStyles: {
       0: { cellWidth: 10, halign: 'center' },
@@ -4150,32 +4273,32 @@ function generateOfferPDF(o) {
   doc.setFontSize(10);
   doc.setTextColor(90, 90, 100);
   if (o.discount > 0) {
-    doc.text('Nëntotali:', W - 64, y, { align: 'right' });
+    doc.text(T.subtotal + ':', W - 64, y, { align: 'right' });
     doc.text(o.subtotal.toFixed(2) + ' €', W - 14, y, { align: 'right' });
     y += 6;
     doc.setTextColor(200, 60, 40);
-    doc.text('Zbritje:', W - 64, y, { align: 'right' });
+    doc.text(T.discount + ':', W - 64, y, { align: 'right' });
     doc.text('-' + o.discount.toFixed(2) + ' €', W - 14, y, { align: 'right' });
     y += 8;
   }
   doc.setFillColor(0, 160, 125);
-  doc.roundedRect(W - 90, y - 5.5, 76, 12, 2, 2, 'F');
+  doc.roundedRect(W - 96, y - 5.5, 82, 12, 2, 2, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(11);
-  doc.text('TOTALI:', W - 64, y + 2.5, { align: 'right' });
+  doc.text(T.total + ':', W - 62, y + 2.5, { align: 'right' });
   doc.text(o.total.toFixed(2) + ' €', W - 18, y + 2.5, { align: 'right' });
   y += 16;
 
   // ── NOTES ──
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(90, 90, 100);
   if (o.notes) {
-    doc.text('Shënim: ' + o.notes, 14, y);
+    doc.text(T.note + ': ' + o.notes, 14, y);
     y += 7;
   }
-  doc.text('Oferta vlen ' + o.validDays + ' ditë nga data e lëshimit. Çmimet janë për punën e kryer.', 14, y);
+  doc.text(T.validity(o.validDays), 14, y);
   y += 16;
 
   // ── SIGNATURES ──
@@ -4184,12 +4307,12 @@ function generateOfferPDF(o) {
     doc.line(20, y + 12, 80, y + 12);
     doc.line(W - 80, y + 12, W - 20, y + 12);
     doc.setFontSize(8.5);
-    doc.text('Për firmën', 50, y + 18, { align: 'center' });
-    doc.text('Klienti', W - 50, y + 18, { align: 'center' });
+    doc.text(T.sigFirm, 50, y + 18, { align: 'center' });
+    doc.text(T.sigClient, W - 50, y + 18, { align: 'center' });
   }
 
-  const safeClient = o.client.replace(/[^a-zA-Z0-9ëçËÇ ]/g, '').replace(/ /g, '-');
-  doc.save('Oferta-' + o.number + '-' + safeClient + '.pdf');
+  const safeClient = o.client.replace(/[^a-zA-Z0-9ëçËÇа-шА-Ш ]/g, '').replace(/ /g, '-');
+  doc.save((isMk ? 'Ponuda-' : 'Oferta-') + o.number + '-' + safeClient + '.pdf');
 }
 
 function renderOffersList() {
