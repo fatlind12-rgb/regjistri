@@ -1425,6 +1425,107 @@ select {
 .empty-state .big { font-size: 2.4rem; margin-bottom: 10px; }
 .empty-state p { font-size: 0.87rem; }
 
+/* CUSTOM CONFIRM DIALOG */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(6,5,10,0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 600;
+  padding: 20px;
+  animation: fadeIn 0.2s var(--ease);
+}
+.confirm-overlay.open { display: flex; }
+.confirm-box {
+  background: linear-gradient(135deg, rgba(37,33,47,0.98) 0%, rgba(21,19,28,0.99) 100%);
+  border: 1px solid var(--border-bright);
+  border-radius: 22px;
+  padding: 28px 24px 22px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  animation: confirmIn 0.32s var(--ease-bounce);
+  position: relative;
+  overflow: hidden;
+}
+.confirm-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.8;
+}
+@keyframes confirmIn {
+  from { opacity: 0; transform: scale(0.85) translateY(24px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.confirm-icon {
+  width: 64px; height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0.06) 100%);
+  border: 1.5px solid rgba(255,107,53,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.7rem;
+  box-shadow: 0 0 30px rgba(255,107,53,0.25);
+  animation: iconPop 0.45s var(--ease-bounce) 0.1s both;
+}
+@keyframes iconPop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+.confirm-icon.green {
+  background: linear-gradient(135deg, rgba(0,212,164,0.18) 0%, rgba(0,212,164,0.06) 100%);
+  border-color: rgba(0,212,164,0.4);
+  box-shadow: 0 0 30px rgba(0,212,164,0.25);
+}
+.confirm-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.15rem; font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.confirm-msg {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 22px;
+  white-space: pre-line;
+}
+.confirm-actions {
+  display: flex; gap: 10px;
+}
+.confirm-btn {
+  flex: 1;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+  border: 1.5px solid var(--border);
+}
+.confirm-btn.cancel {
+  background: var(--surface);
+  color: var(--text);
+}
+.confirm-btn.cancel:active { background: var(--surface2); transform: scale(0.97); }
+.confirm-btn.ok {
+  background: var(--grad-accent);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+}
+.confirm-btn.ok:active { transform: scale(0.97); }
+.confirm-btn.ok.green {
+  background: var(--grad-green);
+  box-shadow: 0 6px 20px rgba(0,212,164,0.4);
+}
+
 /* TOAST */
 .toast {
   position: fixed; bottom: 28px; left: 50%;
@@ -2569,6 +2670,19 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
   </div>
 </div>
 
+<!-- CUSTOM CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box" id="confirmBox">
+    <div class="confirm-icon" id="confirmIcon">🗑</div>
+    <div class="confirm-title" id="confirmTitle">Konfirmo</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="confirm-btn cancel" id="confirmCancelBtn">Anulo</button>
+      <button class="confirm-btn ok" id="confirmOkBtn">Po, Vazhdo</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2835,8 +2949,8 @@ function addWorker() {
   showToast('✔ Punëtori u shtua!');
 }
 
-function delWorker(id) {
-  if (!confirm('Fshi këtë punëtor?')) return;
+async function delWorker(id) {
+  if (!await customConfirm('Punëtori do të fshihet nga lista. Regjistrimet e tij mbeten në Histori.', {title: 'Fshi Punëtorin?'})) return;
   workers = workers.filter(w => w.id !== id);
   save(); renderWorkers(); renderChecklist();
   showToast('🗑 Punëtori u fshi', true);
@@ -2984,10 +3098,10 @@ function savePlannedJob() {
   showToast(id ? '✔ Puna u përditësua!' : '✔ Puna u shtua!');
 }
 
-function deletePlannedJob() {
+async function deletePlannedJob() {
   const id = document.getElementById('plJobId').value;
   if (!id) return;
-  if (!confirm('Fshi këtë punë nga plani?')) return;
+  if (!await customConfirm('Puna do të hiqet nga plani përgjithmonë.', {title: 'Fshi Punën?'})) return;
   plannedJobs = plannedJobs.filter(x => x.id !== id);
   save();
   document.getElementById('plannedModal').classList.remove('open');
@@ -3177,7 +3291,7 @@ function checkReminders() {
   }).join('');
 }
 
-function importLocationsToPlanned() {
+async function importLocationsToPlanned() {
   // Get unique locations from entries that don't already exist in plannedJobs
   const existingPlanLocs = new Set(plannedJobs.map(j => j.location.toLowerCase()));
   const entryLocs = [...new Set(entries.map(e => e.location))]
@@ -3188,7 +3302,7 @@ function importLocationsToPlanned() {
     return;
   }
 
-  if (!confirm(`Do të importohen ${entryLocs.length} vende nga Historia:\n\n${entryLocs.slice(0,5).join('\n')}${entryLocs.length > 5 ? '\n...' : ''}\n\nVazhdo?`)) return;
+  if (!await customConfirm(`${entryLocs.slice(0,5).join('\n')}${entryLocs.length > 5 ? '\n+ ' + (entryLocs.length-5) + ' të tjera...' : ''}`, {title: `Importo ${entryLocs.length} Vende?`, icon: '📥', green: true, okText: 'Po, Importo'})) return;
 
   entryLocs.forEach(loc => {
     // Determine status from locStatus
@@ -3239,8 +3353,8 @@ function addPriceItem() {
   showToast('✔ Tarifa u shtua!');
 }
 
-function delPriceItem(id) {
-  if (!confirm('Fshi këtë tarifë?\nPunët e bëra në vende nuk do të preken.')) return;
+async function delPriceItem(id) {
+  if (!await customConfirm('Punët e regjistruara në vende nuk do të preken.', {title: 'Fshi Tarifën?'})) return;
   priceList = priceList.filter(p => p.id !== id);
   save(); renderPriceList();
   showToast('🗑 Tarifa u fshi', true);
@@ -3391,8 +3505,8 @@ function addProjectWork() {
   showToast('✔ Puna u shtua!');
 }
 
-function delProjectWork(id) {
-  if (!confirm('Fshi këtë punë?')) return;
+async function delProjectWork(id) {
+  if (!await customConfirm('Puna do të hiqet nga ky vend.', {title: 'Fshi Punën?'})) return;
   const pw = projectWorks.find(x => x.id === id);
   const loc = pw ? pw.location : '';
   projectWorks = projectWorks.filter(x => x.id !== id);
@@ -4197,8 +4311,8 @@ function addPayment() {
   showToast('✔ Pagesa u regjistrua!');
 }
 
-function delPayment(id) {
-  if (!confirm('Fshi këtë pagesë?')) return;
+async function delPayment(id) {
+  if (!await customConfirm('Pagesa do të fshihet dhe borxhi rillogaritet.', {title: 'Fshi Pagesën?'})) return;
   payments = payments.filter(p => p.id !== id);
   save(); renderPayments();
   showToast('🗑 Pagesa u fshi', true);
@@ -4371,8 +4485,8 @@ function addExpense() {
   showToast('✔ Shpenzimi u shtua!');
 }
 
-function delExpense(id) {
-  if (!confirm('Fshi këtë shpenzim?')) return;
+async function delExpense(id) {
+  if (!await customConfirm('Shpenzimi do të fshihet përgjithmonë.', {title: 'Fshi Shpenzimin?'})) return;
   expenses = expenses.filter(e => e.id !== id);
   save(); renderExpenses();
   showToast('🗑 Shpenzimi u fshi', true);
@@ -4669,9 +4783,9 @@ function renderAll(filtered) {
   `).join('');
 }
 
-function delEntry(id) {
+async function delEntry(id) {
   if (event && event.stopPropagation) event.stopPropagation();
-  if (!confirm('Fshi këtë regjistrim?')) return;
+  if (!await customConfirm('Dita e punës do të fshihet nga historia.', {title: 'Fshi Regjistrimin?'})) return;
   const before = entries.length;
   entries = entries.filter(e => String(e.id) !== String(id));
   if (entries.length === before) {
@@ -5015,10 +5129,46 @@ function fmtDate(d) { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
 function fmtDateLong(d) { return new Date(d+'T12:00:00').toLocaleDateString('sq-AL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
 function showToast(msg, warn=false) {
   const t = document.getElementById('toast');
-  t.style.background = warn ? '#c84b2f' : '#1a1714';
+  t.style.background = warn ? 'linear-gradient(135deg, #ef4444, #c0392b)' : '';
   t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
+
+// ═══════════════════════════════════════
+// ── CUSTOM CONFIRM DIALOG (futuristic) ──
+// ═══════════════════════════════════════
+let confirmResolve = null;
+
+function customConfirm(msg, opts = {}) {
+  return new Promise(resolve => {
+    confirmResolve = resolve;
+    document.getElementById('confirmIcon').textContent = opts.icon || '🗑';
+    document.getElementById('confirmIcon').className = 'confirm-icon' + (opts.green ? ' green' : '');
+    document.getElementById('confirmTitle').textContent = opts.title || 'A je i sigurt?';
+    document.getElementById('confirmMsg').textContent = msg;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = opts.okText || 'Po, Fshi';
+    okBtn.className = 'confirm-btn ok' + (opts.green ? ' green' : '');
+    document.getElementById('confirmOverlay').classList.add('open');
+    if (navigator.vibrate) navigator.vibrate(15);
+  });
+}
+
+document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
+});
+document.getElementById('confirmOkBtn').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  if (navigator.vibrate) navigator.vibrate(25);
+  if (confirmResolve) { confirmResolve(true); confirmResolve = null; }
+});
+document.getElementById('confirmOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('confirmOverlay')) {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    if (confirmResolve) { confirmResolve(false); confirmResolve = null; }
+  }
+});
 
 renderChecklist();
 
@@ -5151,8 +5301,8 @@ async function onAuthSuccess() {
   }
 }
 
-function disconnectDrive() {
-  if (!confirm('Të shkëputesh nga Google Drive?\nTë dhënat lokale do të fshihen — do të rilidhesh kur të duash.')) return;
+async function disconnectDrive() {
+  if (!await customConfirm('Të dhënat lokale do të fshihen — të dhënat në Drive mbeten të sigurta. Mund të rilidhesh kurdo.', {title: 'Shkëputu nga Drive?', icon: '🔌', okText: 'Po, Shkëputu'})) return;
   accessToken = null;
   driveFileId = null;
   workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = [];
