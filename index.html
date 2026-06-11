@@ -355,9 +355,9 @@ select {
 }
 .tbtn:hover { border-color: var(--text); color: var(--text); }
 .tbtn.active {
-  background: var(--grad-dark);
-  color: var(--bg);
-  border-color: transparent;
+  background: linear-gradient(135deg, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0.1) 100%);
+  color: var(--accent);
+  border-color: rgba(255,107,53,0.55);
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(26,23,20,0.22);
   transform: translateY(-1px);
@@ -582,8 +582,8 @@ select {
 .wav {
   width: 44px; height: 44px;
   border-radius: 50%;
-  background: var(--grad-dark);
-  color: var(--bg);
+  background: var(--grad-accent);
+  color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
   flex-shrink: 0;
@@ -796,9 +796,10 @@ select {
 }
 .loc-bar-fill {
   height: 100%;
-  background: var(--grad-dark);
+  background: var(--grad-green);
   border-radius: 3px;
   transition: width 0.6s var(--ease);
+  box-shadow: 0 0 8px rgba(0,212,164,0.4);
 }
 .loc-card.selected .loc-bar-fill { background: var(--grad-accent); }
 .loc-arrow {
@@ -1428,8 +1429,8 @@ select {
 .toast {
   position: fixed; bottom: 28px; left: 50%;
   transform: translateX(-50%) translateY(20px) scale(0.95);
-  background: var(--grad-dark);
-  color: var(--bg);
+  background: var(--grad-accent);
+  color: #fff;
   padding: 12px 24px;
   border-radius: 30px;
   font-size: 0.88rem; font-weight: 600;
@@ -1495,10 +1496,10 @@ select {
 }
 .btn-sync:hover { border-color: var(--text); transform: translateY(-1px); }
 .btn-sync.primary {
-  background: var(--grad-dark);
-  color: var(--bg);
+  background: var(--grad-accent);
+  color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(26,23,20,0.2);
+  box-shadow: 0 4px 14px rgba(255,107,53,0.35);
 }
 .btn-sync.primary:hover { box-shadow: 0 6px 16px rgba(26,23,20,0.3); }
 .btn-sync:disabled { opacity: 0.5; cursor: not-allowed; }
