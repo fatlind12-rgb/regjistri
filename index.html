@@ -875,10 +875,12 @@ select {
   transition: all 0.18s;
   display: flex; align-items: center; justify-content: center; gap: 7px;
 }
-.sub-tab-btn:hover { color: var(--text); }
+.sub-tab-btn:hover { color: var(--text-bright); }
 .sub-tab-btn.active {
-  background: var(--surface); color: var(--text);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  background: linear-gradient(135deg, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0.06) 100%);
+  color: var(--accent);
+  box-shadow: 0 0 14px rgba(255,107,53,0.12);
+  font-weight: 700;
 }
 .sub-count {
   background: var(--surface2); color: var(--muted);
@@ -886,7 +888,7 @@ select {
   font-size: 0.73rem; font-weight: 700;
   border: 1px solid var(--border); min-width: 22px; text-align: center;
 }
-.sub-tab-btn.active .sub-count { background: var(--grad-accent); color: #fff; border-color: var(--text); }
+.sub-tab-btn.active .sub-count { background: var(--grad-accent); color: #fff; border-color: transparent; }
 
 /* Completed location styling */
 .loc-card.completed {
@@ -1033,19 +1035,49 @@ select {
   border-radius: 20px; padding: 1px 8px; margin-top: 3px;
 }
 
-/* Price card (Tarifat) */
-#prGrid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+/* Price card (Çmimorja) */
+#prGrid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .price-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--r); padding: 12px 14px;
-  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   box-shadow: var(--sh);
-  flex-wrap: wrap;
+  transition: all 0.22s var(--ease);
 }
-.price-card:hover { border-color: var(--green); }
+.price-card:hover { border-color: var(--green); box-shadow: 0 0 18px rgba(0,212,164,0.1); }
+.pc-info { flex: 1; min-width: 0; }
+.pc-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-bright);
+  line-height: 1.35;
+  word-break: break-word;
+  margin-bottom: 5px;
+}
+.pc-price {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--green);
+  text-shadow: 0 0 16px rgba(0,212,164,0.25);
+  white-space: nowrap;
+}
+.pc-unit {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+  text-shadow: none;
+}
+.pc-actions { display: flex; gap: 6px; flex-shrink: 0; }
 @media (max-width: 380px) {
-  .price-card { padding: 10px 11px; gap: 6px; }
-  .price-card > div:nth-child(2) { font-size: 0.92rem !important; }
+  .price-card { padding: 12px 13px; }
+  .pc-price { font-size: 1.02rem; }
 }
 
 /* ═══════════════════════════════════════
@@ -1263,13 +1295,14 @@ select {
   color: var(--text);
 }
 .sub-tab-btn.active {
-  background: var(--grad-dark);
-  color: var(--bg);
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(26,23,20,0.2);
+  background: linear-gradient(135deg, rgba(255,107,53,0.2) 0%, rgba(255,107,53,0.08) 100%);
+  color: var(--accent);
+  border-color: rgba(255,107,53,0.5);
+  box-shadow: 0 0 16px rgba(255,107,53,0.15);
+  font-weight: 700;
 }
 .badge-count {
-  background: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.25);
   color: inherit;
   font-size: 0.7rem;
   padding: 2px 7px;
@@ -1280,7 +1313,8 @@ select {
   text-align: center;
 }
 .sub-tab-btn.active .badge-count {
-  background: rgba(255,255,255,0.18);
+  background: var(--grad-accent);
+  color: #fff;
 }
 
 /* Overview grid for Payments tab - responsive */
@@ -3253,12 +3287,11 @@ function renderPriceList() {
   }
   g.innerHTML = priceList.map(p => `
     <div class="price-card">
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem">${esc(p.name)}</div>
-        <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">${esc(p.unit)}</div>
+      <div class="pc-info">
+        <div class="pc-name">${esc(p.name)}</div>
+        <div class="pc-price">${p.price.toFixed(2)}€ <span class="pc-unit">/ ${esc(p.unit)}</span></div>
       </div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--green)">${p.price.toFixed(2)}€/${esc(p.unit)}</div>
-      <div style="display:flex;gap:5px">
+      <div class="pc-actions">
         <button class="btn-edit" onclick="editPriceItem('${p.id}')" title="Edito">✎</button>
         <button class="btn-xw" onclick="delPriceItem('${p.id}')" title="Fshi">✕</button>
       </div>
@@ -3797,12 +3830,15 @@ function renderChart(filtered) {
     const extraOnlyW = Math.round((d.extraOnly/maxVal)*100);
     const sel = selectedWorker === name ? 'selected' : '';
     const nameEsc = esc(name).replace(/'/g,"\\'");
-    const extraText = d.extraHours > 0 ? ` · ⏰ ${d.extraHours}h ekstra` : '';
+    const extraText = d.extraHours > 0 ? ` · ⏰ ${d.extraHours}h` : '';
+    // Equivalent days: full + half/2
+    const eqD = d.full + (d.half / 2);
+    const eqDTxt = Number.isInteger(eqD) ? eqD : eqD.toFixed(1);
     return `
       <div class="bc-row clickable ${sel}" onclick="selectWorker('${nameEsc}')">
         <div class="bc-label">
           <div class="bc-av">${ini(name)}</div>
-          <div class="bc-name-text">${esc(name)}<small>${d.dates.size} ditë${extraText}</small></div>
+          <div class="bc-name-text">${esc(name)}<small><strong style="color:var(--green)">${eqDTxt} ditë</strong>${extraText}</small></div>
         </div>
         <div class="bc-bars">
           ${d.full ? `<div class="bc-bar-wrap"><div class="bc-bar full-bar" style="width:${fullW}%"></div><span class="bc-count">${d.full}</span></div>` : ''}
@@ -3835,6 +3871,10 @@ function renderWorkerDrill(w) {
   const extraTxt = w.extraHours > 0 ? ` · ⏰ ${w.extraHours}h ekstra` : '';
   const extraOnlyTxt = w.extraOnly > 0 ? ` · ${w.extraOnly} vetëm ekstra` : '';
 
+  // Equivalent days: full counts 1, half counts 0.5
+  const eqDays = w.full + (w.half / 2);
+  const eqDaysTxt = Number.isInteger(eqDays) ? eqDays : eqDays.toFixed(1);
+
   document.getElementById('workerDrillPanel').innerHTML = `
     <div class="drill-panel">
       <div class="drill-header">
@@ -3846,6 +3886,16 @@ function renderWorkerDrill(w) {
           </div>
         </div>
         <button class="btn-sm" onclick="selectWorker('${nameEsc}')">✕ Mbyll</button>
+      </div>
+
+      <!-- PËRMBLEDHJA -->
+      <div style="background:linear-gradient(135deg, rgba(0,212,164,0.1) 0%, rgba(0,212,164,0.03) 100%);border:1.5px solid rgba(0,212,164,0.4);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:0 0 20px rgba(0,212,164,0.08)">
+        <div style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">📊 Përmbledhja Totale</div>
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--green);text-shadow:0 0 20px rgba(0,212,164,0.3)">${eqDaysTxt} ditë</span>
+          ${w.extraHours > 0 ? `<span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--yellow)">+ ${w.extraHours}h ekstra</span>` : ''}
+        </div>
+        <div style="font-size:0.76rem;color:var(--muted);margin-top:5px">${w.full} ditë plota + ${w.half} gjysmë (${w.half}÷2 = ${(w.half/2) % 1 === 0 ? w.half/2 : (w.half/2).toFixed(1)}) = ${eqDaysTxt} ditë pune</div>
       </div>
 
       <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Vendet ku ka Punuar</div>
