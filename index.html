@@ -2691,6 +2691,17 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div class="stitle"><span class="stitle-ico">✦</span>Çmimorja <span id="prCount" class="chip">0</span></div>
     <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">Vendos çmimet për llojet e punëve që bën (p.sh. shtrim pllakash 15€/m²). Pastaj te çdo vend pune mund të shtosh sa metra/copa ke bërë.</div>
 
+    <!-- OFERTA PËR KLIENTË -->
+    <div class="card" style="border-color:rgba(0,212,164,0.4);box-shadow:0 0 24px rgba(0,212,164,0.08)">
+      <div class="card-hd">
+        <h3>🧾 Oferta për Klientë</h3>
+        <button class="btn-sync primary" onclick="openOfferModal()" style="background:var(--grad-green);box-shadow:0 4px 14px rgba(0,212,164,0.35)">➕ Krijo Ofertë</button>
+      </div>
+      <div class="card-bd" style="padding:14px 16px">
+        <div id="offersListContainer"></div>
+      </div>
+    </div>
+
     <div id="prGrid"></div>
 
     <div class="card">
@@ -2926,6 +2937,71 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div class="row-end">
       <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
       <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- OFFER MODAL -->
+<div class="modal-overlay" id="offerModal">
+  <div class="modal" style="max-width:560px">
+    <h3>🧾 Krijo Ofertë për Klientin</h3>
+
+    <div style="background:rgba(0,212,164,0.05);border:1px solid rgba(0,212,164,0.25);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">🏢 Firma Jote (ruhet 1 herë)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input type="text" id="ofFirmName" placeholder="Emri i firmës"/>
+        <input type="tel" id="ofFirmPhone" placeholder="Tel i firmës"/>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label>👤 Klienti *</label>
+        <input type="text" id="ofClient" placeholder="Emri i klientit"/>
+      </div>
+      <div>
+        <label>📞 Tel (opsional)</label>
+        <input type="tel" id="ofPhone" placeholder="+389..."/>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>📍 Projekti/Vendi</label>
+      <input type="text" id="ofProject" placeholder="p.sh. Banesa - Çair"/>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">➕ Shto Punë në Ofertë</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px">
+        <select id="ofPriceItem">
+          <option value="">-- Zgjedh nga çmimorja --</option>
+        </select>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+          <input type="number" id="ofQty" placeholder="Sasia (p.sh. 45)" min="0" step="0.01" inputmode="decimal"/>
+          <button class="btn-o" onclick="addOfferItem()" style="border-color:var(--green);color:var(--green)">＋ Shto</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ofItemsList" style="margin-bottom:12px"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label>🏷 Zbritje (€, opsionale)</label>
+        <input type="number" id="ofDiscount" placeholder="0" min="0" step="0.01" inputmode="decimal" oninput="renderOfferItems()"/>
+      </div>
+      <div>
+        <label>⏳ Vlefshmëria (ditë)</label>
+        <input type="number" id="ofValidDays" value="15" min="1" inputmode="numeric"/>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label>📝 Shënime (opsionale)</label>
+      <input type="text" id="ofNotes" placeholder="p.sh. Materiali nga klienti"/>
+    </div>
+
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('offerModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveOfferAndPDF()" style="background:var(--grad-green);box-shadow:0 4px 14px rgba(0,212,164,0.35)">📄 Gjenero PDF</button>
     </div>
   </div>
 </div>
@@ -3232,6 +3308,7 @@ let payments = []; // Pagesat e punëtorëve [{id, workerId, workerName, date, a
 let priceList = []; // Lista e tarifave [{id, name, unit, price}]
 let projectWorks = []; // Punët e bëra në çdo vend
 let plannedJobs = []; // Punët e radhës [{id, location, client, phone, startDate, endDate, priority, status, description, address, notes}]
+let offers = []; // Ofertat për klientë [{id, number, date, client, phone, project, items, total, notes, validDays}]
 
 // ── INIT: start empty, load from Drive after login ──
 // We keep a local cache only to survive page refresh while connected
@@ -3245,6 +3322,7 @@ function loadLocalCache() {
   priceList = JSON.parse(localStorage.getItem('pun_pricelist')||'[]');
   projectWorks = JSON.parse(localStorage.getItem('pun_projectworks')||'[]');
   plannedJobs = JSON.parse(localStorage.getItem('pun_plannedjobs')||'[]');
+  offers = JSON.parse(localStorage.getItem('pun_offers')||'[]');
   // Migrate old IDs
   let migrated = false;
   entries.forEach((e, i) => {
@@ -3280,7 +3358,7 @@ function showView(name, btn) {
   btn.classList.add('active');
   if (name==='register') renderChecklist();
   if (name==='workers') renderWorkers();
-  if (name==='prices') renderPriceList();
+  if (name==='prices') { renderPriceList(); renderOffersList(); }
   if (name==='planned') renderPlannedJobs();
   if (name==='history') renderHistory();
 }
@@ -3869,6 +3947,278 @@ async function importLocationsToPlanned() {
   save();
   renderPlanned();
   showToast(`✔ U importuan ${entryLocs.length} vende!`);
+}
+
+// ═══════════════════════════════════════
+// ── OFERTAT PËR KLIENTË (PDF Generator) ──
+// ═══════════════════════════════════════
+let offerItems = []; // Items in the offer being built
+
+function openOfferModal() {
+  if (!priceList.length) {
+    showToast('⚠ Shto së pari tarifa te Çmimorja!', true);
+    return;
+  }
+  offerItems = [];
+  // Pre-fill firm info from localStorage
+  document.getElementById('ofFirmName').value = localStorage.getItem('pun_firm_name') || '';
+  document.getElementById('ofFirmPhone').value = localStorage.getItem('pun_firm_phone') || '';
+  document.getElementById('ofClient').value = '';
+  document.getElementById('ofPhone').value = '';
+  document.getElementById('ofProject').value = '';
+  document.getElementById('ofDiscount').value = '';
+  document.getElementById('ofValidDays').value = '15';
+  document.getElementById('ofNotes').value = '';
+  document.getElementById('ofQty').value = '';
+  // Populate price dropdown
+  document.getElementById('ofPriceItem').innerHTML = '<option value="">-- Zgjedh nga çmimorja --</option>' +
+    priceList.map(p => `<option value="${p.id}">${esc(p.name)} (${p.price.toFixed(2)}€/${esc(p.unit)})</option>`).join('');
+  renderOfferItems();
+  document.getElementById('offerModal').classList.add('open');
+}
+
+function addOfferItem() {
+  const pid = document.getElementById('ofPriceItem').value;
+  const qty = parseFloat(document.getElementById('ofQty').value) || 0;
+  if (!pid) { showToast('⚠ Zgjedh punën!'); return; }
+  if (qty <= 0) { showToast('⚠ Vendos sasinë!'); return; }
+  const p = priceList.find(x => x.id === pid);
+  if (!p) return;
+  offerItems.push({ name: p.name, unit: p.unit, qty, price: p.price });
+  document.getElementById('ofQty').value = '';
+  document.getElementById('ofPriceItem').value = '';
+  renderOfferItems();
+  if (navigator.vibrate) navigator.vibrate(12);
+}
+
+function removeOfferItem(idx) {
+  offerItems.splice(idx, 1);
+  renderOfferItems();
+}
+
+function renderOfferItems() {
+  const c = document.getElementById('ofItemsList');
+  if (!offerItems.length) {
+    c.innerHTML = '<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.82rem">Asnjë punë e shtuar ende.</div>';
+    return;
+  }
+  const subtotal = offerItems.reduce((s, it) => s + it.qty * it.price, 0);
+  const discount = parseFloat(document.getElementById('ofDiscount').value) || 0;
+  const total = Math.max(0, subtotal - discount);
+
+  c.innerHTML = offerItems.map((it, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.86rem;font-weight:600;color:var(--text-bright)">${esc(it.name)}</div>
+        <div style="font-size:0.73rem;color:var(--muted)">${it.qty} ${esc(it.unit)} × ${it.price.toFixed(2)}€</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);white-space:nowrap">${(it.qty * it.price).toFixed(2)}€</div>
+      <button onclick="removeOfferItem(${i})" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px">🗑</button>
+    </div>
+  `).join('') + `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(0,212,164,0.08);border:1.5px solid var(--green);border-radius:10px;margin-top:8px">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem">TOTALI${discount > 0 ? ' (me zbritje -' + discount.toFixed(2) + '€)' : ''}</span>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--green)">${total.toFixed(2)}€</span>
+    </div>
+  `;
+}
+
+function saveOfferAndPDF() {
+  const firmName = document.getElementById('ofFirmName').value.trim();
+  const firmPhone = document.getElementById('ofFirmPhone').value.trim();
+  const client = document.getElementById('ofClient').value.trim();
+  const phone = document.getElementById('ofPhone').value.trim();
+  const project = document.getElementById('ofProject').value.trim();
+  const discount = parseFloat(document.getElementById('ofDiscount').value) || 0;
+  const validDays = parseInt(document.getElementById('ofValidDays').value) || 15;
+  const notes = document.getElementById('ofNotes').value.trim();
+
+  if (!firmName) { showToast('⚠ Shkruaj emrin e firmës!'); return; }
+  if (!client) { showToast('⚠ Shkruaj emrin e klientit!'); return; }
+  if (!offerItems.length) { showToast('⚠ Shto të paktën një punë!'); return; }
+
+  // Save firm info for next time
+  localStorage.setItem('pun_firm_name', firmName);
+  localStorage.setItem('pun_firm_phone', firmPhone);
+
+  const subtotal = offerItems.reduce((s, it) => s + it.qty * it.price, 0);
+  const total = Math.max(0, subtotal - discount);
+
+  // Offer number: OF-YYYY-NNN
+  const year = new Date().getFullYear();
+  const countThisYear = offers.filter(o => (o.number || '').includes('-' + year + '-')).length;
+  const number = 'OF-' + year + '-' + String(countThisYear + 1).padStart(3, '0');
+
+  const offer = {
+    id: 'of' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    number,
+    date: todayStr,
+    client, phone, project,
+    items: offerItems.slice(),
+    subtotal, discount, total,
+    notes, validDays,
+    firmName, firmPhone
+  };
+  offers.unshift(offer);
+  save();
+  generateOfferPDF(offer);
+  document.getElementById('offerModal').classList.remove('open');
+  renderOffersList();
+  showToast('📄 Oferta ' + number + ' u krijua!');
+}
+
+function generateOfferPDF(o) {
+  if (!window.jspdf) { showToast('⚠ PDF library nuk është gati.', true); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const W = doc.internal.pageSize.getWidth();
+
+  // ── HEADER BAND ──
+  doc.setFillColor(20, 17, 26);
+  doc.rect(0, 0, W, 34, 'F');
+  doc.setFillColor(255, 107, 53);
+  doc.rect(0, 34, W, 1.5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.text(o.firmName, 14, 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(200, 200, 210);
+  let headerSub = 'Shtrim pllakash & punime ndertimi';
+  if (o.firmPhone) headerSub += '  ·  Tel: ' + o.firmPhone;
+  doc.text(headerSub, 14, 23);
+
+  // ── OFERTË title + meta ──
+  doc.setTextColor(255, 107, 53);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('OFERTË', 14, 50);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(90, 90, 100);
+  doc.text('Nr: ' + o.number, W - 14, 44, { align: 'right' });
+  doc.text('Data: ' + fmtDate(o.date), W - 14, 50, { align: 'right' });
+  const validUntil = new Date(o.date);
+  validUntil.setDate(validUntil.getDate() + o.validDays);
+  doc.text('Vlefshme deri: ' + fmtDate(validUntil.toISOString().slice(0, 10)), W - 14, 56, { align: 'right' });
+
+  // ── CLIENT ──
+  doc.setFillColor(245, 243, 248);
+  doc.roundedRect(14, 58, W - 28, 20, 2, 2, 'F');
+  doc.setTextColor(40, 40, 50);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Për: ' + o.client, 19, 66);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(90, 90, 100);
+  let clientLine2 = [];
+  if (o.phone) clientLine2.push('Tel: ' + o.phone);
+  if (o.project) clientLine2.push('Projekti: ' + o.project);
+  if (clientLine2.length) doc.text(clientLine2.join('   ·   '), 19, 73);
+
+  // ── ITEMS TABLE ──
+  const rows = o.items.map((it, i) => [
+    String(i + 1),
+    it.name,
+    it.qty + ' ' + it.unit,
+    it.price.toFixed(2) + ' €',
+    (it.qty * it.price).toFixed(2) + ' €'
+  ]);
+
+  doc.autoTable({
+    head: [['#', 'Përshkrimi i punës', 'Sasia', 'Çmimi/njësi', 'Totali']],
+    body: rows,
+    startY: 84,
+    theme: 'striped',
+    headStyles: { fillColor: [20, 17, 26], textColor: [255, 255, 255], fontSize: 9.5, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 9.5, textColor: [40, 40, 50] },
+    alternateRowStyles: { fillColor: [248, 246, 251] },
+    columnStyles: {
+      0: { cellWidth: 10, halign: 'center' },
+      2: { halign: 'center', cellWidth: 28 },
+      3: { halign: 'right', cellWidth: 30 },
+      4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' }
+    },
+    margin: { left: 14, right: 14 }
+  });
+
+  let y = doc.lastAutoTable.finalY + 8;
+
+  // ── TOTALS ──
+  doc.setFontSize(10);
+  doc.setTextColor(90, 90, 100);
+  if (o.discount > 0) {
+    doc.text('Nëntotali:', W - 64, y, { align: 'right' });
+    doc.text(o.subtotal.toFixed(2) + ' €', W - 14, y, { align: 'right' });
+    y += 6;
+    doc.setTextColor(200, 60, 40);
+    doc.text('Zbritje:', W - 64, y, { align: 'right' });
+    doc.text('-' + o.discount.toFixed(2) + ' €', W - 14, y, { align: 'right' });
+    y += 8;
+  }
+  doc.setFillColor(0, 160, 125);
+  doc.roundedRect(W - 90, y - 5.5, 76, 12, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('TOTALI:', W - 64, y + 2.5, { align: 'right' });
+  doc.text(o.total.toFixed(2) + ' €', W - 18, y + 2.5, { align: 'right' });
+  y += 16;
+
+  // ── NOTES ──
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(90, 90, 100);
+  if (o.notes) {
+    doc.text('Shënim: ' + o.notes, 14, y);
+    y += 7;
+  }
+  doc.text('Oferta vlen ' + o.validDays + ' ditë nga data e lëshimit. Çmimet janë për punën e kryer.', 14, y);
+  y += 16;
+
+  // ── SIGNATURES ──
+  if (y < 250) {
+    doc.setDrawColor(180, 180, 190);
+    doc.line(20, y + 12, 80, y + 12);
+    doc.line(W - 80, y + 12, W - 20, y + 12);
+    doc.setFontSize(8.5);
+    doc.text('Për firmën', 50, y + 18, { align: 'center' });
+    doc.text('Klienti', W - 50, y + 18, { align: 'center' });
+  }
+
+  const safeClient = o.client.replace(/[^a-zA-Z0-9ëçËÇ ]/g, '').replace(/ /g, '-');
+  doc.save('Oferta-' + o.number + '-' + safeClient + '.pdf');
+}
+
+function renderOffersList() {
+  const c = document.getElementById('offersListContainer');
+  if (!c) return;
+  if (!offers.length) {
+    c.innerHTML = '<div style="text-align:center;padding:10px;color:var(--muted);font-size:0.82rem">Asnjë ofertë ende. Klik <strong style="color:var(--green)">➕ Krijo Ofertë</strong> për të parën!</div>';
+    return;
+  }
+  c.innerHTML = offers.slice(0, 8).map(o => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,164,0.1);border:1px solid rgba(0,212,164,0.3);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0">🧾</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.86rem;font-weight:600;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.client)}${o.project ? ' · ' + esc(o.project) : ''}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${o.number} · ${fmtDate(o.date)}</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);white-space:nowrap;font-size:0.95rem">${o.total.toFixed(0)}€</div>
+      <button onclick="generateOfferPDF(offers.find(x=>x.id==='${o.id}'))" title="Shkarko PDF" style="background:var(--surface3);border:1px solid var(--border);border-radius:9px;width:32px;height:32px;color:var(--text);cursor:pointer;font-size:0.85rem">📄</button>
+      <button onclick="delOffer('${o.id}')" title="Fshi" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:4px">🗑</button>
+    </div>
+  `).join('') + (offers.length > 8 ? `<div style="text-align:center;font-size:0.74rem;color:var(--muted);padding:4px">+ ${offers.length - 8} oferta të tjera</div>` : '');
+}
+
+async function delOffer(id) {
+  if (!await customConfirm('Oferta do të fshihet nga lista. PDF-të e shkarkuara mbeten në telefon.', {title: 'Fshi Ofertën?'})) return;
+  offers = offers.filter(o => o.id !== id);
+  save();
+  renderOffersList();
+  showToast('🗑 Oferta u fshi', true);
 }
 
 // ═══════════════════════════════════════
@@ -5872,6 +6222,7 @@ function saveLocalCache() {
   localStorage.setItem('pun_pricelist', JSON.stringify(priceList));
   localStorage.setItem('pun_projectworks', JSON.stringify(projectWorks));
   localStorage.setItem('pun_plannedjobs', JSON.stringify(plannedJobs));
+  localStorage.setItem('pun_offers', JSON.stringify(offers));
 }
 
 function save() {
@@ -6101,7 +6452,7 @@ async function disconnectDrive() {
   if (!await customConfirm('Të dhënat lokale do të fshihen — të dhënat në Drive mbeten të sigurta. Mund të rilidhesh kurdo.', {title: 'Shkëputu nga Drive?', icon: '🔌', okText: 'Po, Shkëputu'})) return;
   accessToken = null;
   driveFileId = null;
-  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = [];
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = []; offers = [];
   saveLocalCache();
   localStorage.removeItem('gdrive_token_time');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -6177,6 +6528,7 @@ async function pullFromDrive() {
     priceList = data.priceList || [];
     projectWorks = data.projectWorks || [];
     plannedJobs = data.plannedJobs || [];
+    offers = data.offers || [];
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -6242,7 +6594,7 @@ function refreshUI() {
   if (document.getElementById('view-workers').classList.contains('active')) renderWorkers();
   if (document.getElementById('view-history').classList.contains('active')) renderHistory();
   if (document.getElementById('view-planned').classList.contains('active')) renderPlanned();
-  if (document.getElementById('view-prices').classList.contains('active')) renderPriceList();
+  if (document.getElementById('view-prices').classList.contains('active')) { renderPriceList(); renderOffersList(); }
 }
 
 async function pushToDrive() {
@@ -6250,9 +6602,9 @@ async function pushToDrive() {
   isSyncing = true;
   try {
     const payload = JSON.stringify({
-      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs,
+      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs, offers,
       lastSync: new Date().toISOString(),
-      version: 6
+      version: 7
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
