@@ -2711,7 +2711,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         <div class="add-form">
           <div><label>Emri i Punës</label><input type="text" id="npName" placeholder="p.sh. Shtrimi i pllakave"/></div>
           <div><label>Njësia</label>
-            <select id="npUnit" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
+            <select id="npUnit" onchange="toggleCustomUnit('np')" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
               <option value="m²">m² (metër katror)</option>
               <option value="m">m (metër)</option>
               <option value="m³">m³ (metër kub)</option>
@@ -2720,7 +2720,9 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
               <option value="ditë">ditë</option>
               <option value="kg">kg</option>
               <option value="punë">punë (total)</option>
+              <option value="__custom">✏️ Tjetër (shkruaj vetë)</option>
             </select>
+            <input type="text" id="npUnitCustom" placeholder="p.sh. palet, thasë, set..." maxlength="12" style="display:none;margin-top:8px"/>
           </div>
           <div><label>Çmimi për Njësi (€)</label><input type="number" id="npPrice" placeholder="p.sh. 15" min="0" step="0.01" inputmode="decimal"/></div>
           <div style="display:flex;align-items:flex-end"><button class="btn-p" onclick="addPriceItem()" style="width:100%">Shto</button></div>
@@ -3166,7 +3168,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     </div>
     <div style="margin-bottom:12px">
       <label>Njësia</label>
-      <select id="editPrUnit" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
+      <select id="editPrUnit" onchange="toggleCustomUnit('editPr')" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:11px 13px;outline:none;cursor:pointer">
         <option value="m²">m² (metër katror)</option>
         <option value="m">m (metër)</option>
         <option value="m³">m³ (metër kub)</option>
@@ -3175,7 +3177,9 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         <option value="ditë">ditë</option>
         <option value="kg">kg</option>
         <option value="punë">punë (total)</option>
+        <option value="__custom">✏️ Tjetër (shkruaj vetë)</option>
       </select>
+      <input type="text" id="editPrUnitCustom" placeholder="p.sh. palet, thasë, set..." maxlength="12" style="display:none;margin-top:8px"/>
     </div>
     <div style="margin-bottom:14px">
       <label>Çmimi për Njësi (€)</label>
@@ -4439,11 +4443,34 @@ async function delOffer(id) {
 // ═══════════════════════════════════════
 // ── PRICE LIST (Tarifat e Punëve) ──
 // ═══════════════════════════════════════
+// ── Custom unit helper ──
+const STANDARD_UNITS = ['m²', 'm', 'm³', 'copë', 'orë', 'ditë', 'kg', 'punë'];
+
+function toggleCustomUnit(prefix) {
+  const sel = document.getElementById(prefix + 'Unit');
+  const custom = document.getElementById(prefix + 'UnitCustom');
+  if (sel.value === '__custom') {
+    custom.style.display = '';
+    setTimeout(() => custom.focus(), 50);
+  } else {
+    custom.style.display = 'none';
+  }
+}
+
+function getUnitValue(prefix) {
+  const sel = document.getElementById(prefix + 'Unit');
+  if (sel.value === '__custom') {
+    return document.getElementById(prefix + 'UnitCustom').value.trim();
+  }
+  return sel.value;
+}
+
 function addPriceItem() {
   const name = document.getElementById('npName').value.trim();
-  const unit = document.getElementById('npUnit').value;
+  const unit = getUnitValue('np');
   const price = parseFloat(document.getElementById('npPrice').value) || 0;
   if (!name) { showToast('⚠ Shkruaj emrin e punës!'); return; }
+  if (!unit) { showToast('⚠ Shkruaj njësinë!'); return; }
   if (price <= 0) { showToast('⚠ Vendos çmimin!'); return; }
   priceList.push({
     id: 'pr' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
@@ -4452,6 +4479,9 @@ function addPriceItem() {
   save(); renderPriceList();
   document.getElementById('npName').value = '';
   document.getElementById('npPrice').value = '';
+  document.getElementById('npUnitCustom').value = '';
+  document.getElementById('npUnit').value = 'm²';
+  toggleCustomUnit('np');
   showToast('✔ Tarifa u shtua!');
 }
 
@@ -4467,7 +4497,15 @@ function editPriceItem(id) {
   if (!p) return;
   document.getElementById('editPrId').value = id;
   document.getElementById('editPrName').value = p.name;
-  document.getElementById('editPrUnit').value = p.unit;
+  // If unit is custom (not in standard list), select __custom and fill the text input
+  if (STANDARD_UNITS.includes(p.unit)) {
+    document.getElementById('editPrUnit').value = p.unit;
+    document.getElementById('editPrUnitCustom').value = '';
+  } else {
+    document.getElementById('editPrUnit').value = '__custom';
+    document.getElementById('editPrUnitCustom').value = p.unit;
+  }
+  toggleCustomUnit('editPr');
   document.getElementById('editPrPrice').value = p.price;
   document.getElementById('editPriceModal').classList.add('open');
   setTimeout(() => document.getElementById('editPrName').select(), 100);
@@ -4478,9 +4516,10 @@ function saveEditPriceItem() {
   const p = priceList.find(x => x.id === id);
   if (!p) return;
   const name = document.getElementById('editPrName').value.trim();
-  const unit = document.getElementById('editPrUnit').value;
+  const unit = getUnitValue('editPr');
   const price = parseFloat(document.getElementById('editPrPrice').value) || 0;
   if (!name) { showToast('⚠ Emri nuk mund të jetë bosh!'); return; }
+  if (!unit) { showToast('⚠ Shkruaj njësinë!'); return; }
   if (price <= 0) { showToast('⚠ Vendos çmimin!'); return; }
   p.name = name; p.unit = unit; p.price = price;
   // Also update existing projectWorks that reference this priceItem (just name/unit, not price)
