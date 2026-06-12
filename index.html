@@ -3972,6 +3972,33 @@ async function importLocationsToPlanned() {
 // ═══════════════════════════════════════
 let offerItems = []; // Items in the offer being built
 let offerLang = 'sq'; // 'sq' or 'mk'
+let offerType = 'price'; // 'price' (vetëm çmimet) or 'work' (sasi + totale)
+
+function setOfferType(type) {
+  offerType = type;
+  document.getElementById('ofTypePrice').classList.toggle('active', type === 'price');
+  document.getElementById('ofTypeWork').classList.toggle('active', type === 'work');
+  // Show/hide qty input, add-all button, discount
+  document.getElementById('ofQty').style.display = type === 'work' ? '' : 'none';
+  document.getElementById('ofAddAllBtn').style.display = type === 'price' ? '' : 'none';
+  document.getElementById('ofDiscountWrap').style.display = type === 'work' ? '' : 'none';
+  renderOfferItems();
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function addAllPriceItems() {
+  // Add entire price list (price-only offer)
+  const existing = new Set(offerItems.map(it => it.name + '|' + it.unit));
+  let added = 0;
+  priceList.forEach(p => {
+    if (!existing.has(p.name + '|' + p.unit)) {
+      offerItems.push({ name: p.name, unit: p.unit, qty: 0, price: p.price });
+      added++;
+    }
+  });
+  renderOfferItems();
+  showToast(added ? `✔ U shtuan ${added} çmime!` : 'ℹ Të gjitha janë shtuar tashmë');
+}
 
 // ── PDF Label Translations ──
 const OFFER_T = {
