@@ -2956,6 +2956,14 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     </div>
 
     <div style="margin-bottom:12px">
+      <label>📄 Lloji i Dokumentit</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button type="button" class="tbtn active" id="ofTypePrice" onclick="setOfferType('price')">📋 Ofertë<br><small style="font-weight:400;font-size:0.68rem;opacity:0.8">vetëm çmimet/njësi</small></button>
+        <button type="button" class="tbtn" id="ofTypeWork" onclick="setOfferType('work')">🧾 Llogari Pune<br><small style="font-weight:400;font-size:0.68rem;opacity:0.8">sasitë + totali</small></button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
       <label>🌐 Gjuha e Ofertës</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <button type="button" class="tbtn active" id="ofLangSq" onclick="setOfferLang('sq')">🇦🇱 Shqip</button>
@@ -2988,13 +2996,14 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
           <input type="number" id="ofQty" placeholder="Sasia (p.sh. 45)" min="0" step="0.01" inputmode="decimal"/>
           <button class="btn-o" onclick="addOfferItem()" style="border-color:var(--green);color:var(--green)">＋ Shto</button>
         </div>
+        <button type="button" class="btn-o" id="ofAddAllBtn" onclick="addAllPriceItems()" style="border-style:dashed">📥 Shto të gjitha nga çmimorja</button>
       </div>
     </div>
 
     <div id="ofItemsList" style="margin-bottom:12px"></div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div>
+      <div id="ofDiscountWrap">
         <label>🏷 Zbritje (€, opsionale)</label>
         <input type="number" id="ofDiscount" placeholder="0" min="0" step="0.01" inputmode="decimal" oninput="renderOfferItems()"/>
       </div>
@@ -3968,6 +3977,10 @@ let offerLang = 'sq'; // 'sq' or 'mk'
 const OFFER_T = {
   sq: {
     title: 'OFERTË',
+    titleWork: 'LLOGARI PUNE',
+    thPriceOnly: 'Çmimi',
+    priceNote: 'Çmimet janë për njësi pune.',
+    workNote: 'Llogari për punët e kryera.',
     headerSub: 'Shtrim pllakash & punime ndërtimi',
     nr: 'Nr', date: 'Data', validUntil: 'Vlefshme deri',
     forClient: 'Për', tel: 'Tel', project: 'Projekti',
@@ -3978,6 +3991,10 @@ const OFFER_T = {
   },
   mk: {
     title: 'ПОНУДА',
+    titleWork: 'ПРЕСМЕТКА',
+    thPriceOnly: 'Цена',
+    priceNote: 'Цените се за единица работа.',
+    workNote: 'Пресметка за извршените работи.',
     headerSub: 'Поставување плочки и градежни работи',
     nr: 'Бр', date: 'Датум', validUntil: 'Важи до',
     forClient: 'За', tel: 'Тел', project: 'Проект',
@@ -4058,6 +4075,7 @@ function openOfferModal() {
   }
   offerItems = [];
   setOfferLang('sq');
+  setOfferType('price');
   // Pre-fill firm info from localStorage
   document.getElementById('ofFirmName').value = localStorage.getItem('pun_firm_name') || '';
   document.getElementById('ofFirmPhone').value = localStorage.getItem('pun_firm_phone') || '';
@@ -4079,10 +4097,10 @@ function addOfferItem() {
   const pid = document.getElementById('ofPriceItem').value;
   const qty = parseFloat(document.getElementById('ofQty').value) || 0;
   if (!pid) { showToast('⚠ Zgjedh punën!'); return; }
-  if (qty <= 0) { showToast('⚠ Vendos sasinë!'); return; }
+  if (offerType === 'work' && qty <= 0) { showToast('⚠ Vendos sasinë!'); return; }
   const p = priceList.find(x => x.id === pid);
   if (!p) return;
-  offerItems.push({ name: p.name, unit: p.unit, qty, price: p.price });
+  offerItems.push({ name: p.name, unit: p.unit, qty: offerType === 'work' ? qty : 0, price: p.price });
   document.getElementById('ofQty').value = '';
   document.getElementById('ofPriceItem').value = '';
   renderOfferItems();
@@ -4100,6 +4118,24 @@ function renderOfferItems() {
     c.innerHTML = '<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.82rem">Asnjë punë e shtuar ende.</div>';
     return;
   }
+
+  if (offerType === 'price') {
+    // PRICE-ONLY MODE: just show name + price/unit
+    c.innerHTML = offerItems.map((it, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:0.86rem;font-weight:600;color:var(--text-bright)">${esc(it.name)}</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);white-space:nowrap">${it.price.toFixed(2)}€/${esc(it.unit)}</div>
+        <button onclick="removeOfferItem(${i})" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px">🗑</button>
+      </div>
+    `).join('') + `
+      <div style="text-align:center;padding:8px;font-size:0.76rem;color:var(--muted)">📋 Oferta tregon vetëm çmimet për njësi — pa sasi e totale.</div>
+    `;
+    return;
+  }
+
+  // WORK MODE: qty × price = totals
   const subtotal = offerItems.reduce((s, it) => s + it.qty * it.price, 0);
   const discount = parseFloat(document.getElementById('ofDiscount').value) || 0;
   const total = Math.max(0, subtotal - discount);
@@ -4139,13 +4175,15 @@ function saveOfferAndPDF() {
   localStorage.setItem('pun_firm_name', firmName);
   localStorage.setItem('pun_firm_phone', firmPhone);
 
-  const subtotal = offerItems.reduce((s, it) => s + it.qty * it.price, 0);
-  const total = Math.max(0, subtotal - discount);
+  const isWork = offerType === 'work';
+  const subtotal = isWork ? offerItems.reduce((s, it) => s + it.qty * it.price, 0) : 0;
+  const total = isWork ? Math.max(0, subtotal - discount) : 0;
 
-  // Offer number: OF-YYYY-NNN
+  // Number: OF-YYYY-NNN for offers, LL-YYYY-NNN for work accounts
   const year = new Date().getFullYear();
-  const countThisYear = offers.filter(o => (o.number || '').includes('-' + year + '-')).length;
-  const number = 'OF-' + year + '-' + String(countThisYear + 1).padStart(3, '0');
+  const prefix = isWork ? 'LL' : 'OF';
+  const countThisYear = offers.filter(o => (o.number || '').startsWith(prefix + '-' + year + '-')).length;
+  const number = prefix + '-' + year + '-' + String(countThisYear + 1).padStart(3, '0');
 
   const offer = {
     id: 'of' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
@@ -4153,10 +4191,11 @@ function saveOfferAndPDF() {
     date: todayStr,
     client, phone, project,
     items: offerItems.slice(),
-    subtotal, discount, total,
+    subtotal, discount: isWork ? discount : 0, total,
     notes, validDays,
     firmName, firmPhone,
-    lang: offerLang
+    lang: offerLang,
+    type: offerType
   };
   offers.unshift(offer);
   save();
@@ -4175,6 +4214,8 @@ function generateOfferPDF(o) {
   const lang = o.lang || 'sq';
   const T = OFFER_T[lang];
   const isMk = lang === 'mk';
+  const isWork = (o.type || 'work') === 'work';
+  const docTitle = isWork ? T.titleWork : T.title;
 
   // For Macedonian (Cyrillic) we need the embedded DejaVu font
   let FONT = 'helvetica';
@@ -4215,7 +4256,7 @@ function generateOfferPDF(o) {
   doc.setTextColor(255, 107, 53);
   doc.setFont(FONT, 'bold');
   doc.setFontSize(22);
-  doc.text(T.title, 14, 50);
+  doc.text(docTitle, 14, 50);
   doc.setFont(FONT, 'normal');
   doc.setFontSize(10);
   doc.setTextColor(90, 90, 100);
@@ -4240,17 +4281,39 @@ function generateOfferPDF(o) {
   if (o.project) clientLine2.push(T.project + ': ' + o.project);
   if (clientLine2.length) doc.text(clientLine2.join('   ·   '), 19, 73);
 
-  // ── ITEMS TABLE ──
-  const rows = items.map((it, i) => [
-    String(i + 1),
-    it.name,
-    it.qty + ' ' + it.unit,
-    it.price.toFixed(2) + ' €',
-    (it.qty * it.price).toFixed(2) + ' €'
-  ]);
+  // ── ITEMS TABLE ── (different columns per type)
+  let head, rows, colStyles;
+  if (isWork) {
+    head = [[T.thNum, T.thDesc, T.thQty, T.thPrice, T.thTotal]];
+    rows = items.map((it, i) => [
+      String(i + 1),
+      it.name,
+      it.qty + ' ' + it.unit,
+      it.price.toFixed(2) + ' €',
+      (it.qty * it.price).toFixed(2) + ' €'
+    ]);
+    colStyles = {
+      0: { cellWidth: 10, halign: 'center' },
+      2: { halign: 'center', cellWidth: 28 },
+      3: { halign: 'right', cellWidth: 30 },
+      4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' }
+    };
+  } else {
+    // PRICE-ONLY: # | Përshkrimi | Çmimi (30.00 € / m²)
+    head = [[T.thNum, T.thDesc, T.thPriceOnly]];
+    rows = items.map((it, i) => [
+      String(i + 1),
+      it.name,
+      it.price.toFixed(2) + ' € / ' + it.unit
+    ]);
+    colStyles = {
+      0: { cellWidth: 10, halign: 'center' },
+      2: { halign: 'right', cellWidth: 45, fontStyle: 'bold' }
+    };
+  }
 
   doc.autoTable({
-    head: [[T.thNum, T.thDesc, T.thQty, T.thPrice, T.thTotal]],
+    head: head,
     body: rows,
     startY: 84,
     theme: 'striped',
@@ -4258,21 +4321,16 @@ function generateOfferPDF(o) {
     headStyles: { fillColor: [20, 17, 26], textColor: [255, 255, 255], fontSize: 9.5, fontStyle: 'bold', font: FONT },
     bodyStyles: { fontSize: 9.5, textColor: [40, 40, 50], font: FONT },
     alternateRowStyles: { fillColor: [248, 246, 251] },
-    columnStyles: {
-      0: { cellWidth: 10, halign: 'center' },
-      2: { halign: 'center', cellWidth: 28 },
-      3: { halign: 'right', cellWidth: 30 },
-      4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' }
-    },
+    columnStyles: colStyles,
     margin: { left: 14, right: 14 }
   });
 
   let y = doc.lastAutoTable.finalY + 8;
 
-  // ── TOTALS ──
+  // ── TOTALS (only for work accounts) ──
   doc.setFontSize(10);
   doc.setTextColor(90, 90, 100);
-  if (o.discount > 0) {
+  if (isWork && o.discount > 0) {
     doc.text(T.subtotal + ':', W - 64, y, { align: 'right' });
     doc.text(o.subtotal.toFixed(2) + ' €', W - 14, y, { align: 'right' });
     y += 6;
@@ -4281,14 +4339,16 @@ function generateOfferPDF(o) {
     doc.text('-' + o.discount.toFixed(2) + ' €', W - 14, y, { align: 'right' });
     y += 8;
   }
-  doc.setFillColor(0, 160, 125);
-  doc.roundedRect(W - 96, y - 5.5, 82, 12, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(11);
-  doc.text(T.total + ':', W - 62, y + 2.5, { align: 'right' });
-  doc.text(o.total.toFixed(2) + ' €', W - 18, y + 2.5, { align: 'right' });
-  y += 16;
+  if (isWork) {
+    doc.setFillColor(0, 160, 125);
+    doc.roundedRect(W - 96, y - 5.5, 82, 12, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(FONT, 'bold');
+    doc.setFontSize(11);
+    doc.text(T.total + ':', W - 62, y + 2.5, { align: 'right' });
+    doc.text(o.total.toFixed(2) + ' €', W - 18, y + 2.5, { align: 'right' });
+    y += 16;
+  }
 
   // ── NOTES ──
   doc.setFont(FONT, 'normal');
@@ -4298,7 +4358,11 @@ function generateOfferPDF(o) {
     doc.text(T.note + ': ' + o.notes, 14, y);
     y += 7;
   }
-  doc.text(T.validity(o.validDays), 14, y);
+  if (isWork) {
+    doc.text(T.workNote, 14, y);
+  } else {
+    doc.text(T.validity(o.validDays) + ' ' + T.priceNote, 14, y);
+  }
   y += 16;
 
   // ── SIGNATURES ──
@@ -4312,7 +4376,8 @@ function generateOfferPDF(o) {
   }
 
   const safeClient = o.client.replace(/[^a-zA-Z0-9ëçËÇа-шА-Ш ]/g, '').replace(/ /g, '-');
-  doc.save((isMk ? 'Ponuda-' : 'Oferta-') + o.number + '-' + safeClient + '.pdf');
+  const fname = isWork ? (isMk ? 'Presmetka-' : 'Llogari-') : (isMk ? 'Ponuda-' : 'Oferta-');
+  doc.save(fname + o.number + '-' + safeClient + '.pdf');
 }
 
 function renderOffersList() {
@@ -4324,12 +4389,12 @@ function renderOffersList() {
   }
   c.innerHTML = offers.slice(0, 8).map(o => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
-      <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,164,0.1);border:1px solid rgba(0,212,164,0.3);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0">🧾</div>
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,164,0.1);border:1px solid rgba(0,212,164,0.3);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0">${(o.type||'work')==='work' ? '🧾' : '📋'}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:0.86rem;font-weight:600;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.client)}${o.project ? ' · ' + esc(o.project) : ''}</div>
-        <div style="font-size:0.72rem;color:var(--muted)">${o.number} · ${fmtDate(o.date)}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${o.number} · ${fmtDate(o.date)}${(o.lang||'sq')==='mk' ? ' · 🇲🇰' : ''}</div>
       </div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);white-space:nowrap;font-size:0.95rem">${o.total.toFixed(0)}€</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);white-space:nowrap;font-size:0.95rem">${(o.type||'work')==='work' ? o.total.toFixed(0)+'€' : '<span style="font-size:0.72rem;color:var(--muted);font-weight:600">çmimore</span>'}</div>
       <button onclick="generateOfferPDF(offers.find(x=>x.id==='${o.id}'))" title="Shkarko PDF" style="background:var(--surface3);border:1px solid var(--border);border-radius:9px;width:32px;height:32px;color:var(--text);cursor:pointer;font-size:0.85rem">📄</button>
       <button onclick="delOffer('${o.id}')" title="Fshi" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:4px">🗑</button>
     </div>
