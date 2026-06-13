@@ -1934,6 +1934,87 @@ select {
   font-size: 0.9rem;
 }
 
+/* ═══════════════════════════════════════
+   "TË GJITHA" — Day groups (collapsible)
+═══════════════════════════════════════ */
+.day-group {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: all 0.25s var(--ease);
+}
+.day-group.open {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(255,107,53,0.1);
+}
+.day-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.2s var(--ease);
+}
+.day-header:active { background: rgba(255,255,255,0.03); }
+.day-cal {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: var(--grad-accent);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(255,107,53,0.3);
+}
+.day-cal-day {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.25rem; font-weight: 800;
+  color: #fff; line-height: 1;
+}
+.day-cal-mon {
+  font-size: 0.6rem; font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+.day-info { flex: 1; min-width: 0; }
+.day-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--text-bright);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.day-sub {
+  font-size: 0.76rem; color: var(--muted);
+  margin-top: 2px;
+}
+.day-chevron {
+  color: var(--accent);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+.day-body {
+  padding: 0 12px 12px;
+  animation: dayExpand 0.3s var(--ease);
+}
+@keyframes dayExpand {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.day-loc-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.day-loc-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.84rem; font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
 /* CUSTOM CONFIRM DIALOG */
 .confirm-overlay {
   position: fixed; inset: 0;
@@ -2741,7 +2822,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <!-- GLOBAL SEARCH -->
     <div class="gsearch-wrap">
       <svg class="gsearch-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="globalSearch" placeholder="Kërko gjithçka: punëtorë, vende, përshkrime..." oninput="runGlobalSearch()" autocomplete="off"/>
+      <input type="text" id="globalSearch" placeholder="Kërko: punëtorë, vende, data (12.10.2026)..." oninput="runGlobalSearch()" autocomplete="off"/>
       <button class="gsearch-clear" id="gsearchClear" onclick="clearGlobalSearch()" style="display:none">✕</button>
     </div>
     <div id="gsearchResults" style="display:none"></div>
@@ -4934,12 +5015,63 @@ function runGlobalSearch() {
     });
   }
 
+  // 5. Date search — detect date patterns like 12.10.2026, 12/10, 12-10-26
+  const dateMatch = q.match(/(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/);
+  if (dateMatch) {
+    let [, dd, mm, yy] = dateMatch;
+    dd = dd.padStart(2, '0');
+    mm = mm.padStart(2, '0');
+    // Build matching date keys
+    const matchDates = [...new Set(entries.map(e => e.date))].filter(date => {
+      const [y, m, d] = date.split('-');
+      if (d !== dd || m !== mm) return false;
+      if (yy) {
+        const fullYy = yy.length === 2 ? '20' + yy : yy;
+        return y === fullYy;
+      }
+      return true;
+    }).sort((a,b) => b.localeCompare(a)).slice(0, 6);
+
+    if (matchDates.length) {
+      html += '<div class="gs-section">📆 Ditë Pune</div>';
+      matchDates.forEach(date => {
+        const dayEntries = entries.filter(e => e.date === date);
+        const workerNames = [...new Set(dayEntries.map(e => e.workerName))];
+        const locs = [...new Set(dayEntries.map(e => e.location))];
+        html += `<div class="gs-item" onclick="gsGoDate('${date}')">
+          <div class="gs-item-ico" style="background:var(--grad-accent);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:0.78rem;flex-direction:column;line-height:1">
+            <span>${date.slice(8,10)}</span>
+          </div>
+          <div class="gs-item-txt">
+            <div class="gs-item-title">${fmtDateLong(date)}</div>
+            <div class="gs-item-sub">${workerNames.length} punëtorë · ${locs.join(', ')}</div>
+          </div>
+        </div>`;
+        found++;
+      });
+    }
+  }
+
   if (!found) {
-    html = '<div class="gs-empty">🔍 Asgjë nuk u gjet për "' + esc(q) + '"</div>';
+    html = '<div class="gs-empty">🔍 Asgjë nuk u gjet për "' + esc(q) + '"<br><small style="color:var(--muted)">Provo emër, vend, ose datë (p.sh. 12.10.2026)</small></div>';
   }
 
   res.innerHTML = html;
   res.style.display = 'block';
+}
+
+function gsGoDate(date) {
+  clearGlobalSearch();
+  // Switch to "Të Gjitha" tab and expand that date
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.includes('Të Gjitha')) { switchTab('all', b); }
+  });
+  expandedDate = date;
+  renderHistory();
+  setTimeout(() => {
+    const groups = document.querySelectorAll('.day-group.open');
+    if (groups.length) groups[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 120);
 }
 
 function clearGlobalSearch() {
@@ -6147,6 +6279,8 @@ function saveEditLoc() {
 }
 
 // ── ALL TAB ──
+let expandedDate = null; // Currently expanded date in "Të Gjitha"
+
 function renderAll(filtered) {
   if (!filtered.length) {
     document.getElementById('allContainer').innerHTML = `<div class="empty-state"><div class="big">📭</div><p>Nuk ka regjistrime.</p></div>`;
@@ -6155,26 +6289,61 @@ function renderAll(filtered) {
   const grouped = {};
   filtered.forEach(e => { (grouped[e.date]=grouped[e.date]||[]).push(e); });
   const dates = Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
-  document.getElementById('allContainer').innerHTML = dates.map(date => `
-    <div class="eg">
-      <div class="eg-date">${fmtDateLong(date)} — ${grouped[date].length} punëtor${grouped[date].length>1?'ë':''}</div>
-      ${grouped[date].map(e => `
-        <div class="ecard">
-          <div class="eav">${ini(e.workerName)}</div>
-          <div class="ei">
-            <strong>${esc(e.workerName)}</strong>
-            <div class="ei-meta"><span class="loc">${esc(e.location)}</span>${e.workerRole?`<span>· ${esc(e.workerRole)}</span>`:''}</div>
-            <div class="ei-desc">${esc(e.desc)}</div>
-          </div>
-          <div>${dayBadge(e)}</div>
-            <div class="entry-actions" onclick="event.stopPropagation()">
-              <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
-              <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
-            </div>
+
+  document.getElementById('allContainer').innerHTML = dates.map(date => {
+    const dayEntries = grouped[date];
+    const workers = new Set(dayEntries.map(e => e.workerId)).size;
+    const locs = [...new Set(dayEntries.map(e => e.location))];
+    const isOpen = expandedDate === date;
+    const fullCount = dayEntries.filter(e => e.dayType === 'full').length;
+    const halfCount = dayEntries.filter(e => e.dayType === 'half').length;
+
+    return `
+    <div class="day-group ${isOpen ? 'open' : ''}">
+      <div class="day-header" onclick="toggleDayExpand('${date}')">
+        <div class="day-cal">
+          <div class="day-cal-day">${date.slice(8,10)}</div>
+          <div class="day-cal-mon">${['Jan','Shk','Mar','Pri','Maj','Qer','Kor','Gus','Sht','Tet','Nën','Dhj'][parseInt(date.slice(5,7))-1]}</div>
         </div>
-      `).join('')}
+        <div class="day-info">
+          <div class="day-title">${fmtDateLong(date)}</div>
+          <div class="day-sub">${workers} punëtor${workers>1?'ë':''} · ${locs.length} vend${locs.length>1?'e':''}${fullCount?` · ${fullCount} plota`:''}${halfCount?` · ${halfCount} gjysëm`:''}</div>
+        </div>
+        <div class="day-chevron">${isOpen ? '▲' : '▼'}</div>
+      </div>
+      ${isOpen ? `
+        <div class="day-body">
+          ${locs.map(loc => `
+            <div class="day-loc-group">
+              <div class="day-loc-name">📍 ${esc(loc)}</div>
+              ${dayEntries.filter(e => e.location === loc).map(e => `
+                <div class="ecard">
+                  <div class="eav">${ini(e.workerName)}</div>
+                  <div class="ei">
+                    <strong>${esc(e.workerName)}</strong>
+                    ${e.workerRole?`<div class="ei-meta"><span>${esc(e.workerRole)}</span></div>`:''}
+                    ${e.desc?`<div class="ei-desc">${esc(e.desc)}</div>`:''}
+                  </div>
+                  <div>${dayBadge(e)}</div>
+                  <div class="entry-actions" onclick="event.stopPropagation()">
+                    <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
+                    <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
+}
+
+function toggleDayExpand(date) {
+  expandedDate = expandedDate === date ? null : date;
+  renderAll(getFiltered());
+  if (navigator.vibrate) navigator.vibrate(8);
 }
 
 async function delEntry(id) {
