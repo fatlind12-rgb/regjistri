@@ -2729,20 +2729,6 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         </div>
       </div>
     </div>
-
-    <!-- BACKUP & SIGURIA -->
-    <div class="card" style="border-color:rgba(77,159,255,0.35)">
-      <div class="card-hd"><h3>💾 Backup &amp; Siguria</h3></div>
-      <div class="card-bd">
-        <div style="font-size:0.83rem;color:var(--muted);margin-bottom:14px;line-height:1.5">Ruaj një kopje të të gjitha të dhënave në telefon. Mund ta rikthesh kurdo nëse diçka shkon keq me Google Drive.</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn-o" onclick="exportBackup()" style="flex:1;min-width:150px;border-color:var(--blue);color:var(--blue)">⬇️ Shkarko Backup</button>
-          <button class="btn-o" onclick="document.getElementById('importFile').click()" style="flex:1;min-width:150px;border-color:var(--green);color:var(--green)">⬆️ Rikthe Backup</button>
-        </div>
-        <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importBackup(event)"/>
-        <div id="backupInfo" style="font-size:0.76rem;color:var(--muted);margin-top:12px;text-align:center"></div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -2794,10 +2780,6 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         <button class="btn-sync primary" onclick="openOfferModal()" style="background:var(--grad-green);box-shadow:0 4px 14px rgba(0,212,164,0.35)">➕ Krijo Ofertë</button>
       </div>
       <div class="card-bd" style="padding:14px 16px">
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="btn-o" onclick="openCalcModal()" style="flex:1;min-width:130px;border-color:var(--blue);color:var(--blue)">📐 Kalkulatori i Pllakave</button>
-          <button class="btn-o" onclick="openClientsModal()" style="flex:1;min-width:130px;border-color:var(--purple);color:var(--purple)">👤 Klientët <span id="clCountBadge" style="opacity:0.7"></span></button>
-        </div>
         <div id="offersListContainer"></div>
       </div>
     </div>
@@ -3039,67 +3021,6 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div class="row-end">
       <button class="btn-sync" onclick="document.getElementById('editLocModal').classList.remove('open')">Anulo</button>
       <button class="btn-sync primary" onclick="saveEditLoc()">Ruaj</button>
-    </div>
-  </div>
-</div>
-
-<!-- TILE CALCULATOR MODAL -->
-<div class="modal-overlay" id="calcModal">
-  <div class="modal" style="max-width:480px">
-    <h3>📐 Kalkulatori i Pllakave</h3>
-    <div style="font-size:0.83rem;color:var(--muted);margin-bottom:14px">Vendos përmasat e dhomës — llogarit m², materialet dhe çmimin.</div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div>
-        <label>↔️ Gjatësia (m)</label>
-        <input type="number" id="calcLength" placeholder="4.5" min="0" step="0.01" inputmode="decimal" oninput="runCalc()"/>
-      </div>
-      <div>
-        <label>↕️ Gjerësia (m)</label>
-        <input type="number" id="calcWidth" placeholder="3.2" min="0" step="0.01" inputmode="decimal" oninput="runCalc()"/>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div>
-        <label>📦 Rezervë (%)</label>
-        <input type="number" id="calcWaste" value="10" min="0" max="50" step="1" inputmode="numeric" oninput="runCalc()"/>
-      </div>
-      <div>
-        <label>💲 Çmimi/m² (€)</label>
-        <input type="number" id="calcPrice" placeholder="15" min="0" step="0.5" inputmode="decimal" oninput="runCalc()"/>
-      </div>
-    </div>
-
-    <div id="calcResult"></div>
-
-    <div class="row-end" style="margin-top:14px">
-      <button class="btn-sync" onclick="document.getElementById('calcModal').classList.remove('open')">Mbyll</button>
-    </div>
-  </div>
-</div>
-
-<!-- CLIENTS MODAL -->
-<div class="modal-overlay" id="clientsModal">
-  <div class="modal" style="max-width:520px">
-    <h3>👤 Klientët <span id="clCount" style="color:var(--purple)"></span></h3>
-
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px">
-      <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">➕ Shto Klient</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <input type="text" id="clName" placeholder="Emri *"/>
-        <input type="tel" id="clPhone" placeholder="Telefoni"/>
-      </div>
-      <input type="text" id="clAddress" placeholder="Adresa (opsional)" style="margin-bottom:8px"/>
-      <input type="text" id="clNotes" placeholder="Shënime (opsional)" style="margin-bottom:8px"/>
-      <button class="btn-o" onclick="addClient()" style="width:100%;border-color:var(--purple);color:var(--purple)">＋ Shto Klientin</button>
-    </div>
-
-    <input type="text" id="clSearch" placeholder="🔍 Kërko klient..." oninput="renderClientsList()" style="margin-bottom:10px"/>
-    <div id="clientsListContainer" style="max-height:340px;overflow-y:auto;margin-bottom:14px"></div>
-
-    <div class="row-end">
-      <button class="btn-sync" onclick="document.getElementById('clientsModal').classList.remove('open')">Mbyll</button>
     </div>
   </div>
 </div>
@@ -3491,7 +3412,6 @@ let priceList = []; // Lista e tarifave [{id, name, unit, price}]
 let projectWorks = []; // Punët e bëra në çdo vend
 let plannedJobs = []; // Punët e radhës [{id, location, client, phone, startDate, endDate, priority, status, description, address, notes}]
 let offers = []; // Ofertat për klientë [{id, number, date, client, phone, project, items, total, notes, validDays}]
-let clients = []; // Databaza e klientëve [{id, name, phone, address, notes, createdAt}]
 
 // ── INIT: start empty, load from Drive after login ──
 // We keep a local cache only to survive page refresh while connected
@@ -3506,7 +3426,6 @@ function loadLocalCache() {
   projectWorks = JSON.parse(localStorage.getItem('pun_projectworks')||'[]');
   plannedJobs = JSON.parse(localStorage.getItem('pun_plannedjobs')||'[]');
   offers = JSON.parse(localStorage.getItem('pun_offers')||'[]');
-  clients = JSON.parse(localStorage.getItem('pun_clients')||'[]');
   // Migrate old IDs
   let migrated = false;
   entries.forEach((e, i) => {
@@ -3542,7 +3461,7 @@ function showView(name, btn) {
   btn.classList.add('active');
   if (name==='register') renderChecklist();
   if (name==='workers') renderWorkers();
-  if (name==='prices') { renderPriceList(); renderOffersList(); updateClientsBadge(); }
+  if (name==='prices') { renderPriceList(); renderOffersList(); }
   if (name==='planned') renderPlannedJobs();
   if (name==='history') renderHistory();
 }
@@ -3781,84 +3700,6 @@ function saveEditWorker() {
   save(); renderWorkers(); renderChecklist();
   document.getElementById('editWorkerModal').classList.remove('open');
   showToast('✔ Punëtori u përditësua!');
-}
-
-// ═══════════════════════════════════════
-// ── BACKUP & RESTORE (Manual JSON) ──
-// ═══════════════════════════════════════
-function exportBackup() {
-  const data = {
-    _app: 'Regjistri Punës',
-    _version: 7,
-    _exported: new Date().toISOString(),
-    workers, entries, locStatus, expenses, contracts,
-    payments, priceList, projectWorks, plannedJobs, offers, clients
-  };
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const dateStr = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = 'regjistri-backup-' + dateStr + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  const total = workers.length + entries.length + offers.length;
-  document.getElementById('backupInfo').textContent = '✅ U shkarkua: ' + total + ' regjistrime · ' + dateStr;
-  if (navigator.vibrate) navigator.vibrate(20);
-  showToast('💾 Backup u shkarkua!');
-}
-
-async function importBackup(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!data.workers && !data.entries) {
-        showToast('⚠ File-i nuk është backup i vlefshëm!', true);
-        return;
-      }
-      const wCount = (data.workers||[]).length;
-      const eCount = (data.entries||[]).length;
-      const oCount = (data.offers||[]).length;
-      const exported = data._exported ? fmtDate(data._exported.slice(0,10)) : 'i panjohur';
-
-      const ok = await customConfirm(
-        `Backup-i përmban:\n${wCount} punëtorë · ${eCount} regjistrime · ${oCount} oferta\nData: ${exported}\n\n⚠ Të dhënat aktuale do të zëvendësohen plotësisht!`,
-        { title: 'Rikthe Backup?', icon: '⬆️', green: true, okText: 'Po, Rikthe' }
-      );
-      if (!ok) { document.getElementById('importFile').value = ''; return; }
-
-      // Restore all data
-      workers = data.workers || [];
-      entries = data.entries || [];
-      locStatus = data.locStatus || {};
-      expenses = data.expenses || [];
-      contracts = data.contracts || {};
-      payments = data.payments || [];
-      priceList = data.priceList || [];
-      projectWorks = data.projectWorks || [];
-      plannedJobs = data.plannedJobs || [];
-      offers = data.offers || [];
-    clients = data.clients || [];
-
-      save();
-      refreshUI();
-      renderWorkers();
-      document.getElementById('backupInfo').textContent = '✅ U rikthye: ' + wCount + ' punëtorë, ' + eCount + ' regjistrime';
-      if (navigator.vibrate) navigator.vibrate([20,40,20]);
-      showToast('✅ Backup u rikthye me sukses!');
-    } catch (err) {
-      console.error('Import error:', err);
-      showToast('⚠ Gabim: file-i është i dëmtuar!', true);
-    }
-    document.getElementById('importFile').value = '';
-  };
-  reader.readAsText(file);
 }
 
 function renderWorkers() {
@@ -4212,171 +4053,6 @@ async function importLocationsToPlanned() {
 }
 
 // ═══════════════════════════════════════
-// ── TILE CALCULATOR ──
-// ═══════════════════════════════════════
-function openCalcModal() {
-  document.getElementById('calcLength').value = '';
-  document.getElementById('calcWidth').value = '';
-  document.getElementById('calcWaste').value = '10';
-  // Pre-fill price from "Pllaka" if exists in price list
-  const tilePrice = priceList.find(p => /pllak/i.test(p.name) && p.unit === 'm²');
-  document.getElementById('calcPrice').value = tilePrice ? tilePrice.price : '';
-  runCalc();
-  document.getElementById('calcModal').classList.add('open');
-}
-
-function runCalc() {
-  const L = parseFloat(document.getElementById('calcLength').value) || 0;
-  const W = parseFloat(document.getElementById('calcWidth').value) || 0;
-  const waste = parseFloat(document.getElementById('calcWaste').value) || 0;
-  const price = parseFloat(document.getElementById('calcPrice').value) || 0;
-  const res = document.getElementById('calcResult');
-
-  if (L <= 0 || W <= 0) {
-    res.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:0.84rem">Vendos gjatësinë dhe gjerësinë...</div>';
-    return;
-  }
-
-  const area = L * W;
-  const areaWithWaste = area * (1 + waste / 100);
-  // Material estimates per m²
-  const adhesive = areaWithWaste * 5;   // ~5 kg/m² ngjitës
-  const grout = areaWithWaste * 0.5;    // ~0.5 kg/m² fugues
-  const labor = areaWithWaste * price;
-
-  res.innerHTML = `
-    <div style="background:linear-gradient(135deg, rgba(77,159,255,0.1) 0%, rgba(77,159,255,0.03) 100%);border:1.5px solid rgba(77,159,255,0.4);border-radius:14px;padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text-bright)">Sipërfaqja</span>
-        <span style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--blue)">${area.toFixed(2)} m²</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.86rem">
-        <span style="color:var(--muted)">📦 Me rezervë +${waste}%</span>
-        <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--text-bright)">${areaWithWaste.toFixed(2)} m²</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.86rem">
-        <span style="color:var(--muted)">🪣 Ngjitës (~5kg/m²)</span>
-        <span style="font-family:'DM Mono',monospace;font-weight:600">${adhesive.toFixed(0)} kg</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.86rem">
-        <span style="color:var(--muted)">🧴 Fugues (~0.5kg/m²)</span>
-        <span style="font-family:'DM Mono',monospace;font-weight:600">${grout.toFixed(1)} kg</span>
-      </div>
-      ${price > 0 ? `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-          <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text-bright)">💰 Çmimi i punës</span>
-          <span style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--green)">${labor.toFixed(2)}€</span>
-        </div>
-        <div style="font-size:0.72rem;color:var(--muted);text-align:right;margin-top:2px">${areaWithWaste.toFixed(2)} m² × ${price.toFixed(2)}€</div>
-      ` : ''}
-    </div>
-  `;
-}
-
-// ═══════════════════════════════════════
-// ── CLIENTS DATABASE ──
-// ═══════════════════════════════════════
-function openClientsModal() {
-  document.getElementById('clName').value = '';
-  document.getElementById('clPhone').value = '';
-  document.getElementById('clAddress').value = '';
-  document.getElementById('clNotes').value = '';
-  document.getElementById('clSearch').value = '';
-  renderClientsList();
-  document.getElementById('clientsModal').classList.add('open');
-}
-
-function addClient() {
-  const name = document.getElementById('clName').value.trim();
-  if (!name) { showToast('⚠ Shkruaj emrin e klientit!'); return; }
-  clients.push({
-    id: 'cl' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    name,
-    phone: document.getElementById('clPhone').value.trim(),
-    address: document.getElementById('clAddress').value.trim(),
-    notes: document.getElementById('clNotes').value.trim(),
-    createdAt: new Date().toISOString()
-  });
-  save();
-  document.getElementById('clName').value = '';
-  document.getElementById('clPhone').value = '';
-  document.getElementById('clAddress').value = '';
-  document.getElementById('clNotes').value = '';
-  renderClientsList();
-  updateClientsBadge();
-  showToast('✔ Klienti u shtua!');
-}
-
-async function delClient(id) {
-  if (!await customConfirm('Klienti do të fshihet nga databaza.', {title: 'Fshi Klientin?'})) return;
-  clients = clients.filter(c => c.id !== id);
-  save();
-  renderClientsList();
-  updateClientsBadge();
-  showToast('🗑 Klienti u fshi', true);
-}
-
-function calcClientStats(client) {
-  // Match offers + project works by client name (case-insensitive)
-  const nameLC = client.name.toLowerCase();
-  const clientOffers = offers.filter(o => (o.client||'').toLowerCase() === nameLC);
-  const totalOffered = clientOffers.filter(o => (o.type||'work')==='work').reduce((s,o) => s + (o.total||0), 0);
-  // Match contracts (locations) where client name appears
-  let contractTotal = 0, contractPaid = 0;
-  Object.values(contracts).forEach(c => {
-    if ((c.client||'').toLowerCase() === nameLC) {
-      contractTotal += c.total || 0;
-      contractPaid += c.advance || 0;
-    }
-  });
-  return { offerCount: clientOffers.length, totalOffered, contractTotal, contractPaid };
-}
-
-function renderClientsList() {
-  const c = document.getElementById('clientsListContainer');
-  const q = (document.getElementById('clSearch').value || '').trim().toLowerCase();
-  document.getElementById('clCount').textContent = clients.length ? '(' + clients.length + ')' : '';
-
-  let list = clients.slice().sort((a,b) => a.name.localeCompare(b.name));
-  if (q) list = list.filter(cl => cl.name.toLowerCase().includes(q) || (cl.phone||'').includes(q));
-
-  if (!list.length) {
-    c.innerHTML = '<div style="text-align:center;padding:18px;color:var(--muted);font-size:0.84rem">' + (q ? 'Asnjë klient nuk u gjet.' : 'Asnjë klient ende. Shto të parin lart!') + '</div>';
-    return;
-  }
-
-  c.innerHTML = list.map(cl => {
-    const stats = calcClientStats(cl);
-    const phoneEsc = (cl.phone||'').replace(/'/g,"\\'");
-    return `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:11px">
-          <div style="width:40px;height:40px;border-radius:50%;background:var(--grad-purple);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;flex-shrink:0">${ini(cl.name)}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;color:var(--text-bright)">${esc(cl.name)}</div>
-            ${cl.phone ? `<a href="tel:${esc(cl.phone)}" onclick="event.stopPropagation()" style="font-size:0.78rem;color:var(--blue);text-decoration:none">📞 ${esc(cl.phone)}</a>` : '<span style="font-size:0.78rem;color:var(--muted)">pa telefon</span>'}
-          </div>
-          <button onclick="delClient('${cl.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px">🗑</button>
-        </div>
-        ${cl.address ? `<div style="font-size:0.76rem;color:var(--muted);margin-top:8px">🏠 ${esc(cl.address)}</div>` : ''}
-        ${cl.notes ? `<div style="font-size:0.76rem;color:var(--muted);margin-top:4px">📝 ${esc(cl.notes)}</div>` : ''}
-        ${(stats.offerCount > 0 || stats.contractTotal > 0) ? `
-          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-            ${stats.offerCount > 0 ? `<span style="font-size:0.72rem;background:rgba(0,212,164,0.1);border:1px solid rgba(0,212,164,0.3);color:var(--green);border-radius:20px;padding:2px 9px">🧾 ${stats.offerCount} oferta · ${stats.totalOffered.toFixed(0)}€</span>` : ''}
-            ${stats.contractTotal > 0 ? `<span style="font-size:0.72rem;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);color:var(--accent);border-radius:20px;padding:2px 9px">💰 Kontrata ${stats.contractTotal.toFixed(0)}€</span>` : ''}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-function updateClientsBadge() {
-  const b = document.getElementById('clCountBadge');
-  if (b) b.textContent = clients.length ? '(' + clients.length + ')' : '';
-}
-
-// ═══════════════════════════════════════
 // ── OFERTAT PËR KLIENTË (PDF Generator) ──
 // ═══════════════════════════════════════
 let offerItems = []; // Items in the offer being built
@@ -4634,19 +4310,10 @@ function saveOfferAndPDF() {
     type: offerType
   };
   offers.unshift(offer);
-  // Auto-add client to database if new
-  if (client && !clients.some(c => c.name.toLowerCase() === client.toLowerCase())) {
-    clients.push({
-      id: 'cl' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      name: client, phone: phone || '', address: '', notes: 'Nga oferta ' + number,
-      createdAt: new Date().toISOString()
-    });
-  }
   save();
   generateOfferPDF(offer);
   document.getElementById('offerModal').classList.remove('open');
   renderOffersList();
-  updateClientsBadge();
   showToast('📄 Oferta ' + number + ' u krijua!');
 }
 
@@ -6979,7 +6646,6 @@ function saveLocalCache() {
   localStorage.setItem('pun_projectworks', JSON.stringify(projectWorks));
   localStorage.setItem('pun_plannedjobs', JSON.stringify(plannedJobs));
   localStorage.setItem('pun_offers', JSON.stringify(offers));
-  localStorage.setItem('pun_clients', JSON.stringify(clients));
 }
 
 function save() {
@@ -7209,7 +6875,7 @@ async function disconnectDrive() {
   if (!await customConfirm('Të dhënat lokale do të fshihen — të dhënat në Drive mbeten të sigurta. Mund të rilidhesh kurdo.', {title: 'Shkëputu nga Drive?', icon: '🔌', okText: 'Po, Shkëputu'})) return;
   accessToken = null;
   driveFileId = null;
-  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = []; offers = []; clients = [];
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = []; offers = [];
   saveLocalCache();
   localStorage.removeItem('gdrive_token_time');
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
@@ -7286,7 +6952,6 @@ async function pullFromDrive() {
     projectWorks = data.projectWorks || [];
     plannedJobs = data.plannedJobs || [];
     offers = data.offers || [];
-    clients = data.clients || [];
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -7360,9 +7025,9 @@ async function pushToDrive() {
   isSyncing = true;
   try {
     const payload = JSON.stringify({
-      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs, offers, clients,
+      workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs, offers,
       lastSync: new Date().toISOString(),
-      version: 8
+      version: 7
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
