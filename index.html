@@ -188,27 +188,29 @@ header::after {
   white-space: nowrap;
 }
 #themeToggle {
-  margin-left: 10px;
-  width: 36px; height: 36px;
+  margin-left: 12px;
+  width: 38px; height: 38px; min-width: 38px;
   border-radius: 50%;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--accent);
   background: var(--surface2);
   color: var(--accent);
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  padding: 0;
   transition: all 0.25s var(--ease);
   -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 0 12px var(--accent-glow);
 }
-#themeToggle:hover { border-color: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
+#themeToggle:hover { box-shadow: 0 0 18px var(--accent-glow); }
 #themeToggle:active { transform: scale(0.9); }
-#themeToggle svg { width: 18px; height: 18px; transition: all 0.3s var(--ease); }
+#themeToggle svg { width: 19px; height: 19px; transition: all 0.3s var(--ease); display: block; }
 /* Show moon in dark mode, sun in light mode */
 #themeToggle .theme-ico-sun { display: none; }
 #themeToggle .theme-ico-moon { display: block; }
 [data-theme="light"] #themeToggle .theme-ico-sun { display: block; }
 [data-theme="light"] #themeToggle .theme-ico-moon { display: none; }
-[data-theme="light"] #themeToggle { color: var(--yellow); }
+[data-theme="light"] #themeToggle { color: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 12px rgba(217,148,0,0.3); }
 .logo-icon {
   color: var(--accent);
   font-size: 1rem;
@@ -271,8 +273,10 @@ header::after {
 
 /* MOBILE: bottom navigation bar (app-like) */
 @media (max-width: 640px) {
-  header { padding: 0 16px; height: 56px; }
-  .logo { font-size: 1rem; }
+  header { padding: 0 12px; height: 56px; }
+  .logo { font-size: 0.92rem; }
+  #themeToggle { margin-left: 8px; width: 34px; height: 34px; min-width: 34px; }
+  #themeToggle svg { width: 17px; height: 17px; }
   .nav {
     position: fixed;
     bottom: 0; left: 0; right: 0;
