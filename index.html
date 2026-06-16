@@ -63,6 +63,64 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* ═══════════════════════════════════════
+   LIGHT MODE PALETTE
+═══════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #f4f2f8;
+  --bg-deep: #eceaf2;
+  --surface: #ffffff;
+  --surface2: #f5f3f9;
+  --surface3: #ebe8f1;
+  --border: #ddd8e6;
+  --border-bright: #c9c2da;
+  --accent: #f5571d;
+  --accent-light: #ff7a45;
+  --accent-glow: rgba(245,87,29,0.25);
+  --green: #00a884;
+  --green-light: #00c79b;
+  --green-glow: rgba(0,168,132,0.22);
+  --blue: #2d7eff;
+  --blue-glow: rgba(45,126,255,0.22);
+  --purple: #8b3edb;
+  --purple-glow: rgba(139,62,219,0.22);
+  --yellow: #d99400;
+  --red: #dc2626;
+  --text: #2a2535;
+  --text-bright: #14111c;
+  --muted: #6b6478;
+  --sh: 0 2px 12px rgba(80,70,110,0.1);
+  --sh-md: 0 6px 22px rgba(80,70,110,0.13);
+  --sh-lg: 0 14px 40px rgba(80,70,110,0.16);
+  --sh-accent: 0 6px 24px rgba(245,87,29,0.22);
+  --sh-green: 0 6px 24px rgba(0,168,132,0.22);
+  --grad-dark: linear-gradient(135deg, #ffffff 0%, #f5f3f9 50%, #ebe8f1 100%);
+  --grad-card: linear-gradient(135deg, rgba(80,70,110,0.03) 0%, rgba(80,70,110,0.01) 100%);
+  --grad-glow: radial-gradient(circle at 50% 0%, rgba(245,87,29,0.08) 0%, transparent 70%);
+}
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(at 20% 0%, rgba(245,87,29,0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(0,168,132,0.04) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(139,62,219,0.03) 0px, transparent 50%);
+}
+/* Light mode: glass surfaces need solid base */
+[data-theme="light"] .card,
+[data-theme="light"] .price-card,
+[data-theme="light"] .loc-card,
+[data-theme="light"] .day-group,
+[data-theme="light"] .wcard,
+[data-theme="light"] .ecard,
+[data-theme="light"] .modal {
+  background: var(--surface);
+}
+[data-theme="light"] .grid-overlay { opacity: 0.35; }
+/* Header stays dark-ish for contrast with white logo area */
+[data-theme="light"] header {
+  background: rgba(255,255,255,0.85);
+  border-bottom-color: var(--border);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 *::selection { background: var(--accent); color: #fff; }
 body {
@@ -129,6 +187,28 @@ header::after {
   display: flex; align-items: center; gap: 2px;
   white-space: nowrap;
 }
+#themeToggle {
+  margin-left: 10px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--accent);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+#themeToggle:hover { border-color: var(--accent); box-shadow: 0 0 14px var(--accent-glow); }
+#themeToggle:active { transform: scale(0.9); }
+#themeToggle svg { width: 18px; height: 18px; transition: all 0.3s var(--ease); }
+/* Show moon in dark mode, sun in light mode */
+#themeToggle .theme-ico-sun { display: none; }
+#themeToggle .theme-ico-moon { display: block; }
+[data-theme="light"] #themeToggle .theme-ico-sun { display: block; }
+[data-theme="light"] #themeToggle .theme-ico-moon { display: none; }
+[data-theme="light"] #themeToggle { color: var(--yellow); }
 .logo-icon {
   color: var(--accent);
   font-size: 1rem;
@@ -2611,6 +2691,16 @@ small { color: var(--muted); }
 body, p, div, span, label, td, th { color: var(--text); }
 strong, h1, h2, h3, h4 { color: var(--text-bright); }
 </style>
+<script>
+  // Apply theme before render to prevent flash
+  (function(){
+    try {
+      if ((localStorage.getItem('pun_theme')||'dark') === 'light') {
+        document.documentElement.setAttribute('data-theme','light');
+      }
+    } catch(e){}
+  })();
+</script>
 </head>
 <body>
 
@@ -2624,7 +2714,12 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 </div>
 
 <header>
-  <div class="logo"><span class="logo-icon">◢</span>Regjistri<span class="logo-dot">.</span><span class="logo-sub">Punës</span></div>
+  <div class="logo"><span class="logo-icon">◢</span>Regjistri<span class="logo-dot">.</span><span class="logo-sub">Punës</span>
+    <button id="themeToggle" onclick="toggleTheme()" title="Ndërro temën" aria-label="Ndërro temën">
+      <svg class="theme-ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="theme-ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
   <div class="nav" id="mainNav">
     <button class="nav-btn active" data-view="register" onclick="showView('register',this)">
       <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -2729,6 +2824,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
         </div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -3402,6 +3498,29 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 <div class="toast" id="toast"></div>
 
 <script>
+// ═══════════════════════════════════════
+// ── DARK / LIGHT THEME ──
+// ═══════════════════════════════════════
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('pun_theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pun_theme', next);
+  applyTheme(next);
+  if (navigator.vibrate) navigator.vibrate(12);
+  showToast(next === 'light' ? '☀️ Tema e çelët' : '🌙 Tema e errët');
+}
+
+// Apply saved theme immediately on load
+applyTheme(localStorage.getItem('pun_theme') || 'dark');
+
 let workers = [];
 let entries = [];
 let locStatus = {};
@@ -7027,7 +7146,7 @@ async function pushToDrive() {
     const payload = JSON.stringify({
       workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs, offers,
       lastSync: new Date().toISOString(),
-      version: 7
+      version: 8
     }, null, 2);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
       method: 'PATCH',
