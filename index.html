@@ -2101,6 +2101,78 @@ select {
   padding: 0 4px;
 }
 
+/* ═══════════════════════════════════════
+   VOICE INPUT
+═══════════════════════════════════════ */
+.voice-card {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(168,85,247,0.03) 100%);
+  border: 1.5px solid rgba(168,85,247,0.35);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  transition: all 0.25s var(--ease);
+}
+.voice-card.listening {
+  border-color: var(--purple);
+  box-shadow: 0 0 28px rgba(168,85,247,0.25);
+}
+.voice-btn {
+  width: 52px; height: 52px; min-width: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--grad-purple, linear-gradient(135deg, #a855f7, #8b3edb));
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s var(--ease);
+  box-shadow: 0 4px 16px rgba(168,85,247,0.4);
+  -webkit-tap-highlight-color: transparent;
+}
+.voice-btn:active { transform: scale(0.92); }
+.voice-btn svg { width: 24px; height: 24px; }
+.voice-card.listening .voice-btn {
+  animation: voicePulse 1.3s ease-in-out infinite;
+}
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(168,85,247,0.4), 0 0 0 0 rgba(168,85,247,0.5); }
+  50% { box-shadow: 0 4px 16px rgba(168,85,247,0.4), 0 0 0 14px rgba(168,85,247,0); }
+}
+.voice-info { flex: 1; min-width: 0; }
+.voice-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--text-bright);
+}
+.voice-sub {
+  font-size: 0.76rem; color: var(--muted);
+  margin-top: 3px; line-height: 1.4;
+}
+.voice-transcript {
+  background: var(--surface);
+  border: 1.5px solid var(--purple);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  color: var(--text-bright);
+  line-height: 1.5;
+}
+.voice-transcript .vt-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  color: var(--purple);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+.voice-transcript .vt-parsed {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem; color: var(--muted);
+}
+.voice-transcript .vt-parsed strong { color: var(--green); }
+
 /* CUSTOM CONFIRM DIALOG */
 .confirm-overlay {
   position: fixed; inset: 0;
@@ -2783,6 +2855,19 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div id="registerFormBody">
       <div class="stitle"><span class="stitle-ico">✦</span>Regjistrim i Ri <span id="todayLabel"></span></div>
     <div class="ssubtitle">Shëno ditën e punës për punëtorët — kush punoi, ku dhe sa.</div>
+
+      <!-- VOICE INPUT -->
+      <div class="voice-card" id="voiceCard">
+        <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
+          <svg class="voice-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <div class="voice-info">
+          <div class="voice-title" id="voiceTitle">🎙 Regjistro me Zë</div>
+          <div class="voice-sub" id="voiceSub">Shtyp dhe thuaj: "Fatoni te Banesa Çair, ditë e plotë, vendosje betoni"</div>
+        </div>
+      </div>
+      <div id="voiceTranscript" class="voice-transcript" style="display:none"></div>
+
       <div class="card">
         <div class="card-hd"><h3>📅 Detajet e Ditës</h3></div>
       <div class="card-bd">
@@ -3532,6 +3617,14 @@ function toggleTheme() {
 
 // Apply saved theme immediately on load
 applyTheme(localStorage.getItem('pun_theme') || 'dark');
+
+// Hide voice card if browser doesn't support speech recognition
+if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const vc = document.getElementById('voiceCard');
+    if (vc) vc.style.display = 'none';
+  });
+}
 
 let workers = [];
 let entries = [];
@@ -4876,6 +4969,168 @@ function calcLocWorkTotal(loc) {
 }
 
 // ── CHECKLIST ──
+// ═══════════════════════════════════════
+// ── VOICE INPUT (Web Speech API) ──
+// ═══════════════════════════════════════
+let recognition = null;
+let isListening = false;
+
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const rec = new SR();
+  rec.lang = 'sq-AL';        // Albanian
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  return rec;
+}
+
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showToast('⚠ Telefoni juaj nuk e mbështet regjistrimin me zë', true);
+    return;
+  }
+
+  if (isListening) {
+    if (recognition) recognition.stop();
+    return;
+  }
+
+  recognition = initVoice();
+  if (!recognition) return;
+
+  const card = document.getElementById('voiceCard');
+  const title = document.getElementById('voiceTitle');
+  const sub = document.getElementById('voiceSub');
+  const transcript = document.getElementById('voiceTranscript');
+
+  recognition.onstart = () => {
+    isListening = true;
+    card.classList.add('listening');
+    title.textContent = '🔴 Po dëgjoj...';
+    sub.textContent = 'Fol tani — shtyp prapë për të ndaluar';
+    if (navigator.vibrate) navigator.vibrate(20);
+  };
+
+  recognition.onresult = (event) => {
+    let text = '';
+    for (let i = 0; i < event.results.length; i++) {
+      text += event.results[i][0].transcript;
+    }
+    transcript.style.display = 'block';
+    transcript.innerHTML = `<div class="vt-label">🎙 Dëgjova:</div>${esc(text)}`;
+  };
+
+  recognition.onerror = (event) => {
+    isListening = false;
+    card.classList.remove('listening');
+    title.textContent = '🎙 Regjistro me Zë';
+    sub.textContent = 'Shtyp dhe thuaj: "Fatoni te Banesa Çair, ditë e plotë"';
+    if (event.error === 'no-speech') {
+      showToast('⚠ Nuk dëgjova asgjë, provo përsëri', true);
+    } else if (event.error === 'not-allowed') {
+      showToast('⚠ Lejo qasjen te mikrofoni në cilësime', true);
+    } else {
+      showToast('⚠ Gabim: ' + event.error, true);
+    }
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    card.classList.remove('listening');
+    title.textContent = '🎙 Regjistro me Zë';
+    sub.textContent = 'Shtyp dhe thuaj: "Fatoni te Banesa Çair, ditë e plotë"';
+    const transcript = document.getElementById('voiceTranscript');
+    const text = transcript.textContent.replace('🎙 Dëgjova:', '').trim();
+    if (text) parseVoiceInput(text);
+  };
+
+  recognition.start();
+}
+
+function parseVoiceInput(text) {
+  const lower = text.toLowerCase();
+  const result = { workers: [], dayType: null, location: null, desc: null };
+
+  // 1. Match workers by name (first name match)
+  workers.forEach(w => {
+    const firstName = w.name.split(' ')[0].toLowerCase();
+    // Match with flexible endings (Fatoni → Faton, Hadia → Hadi)
+    const stem = firstName.length > 4 ? firstName.slice(0, -1) : firstName;
+    if (lower.includes(firstName) || lower.includes(stem)) {
+      result.workers.push(w);
+    }
+  });
+
+  // 2. Day type
+  if (/gjysm|gjys|half/.test(lower)) result.dayType = 'half';
+  else if (/ekstra|extra|orë shtesë|ore shtese/.test(lower)) result.dayType = 'extra';
+  else if (/plot|e plotë|full|tërë ditën|tere diten/.test(lower)) result.dayType = 'full';
+
+  // 3. Location — after "te/tek/në/ne" keyword
+  const locMatch = lower.match(/(?:te|tek|në|ne)\s+([a-zçë\s]+?)(?:\s*,|\s+ditë|\s+dite|\s+gjysm|\s+plot|\s+ekstra|$)/);
+  if (locMatch) {
+    let loc = locMatch[1].trim();
+    // Try to match existing location (case-insensitive)
+    const existing = [...new Set(entries.map(e => e.location))].find(l => l.toLowerCase() === loc || l.toLowerCase().includes(loc));
+    result.location = existing || loc.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  // 4. Description — after work-related keywords
+  const descMatch = text.match(/(?:vendos\w*|bëra|bera|punova|punuam|bëmë|beme|kemi bërë|kemi bere)\s+(.+)$/i);
+  if (descMatch) result.desc = descMatch[1].trim();
+
+  applyVoiceResult(result, text);
+}
+
+function applyVoiceResult(r, originalText) {
+  const transcript = document.getElementById('voiceTranscript');
+  let applied = [];
+
+  // Apply day type
+  if (r.dayType) {
+    setDT(r.dayType);
+    applied.push('Lloji: ' + (r.dayType === 'full' ? 'Ditë plotë' : r.dayType === 'half' ? 'Gjysmë' : 'Ekstra'));
+  }
+
+  // Apply location
+  if (r.location) {
+    document.getElementById('regLoc').value = r.location;
+    applied.push('Vendi: ' + r.location);
+  }
+
+  // Apply description
+  if (r.desc) {
+    document.getElementById('regDesc').value = r.desc;
+    applied.push('Punë: ' + r.desc);
+  }
+
+  // Check workers
+  if (r.workers.length) {
+    r.workers.forEach(w => {
+      const cb = document.querySelector(`#checklist input[value="${w.id}"]`);
+      if (cb && !cb.checked) {
+        cb.checked = true;
+        toggleExtraInput(w.id);
+      }
+    });
+    applied.push('Punëtorë: ' + r.workers.map(w => w.name.split(' ')[0]).join(', '));
+  }
+
+  // Show parsed result
+  let html = `<div class="vt-label">🎙 Dëgjova:</div>${esc(originalText)}`;
+  if (applied.length) {
+    html += `<div class="vt-parsed">✅ <strong>U plotësua:</strong><br>${applied.join('<br>')}</div>`;
+    if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    showToast('✅ Formulari u plotësua nga zëri!');
+  } else {
+    html += `<div class="vt-parsed">⚠ Nuk munda të kuptoj detajet. Provo: "Fatoni te Banesa, ditë e plotë"</div>`;
+  }
+  transcript.innerHTML = html;
+}
+
 function renderChecklist() {
   const cl = document.getElementById('checklist');
   if (!workers.length) {
