@@ -2312,6 +2312,61 @@ select {
 .ai-send:active { transform: scale(0.9); }
 .ai-send svg { width: 20px; height: 20px; }
 .ai-send:disabled { opacity: 0.5; }
+.ai-mic {
+  width: 46px; height: 46px; min-width: 46px;
+  border-radius: 50%; border: 1.5px solid var(--border);
+  background: var(--surface2); color: var(--purple);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s var(--ease);
+}
+.ai-mic svg { width: 20px; height: 20px; }
+.ai-mic:active { transform: scale(0.9); }
+.ai-mic.listening {
+  background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff;
+  border-color: transparent;
+  animation: voicePulse 1.3s ease-in-out infinite;
+}
+
+/* AI Action confirmation card */
+.ai-action-card {
+  align-self: stretch;
+  background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.05) 100%);
+  border: 1.5px solid var(--purple);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 0 24px rgba(168,85,247,0.15);
+}
+.aac-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 0.95rem;
+  color: var(--text-bright);
+  margin-bottom: 12px;
+}
+.aac-row {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 5px 0;
+  font-size: 0.84rem;
+  border-bottom: 1px solid var(--border);
+}
+.aac-row span { color: var(--muted); flex-shrink: 0; }
+.aac-row strong { color: var(--text-bright); text-align: right; }
+.aac-actions {
+  display: flex; gap: 9px; margin-top: 14px;
+}
+.aac-btn {
+  flex: 1; padding: 11px; border-radius: 11px;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; border: 1.5px solid var(--border);
+  transition: all 0.2s var(--ease);
+}
+.aac-btn.cancel { background: var(--surface); color: var(--text); }
+.aac-btn.cancel:active { transform: scale(0.96); }
+.aac-btn.ok {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 4px 14px rgba(168,85,247,0.4);
+}
+.aac-btn.ok:active { transform: scale(0.96); }
 
 /* CUSTOM CONFIRM DIALOG */
 .confirm-overlay {
@@ -3761,7 +3816,10 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
   </div>
 
   <div class="ai-input-bar">
-    <input type="text" id="aiInput" placeholder="Pyet diçka për biznesin..." onkeydown="if(event.key==='Enter')sendAI()"/>
+    <button class="ai-mic" onclick="toggleAIVoice()" id="aiMicBtn" title="Fol">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <input type="text" id="aiInput" placeholder="Pyet ose fol..." onkeydown="if(event.key==='Enter')sendAI()"/>
     <button class="ai-send" onclick="sendAI()" id="aiSendBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
@@ -7389,7 +7447,8 @@ function buildBusinessContext() {
     const c = contracts[loc];
     let contractInfo = '';
     if (c && c.total) contractInfo = `, kontratë ${c.total}€ (klient: ${c.client||'?'}, paguar ${c.advance||0}€)`;
-    return `${loc} (${status}, ${days} ditë pune: ${t.full} plota, ${t.half} gjysëm, ${t.extraHours}h ekstra): të ardhura ${income.toFixed(0)}€, paga ${wages.toFixed(0)}€, fitim ${(income-wages).toFixed(0)}€${contractInfo}`;
+    const numWorkers = new Set(locEntries.map(e => e.workerId)).size;
+    return `${loc}: ${status}, ${days} DITË KALENDARIKE pune (data unike), ${numWorkers} punëtorë, ${locEntries.length} regjistrime gjithsej. Të ardhura ${income.toFixed(0)}€, paga ${wages.toFixed(0)}€, fitim ${(income-wages).toFixed(0)}€${contractInfo}`;
   });
 
   // Monthly summary across all data
@@ -7537,6 +7596,314 @@ ${allEntriesLines.join('\n') || 'asnjë'}
 SHPJEGIM: "ditë ekuivalente" = ditë plota + (gjysëm ÷ 2). "vetëm-ekstra" = ditë ku punoi vetëm orë ekstra. Fitimi = të ardhura nga punët − paga punëtorëve. Ti je Fatlind, pronari.`;
 }
 
+// ═══════════════════════════════════════
+// ── AI AGENT — VEPRIME (regjistrime) ──
+// ═══════════════════════════════════════
+let pendingAction = null; // veprimi që pret konfirmim
+
+// Parse [VEPRIM]...[/VEPRIM] block from AI response
+function extractAction(text) {
+  const match = text.match(/\[VEPRIM\]([\s\S]*?)\[\/VEPRIM\]/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1].trim());
+  } catch (e) {
+    console.error('Action parse error:', e);
+    return null;
+  }
+}
+
+// Resolve worker references ("të gjithë" or names) to actual worker objects
+function resolveWorkers(spec) {
+  if (!spec) return [];
+  const s = String(spec).toLowerCase();
+  if (s.includes('të gjithë') || s.includes('te gjithe') || s.includes('gjithë') || s === 'all') {
+    return workers.slice();
+  }
+  // Match by names
+  const found = [];
+  workers.forEach(w => {
+    const first = w.name.split(' ')[0].toLowerCase();
+    const stem = first.length > 4 ? first.slice(0,-1) : first;
+    if (s.includes(first) || s.includes(stem)) found.push(w);
+  });
+  return found;
+}
+
+// Resolve location reference to existing location name (or use as-is)
+function resolveLocation(spec) {
+  if (!spec) return null;
+  const s = String(spec).trim().toLowerCase();
+  const allLocs = [...new Set(entries.map(e => e.location))];
+  const existing = allLocs.find(l => l.toLowerCase() === s) || allLocs.find(l => l.toLowerCase().includes(s));
+  return existing || String(spec).trim();
+}
+
+// Show confirmation card for a registration action
+function showActionConfirm(action) {
+  const tip = action.tip || 'regjistro';
+
+  if (tip === 'pagese' || tip === 'pagesë') {
+    return showPaymentConfirm(action);
+  }
+  if (tip === 'oferte' || tip === 'ofertë' || tip === 'llogari') {
+    return showOfferConfirm(action);
+  }
+
+  // ── REGISTRATION ──
+  const ws = resolveWorkers(action.puntoret);
+  const loc = resolveLocation(action.vendi);
+  const dt = action.lloji === 'gjysem' || action.lloji === 'half' ? 'half'
+           : action.lloji === 'ekstra' || action.lloji === 'extra' ? 'extra' : 'full';
+  const dtLabel = dt === 'full' ? 'Ditë plotë' : dt === 'half' ? 'Gjysmë dite' : 'Vetëm ekstra';
+  const date = action.data || todayStr;
+  const desc = action.pershkrimi || action.desc || '';
+  const extraHours = parseFloat(action.ore_ekstra || action.extraHours || 0) || 0;
+
+  if (!ws.length) {
+    addAIMessage('⚠ Nuk gjeta punëtorë që përputhen. Provo me emra konkretë ose "të gjithë".', 'bot');
+    return;
+  }
+  if (!loc) {
+    addAIMessage('⚠ Nuk e kuptova vendin. Cili vend?', 'bot');
+    return;
+  }
+
+  pendingAction = { tip: 'regjistro', ws, loc, dt, date, desc, extraHours };
+
+  const msgs = document.getElementById('aiMessages');
+  if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'ai-action-card';
+  card.innerHTML = `
+    <div class="aac-title">📝 Konfirmo Regjistrimin</div>
+    <div class="aac-row"><span>📍 Vendi:</span><strong>${esc(loc)}</strong></div>
+    <div class="aac-row"><span>📅 Data:</span><strong>${fmtDate(date)}</strong></div>
+    <div class="aac-row"><span>⏱ Lloji:</span><strong>${dtLabel}${extraHours>0?' (+'+extraHours+'h)':''}</strong></div>
+    <div class="aac-row"><span>👷 Punëtorët (${ws.length}):</span><strong>${ws.map(w=>esc(w.name.split(' ')[0])).join(', ')}</strong></div>
+    ${desc?`<div class="aac-row"><span>🔨 Puna:</span><strong>${esc(desc)}</strong></div>`:''}
+    <div class="aac-actions">
+      <button class="aac-btn cancel" onclick="cancelAction()">✕ Anulo</button>
+      <button class="aac-btn ok" onclick="confirmAction()">✓ Po, Regjistro</button>
+    </div>
+  `;
+  msgs.appendChild(card);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showPaymentConfirm(action) {
+  const ws = resolveWorkers(action.puntori || action.puntoret);
+  const amount = parseFloat(action.shuma || action.amount || 0) || 0;
+  const date = action.data || todayStr;
+  const notes = action.shenim || action.notes || '';
+
+  if (!ws.length) {
+    addAIMessage('⚠ Nuk gjeta punëtorin. Për kë është pagesa?', 'bot');
+    return;
+  }
+  if (ws.length > 1) {
+    addAIMessage('⚠ Pagesa duhet të jetë për një punëtor. Specifiko kë: ' + ws.map(w=>w.name.split(' ')[0]).join(', '), 'bot');
+    return;
+  }
+  if (amount <= 0) {
+    addAIMessage('⚠ Sa është shuma e pagesës?', 'bot');
+    return;
+  }
+
+  pendingAction = { tip: 'pagese', worker: ws[0], amount, date, notes };
+
+  const msgs = document.getElementById('aiMessages');
+  if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'ai-action-card';
+  card.innerHTML = `
+    <div class="aac-title">💰 Konfirmo Pagesën</div>
+    <div class="aac-row"><span>👤 Punëtori:</span><strong>${esc(ws[0].name)}</strong></div>
+    <div class="aac-row"><span>💶 Shuma:</span><strong>${amount.toFixed(0)}€</strong></div>
+    <div class="aac-row"><span>📅 Data:</span><strong>${fmtDate(date)}</strong></div>
+    ${notes?`<div class="aac-row"><span>📝 Shënim:</span><strong>${esc(notes)}</strong></div>`:''}
+    <div class="aac-actions">
+      <button class="aac-btn cancel" onclick="cancelAction()">✕ Anulo</button>
+      <button class="aac-btn ok" onclick="confirmAction()">✓ Po, Paguaj</button>
+    </div>
+  `;
+  msgs.appendChild(card);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showOfferConfirm(action) {
+  const client = action.klient || action.client || '';
+  const items = Array.isArray(action.punet || action.items) ? (action.punet || action.items) : [];
+  const isWork = (action.lloji_oferte || action.tip_oferte || 'work') === 'work' || items.some(it => it.sasi || it.qty);
+
+  if (!client) {
+    addAIMessage('⚠ Për cilin klient është oferta?', 'bot');
+    return;
+  }
+  if (!items.length) {
+    addAIMessage('⚠ Çfarë punësh të përfshijë oferta? P.sh. "shtrim 40m², bordura 12m"', 'bot');
+    return;
+  }
+
+  // Match items to price list
+  const resolved = items.map(it => {
+    const name = it.emri || it.name || '';
+    const qty = parseFloat(it.sasi || it.qty || 0) || 0;
+    const p = priceList.find(x => x.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(x.name.toLowerCase()));
+    return {
+      name: p ? p.name : name,
+      unit: p ? p.unit : (it.njesi || it.unit || 'copë'),
+      price: p ? p.price : (parseFloat(it.cmimi || it.price || 0) || 0),
+      qty
+    };
+  });
+
+  pendingAction = { tip: 'oferte', client, items: resolved, isWork, project: action.projekti || action.project || '' };
+
+  const total = resolved.reduce((s, it) => s + it.qty * it.price, 0);
+  const msgs = document.getElementById('aiMessages');
+  if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'ai-action-card';
+  card.innerHTML = `
+    <div class="aac-title">🧾 Konfirmo ${isWork ? 'Llogarinë' : 'Ofertën'}</div>
+    <div class="aac-row"><span>👤 Klienti:</span><strong>${esc(client)}</strong></div>
+    ${resolved.map(it => `<div class="aac-row"><span>${esc(it.name)}${isWork && it.qty?' ('+it.qty+' '+esc(it.unit)+')':''}:</span><strong>${isWork && it.qty ? (it.qty*it.price).toFixed(0)+'€' : it.price.toFixed(0)+'€/'+esc(it.unit)}</strong></div>`).join('')}
+    ${isWork && total>0?`<div class="aac-row" style="border-top:2px solid var(--purple);margin-top:4px;padding-top:8px"><span>TOTALI:</span><strong style="color:var(--green)">${total.toFixed(0)}€</strong></div>`:''}
+    <div class="aac-actions">
+      <button class="aac-btn cancel" onclick="cancelAction()">✕ Anulo</button>
+      <button class="aac-btn ok" onclick="confirmAction()">✓ Krijo PDF</button>
+    </div>
+  `;
+  msgs.appendChild(card);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function cancelAction() {
+  pendingAction = null;
+  document.querySelectorAll('.ai-action-card').forEach(c => {
+    const a = c.querySelector('.aac-actions');
+    if (a) a.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center">Anuluar.</div>';
+  });
+  addAIMessage('Në rregull, e anulova. Çfarë tjetër?', 'bot');
+}
+
+function confirmAction() {
+  if (!pendingAction) return;
+  const tip = pendingAction.tip;
+
+  if (tip === 'pagese') {
+    const { worker, amount, date, notes } = pendingAction;
+    payments.unshift({
+      id: 'pay' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      workerId: worker.id, workerName: worker.name, date, amount, location: '', notes: notes || 'Nga asistenti'
+    });
+    save(); refreshUI();
+    document.querySelectorAll('.ai-action-card .aac-actions').forEach(a => {
+      a.innerHTML = '<div style="color:var(--green);font-weight:700;font-size:0.86rem;text-align:center">✅ Pagesa u regjistrua!</div>';
+    });
+    pendingAction = null;
+    if (navigator.vibrate) navigator.vibrate([20,40,20]);
+    addAIMessage(`✅ Pagesa ${amount.toFixed(0)}€ për ${worker.name.split(' ')[0]} u regjistrua. Diçka tjetër?`, 'bot');
+    showToast('✔ Pagesa u shtua!');
+    return;
+  }
+
+  if (tip === 'oferte') {
+    const { client, items, isWork, project } = pendingAction;
+    const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
+    const year = new Date().getFullYear();
+    const prefix = isWork ? 'LL' : 'OF';
+    const countThisYear = offers.filter(o => (o.number||'').startsWith(prefix+'-'+year+'-')).length;
+    const number = prefix + '-' + year + '-' + String(countThisYear+1).padStart(3,'0');
+    const offer = {
+      id: 'of' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      number, date: todayStr, client, phone: '', project: project || '',
+      items: items.map(it => ({ name: it.name, unit: it.unit, qty: it.qty, price: it.price })),
+      subtotal: isWork ? subtotal : 0, discount: 0, total: isWork ? subtotal : 0,
+      notes: '', validDays: 15,
+      firmName: localStorage.getItem('pun_firm_name') || 'Firma ime',
+      firmPhone: localStorage.getItem('pun_firm_phone') || '',
+      lang: 'sq', type: isWork ? 'work' : 'price'
+    };
+    offers.unshift(offer);
+    save();
+    generateOfferPDF(offer);
+    if (typeof renderOffersList === 'function') renderOffersList();
+    document.querySelectorAll('.ai-action-card .aac-actions').forEach(a => {
+      a.innerHTML = '<div style="color:var(--green);font-weight:700;font-size:0.86rem;text-align:center">✅ PDF u krijua!</div>';
+    });
+    pendingAction = null;
+    if (navigator.vibrate) navigator.vibrate([20,40,20]);
+    addAIMessage(`✅ ${isWork?'Llogaria':'Oferta'} ${number} për ${client} u krijua dhe PDF u shkarkua. Diçka tjetër?`, 'bot');
+    showToast('📄 ' + number + ' u krijua!');
+    return;
+  }
+
+  // ── REGISTRATION (default) ──
+  const { ws, loc, dt, date, desc, extraHours } = pendingAction;
+  let count = 0;
+  ws.forEach(w => {
+    entries.unshift({
+      id: 'e' + Date.now() + '_' + Math.random().toString(36).slice(2,9),
+      workerId: w.id, workerName: w.name, workerRole: w.role||'',
+      date, location: loc, dayType: dt, desc: desc || 'Punë', extraHours: dt==='extra'?extraHours:0
+    });
+    count++;
+  });
+  if (!locStatus[loc]) locStatus[loc] = 'progress';
+  save();
+  refreshUI();
+  document.querySelectorAll('.ai-action-card .aac-actions').forEach(a => {
+    a.innerHTML = '<div style="color:var(--green);font-weight:700;font-size:0.86rem;text-align:center">✅ U regjistrua!</div>';
+  });
+  pendingAction = null;
+  if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  addAIMessage(`✅ U regjistruan ${count} punëtorë te ${loc} (${fmtDate(date)}). Diçka tjetër?`, 'bot');
+  showToast(`✔ ${count} regjistrime u shtuan!`);
+}
+
+// AI voice input — speak a command, auto-send to AI
+let aiRecognition = null;
+let aiListening = false;
+function toggleAIVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('⚠ Telefoni s\'e mbështet zërin', true); return; }
+  if (aiListening) { if (aiRecognition) aiRecognition.stop(); return; }
+
+  aiRecognition = new SR();
+  aiRecognition.lang = 'sq-AL';
+  aiRecognition.continuous = false;
+  aiRecognition.interimResults = true;
+  const micBtn = document.getElementById('aiMicBtn');
+  const input = document.getElementById('aiInput');
+
+  aiRecognition.onstart = () => {
+    aiListening = true;
+    micBtn.classList.add('listening');
+    input.placeholder = '🔴 Po dëgjoj...';
+    if (navigator.vibrate) navigator.vibrate(15);
+  };
+  aiRecognition.onresult = (event) => {
+    let text = '';
+    for (let i = 0; i < event.results.length; i++) text += event.results[i][0].transcript;
+    input.value = text;
+  };
+  aiRecognition.onerror = () => {
+    aiListening = false;
+    micBtn.classList.remove('listening');
+    input.placeholder = 'Pyet ose fol...';
+  };
+  aiRecognition.onend = () => {
+    aiListening = false;
+    micBtn.classList.remove('listening');
+    input.placeholder = 'Pyet ose fol...';
+    // Auto-send if we got text
+    if (input.value.trim()) setTimeout(() => sendAI(), 300);
+  };
+  aiRecognition.start();
+}
+
 async function sendAI() {
   const input = document.getElementById('aiInput');
   const question = input.value.trim();
@@ -7560,11 +7927,39 @@ RREGULLAT (TË RËNDËSISHME — LEXOJI ME KUJDES):
 - Fol SHQIP, qartë dhe drejtpërdrejt.
 - Për DITËT e punëtorëve: lexo seksionin "DITËT E PUNËTORËVE". Aty është numri i saktë (p.sh. "DITË NË QERSHOR = 13.5 ditë"). Thuaje pikërisht atë numër.
 - NDALIM RREPTË: kurrë mos llogarit ditët duke pjesëtuar paratë me pagën (p.sh. 1458€ ÷ 55€). Kjo është GABIM. Ditët janë dhënë gati te seksioni i ditëve.
+- Për DITËT e një VENDI: përdor numrin "DITË KALENDARIKE" (data unike). MOS përdor numrin e "regjistrimeve" — ai është më i madh sepse çdo punëtor numërohet veç. P.sh. nëse një vend ka "8 DITË KALENDARIKE, 5 punëtorë, 25 regjistrime" → vendi zgjati 8 ditë, jo 25.
 - Paratë (fituar/paguar/borxh) janë në seksion TJETËR, vetëm për pyetje pagesash.
 - Kujdes me emrat e ngjashëm (Faton, Fabi, Fatlind) — lexo emrin saktë.
 - Kur jep shuma parash, përdor €.
 - Për analiza: krahaso, gjej tendenca, jep këshilla — me numrat e dhënë.
 - Kur të kërkohet ofertë, përdor çmimet nga çmimorja.
+
+VEPRIME (3 LLOJE — përdor bllokun [VEPRIM] vetëm kur Fatlindi kërkon të KRYESH një veprim, jo për pyetje):
+
+1) REGJISTRIM DITESH — kur thotë "regjistro te [vend] ditë [plotë/gjysmë/ekstra] [punëtorët], bëmë [punë]":
+[VEPRIM]
+{"tip":"regjistro","vendi":"emri","lloji":"plote|gjysem|ekstra","puntoret":"të gjithë OSE emra me presje","pershkrimi":"çfarë u bë","data":"","ore_ekstra":0}
+[/VEPRIM]
+
+2) PAGESE — kur thotë "i dhashë/paguaj [punëtor] [shumë]€" ose "shëno pagesë [shumë] për [punëtor]":
+[VEPRIM]
+{"tip":"pagese","puntori":"emri i punëtorit","shuma":100,"data":"","shenim":""}
+[/VEPRIM]
+
+3) OFERTE/LLOGARI — kur thotë "bëj ofertë/llogari për [klient]: [punët me sasi]":
+[VEPRIM]
+{"tip":"oferte","klient":"emri","projekti":"opsional","punet":[{"emri":"shtrim pllaka","sasi":40},{"emri":"bordura","sasi":12}]}
+[/VEPRIM]
+(emri i punës duhet të përkojë me çmimoren; sasia është për "llogari pune". Për "ofertë" pa sasi, lëre sasi:0)
+
+RREGULLA VEPRIMI: shkruaj 1 fjali të shkurtër para bllokut. Vendos VETËM një bllok [VEPRIM]. Përdoruesi konfirmon vetë para se të ruhet. Mos shkruaj [VEPRIM] kur thjesht pyet diçka.
+
+AFTËSI ANALIZE (kur s'ka veprim):
+- KRAHASIME: krahaso muaj/punëtorë/vende me numrat e dhënë (p.sh. "qershori vs maji").
+- PARASHIKIME: nga ritmi aktual, vlerëso të ardhmen (p.sh. "me këtë ritëm, deri fund viti ~X€"). Thuaj që është vlerësim.
+- KËSHILLA PROAKTIVE: paralajmëro për probleme — vende në humbje, borxhe të mëdha, klientë pa avans, punëtorë të papaguar gjatë.
+- PLANIFIKIM: ndihmo të planifikojë punët (radhë pune, afate, sa ditë duhen bazuar në punë të ngjashme).
+Jep gjithmonë numra konkretë dhe këshilla praktike, jo të përgjithshme.
 
 ${context}`;
 
@@ -7598,7 +7993,17 @@ ${context}`;
     aiHistory.push({ role: 'assistant', content: answer });
 
     thinkingMsg.classList.remove('thinking');
-    thinkingMsg.textContent = answer;
+
+    // Check if the AI wants to perform an action
+    const action = extractAction(answer);
+    const cleanAnswer = answer.replace(/\[VEPRIM\][\s\S]*?\[\/VEPRIM\]/, '').trim();
+
+    if (action && action.tip) {
+      thinkingMsg.textContent = cleanAnswer || 'E përgatita:';
+      showActionConfirm(action);
+    } else {
+      thinkingMsg.textContent = cleanAnswer || answer;
+    }
     document.getElementById('aiMessages').scrollTop = document.getElementById('aiMessages').scrollHeight;
   } catch (e) {
     thinkingMsg.classList.remove('thinking');
