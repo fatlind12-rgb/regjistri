@@ -2173,6 +2173,146 @@ select {
 }
 .voice-transcript .vt-parsed strong { color: var(--green); }
 
+/* ═══════════════════════════════════════
+   AI ASSISTANT
+═══════════════════════════════════════ */
+#aiFab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 150;
+  box-shadow: 0 6px 24px rgba(168,85,247,0.5);
+  transition: all 0.25s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  animation: aiFabIn 0.5s var(--ease-bounce);
+}
+@keyframes aiFabIn {
+  from { transform: scale(0) rotate(-90deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+#aiFab:active { transform: scale(0.9); }
+#aiFab svg { width: 28px; height: 28px; }
+@media (min-width: 769px) {
+  #aiFab { bottom: 24px; }
+}
+
+.ai-panel {
+  position: fixed;
+  right: 0; bottom: 0;
+  width: 100%; max-width: 420px;
+  height: 80vh; max-height: 640px;
+  background: var(--bg);
+  border: 1px solid var(--border-bright);
+  border-radius: 22px 22px 0 0;
+  z-index: 500;
+  display: flex; flex-direction: column;
+  transform: translateY(110%);
+  transition: transform 0.35s var(--ease);
+  box-shadow: 0 -12px 50px rgba(0,0,0,0.5);
+}
+@media (min-width: 521px) {
+  .ai-panel { right: 18px; bottom: 18px; border-radius: 22px; height: 600px; }
+}
+.ai-panel.open { transform: translateY(0); }
+.ai-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.06) 100%);
+  border-radius: 22px 22px 0 0;
+}
+.ai-header-title { display: flex; align-items: center; gap: 11px; }
+.ai-header-ico {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 14px rgba(168,85,247,0.4);
+}
+.ai-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--text-bright); }
+.ai-status { font-size: 0.74rem; color: var(--green); }
+.ai-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: var(--surface2); color: var(--muted);
+  cursor: pointer; font-size: 0.9rem;
+}
+.ai-messages {
+  flex: 1; overflow-y: auto;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.ai-msg { max-width: 85%; padding: 11px 14px; border-radius: 16px; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+.ai-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff;
+  border-bottom-right-radius: 5px;
+}
+.ai-msg.bot {
+  align-self: flex-start;
+  background: var(--surface2);
+  color: var(--text-bright);
+  border-bottom-left-radius: 5px;
+}
+.ai-msg.bot.thinking { color: var(--muted); font-style: italic; }
+.ai-welcome {
+  text-align: center; padding: 24px 16px; color: var(--muted);
+}
+.ai-welcome-ico { font-size: 2.4rem; margin-bottom: 10px; }
+.ai-welcome-title { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--text-bright); font-size: 1.05rem; margin-bottom: 6px; }
+.ai-welcome-sub { font-size: 0.84rem; line-height: 1.5; }
+.ai-suggestions {
+  display: flex; gap: 7px; padding: 8px 14px; overflow-x: auto;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ai-chip {
+  white-space: nowrap;
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-bright);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.76rem; font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s var(--ease);
+}
+.ai-chip:active { background: rgba(168,85,247,0.15); border-color: var(--purple); }
+.ai-input-bar {
+  display: flex; gap: 9px; padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#aiInput {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  color: var(--text-bright);
+  font-size: 0.9rem;
+}
+#aiInput:focus { border-color: var(--purple); }
+.ai-send {
+  width: 46px; height: 46px; min-width: 46px;
+  border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ai-send:active { transform: scale(0.9); }
+.ai-send svg { width: 20px; height: 20px; }
+.ai-send:disabled { opacity: 0.5; }
+
 /* CUSTOM CONFIRM DIALOG */
 .confirm-overlay {
   position: fixed; inset: 0;
@@ -3588,6 +3728,65 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     <div class="confirm-actions">
       <button class="confirm-btn cancel" id="confirmCancelBtn">Anulo</button>
       <button class="confirm-btn ok" id="confirmOkBtn">Po, Vazhdo</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI ASSISTANT FAB -->
+<button id="aiFab" onclick="openAI()" title="Asistenti AI">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="13.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="13.5" r="1.5" fill="currentColor"/></svg>
+</button>
+
+<!-- AI CHAT PANEL -->
+<div id="aiPanel" class="ai-panel">
+  <div class="ai-header">
+    <div class="ai-header-title">
+      <span class="ai-header-ico">🤖</span>
+      <div>
+        <div class="ai-name">Asistenti</div>
+        <div class="ai-status" id="aiStatus">Gati për ndihmë</div>
+      </div>
+    </div>
+    <button class="ai-close" onclick="closeAI()">✕</button>
+  </div>
+
+  <div class="ai-messages" id="aiMessages"></div>
+
+  <div class="ai-suggestions" id="aiSuggestions">
+    <button class="ai-chip" onclick="askAI('Kush nuk ka paguar ende?')">💰 Kush s'ka paguar?</button>
+    <button class="ai-chip" onclick="askAI('Sa fitova këtë muaj?')">📊 Sa fitova?</button>
+    <button class="ai-chip" onclick="askAI('Cili punëtor ka punuar më shumë?')">🏆 Më produktivi</button>
+    <button class="ai-chip" onclick="askAI('A po fitoj mjaftueshëm nga puna ime?')">💡 Këshillë</button>
+  </div>
+
+  <div class="ai-input-bar">
+    <input type="text" id="aiInput" placeholder="Pyet diçka për biznesin..." onkeydown="if(event.key==='Enter')sendAI()"/>
+    <button class="ai-send" onclick="sendAI()" id="aiSendBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- AI SETUP MODAL (API key) -->
+<div class="modal-overlay" id="aiSetupModal">
+  <div class="modal" style="max-width:440px">
+    <h3>🤖 Aktivizo Asistentin AI</h3>
+    <div style="font-size:0.84rem;color:var(--muted);margin-bottom:14px;line-height:1.55">Për të aktivizuar asistentin, duhet një çelës API nga Anthropic. E fut një herë — ruhet te Google Drive dhe punon në të gjithë telefonat me llogarinë tënde.</div>
+
+    <div style="background:rgba(77,159,255,0.08);border:1px solid rgba(77,159,255,0.3);border-radius:12px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--text);line-height:1.6">
+      <strong style="color:var(--blue)">Si ta marrësh çelësin:</strong><br>
+      1. Hap <strong>console.anthropic.com</strong><br>
+      2. Regjistrohu → <strong>API Keys</strong> → <strong>Create Key</strong><br>
+      3. Kopjo çelësin (fillon me sk-ant-...)<br>
+      4. Shto pak kredit te <strong>Billing</strong>
+    </div>
+
+    <label>🔑 Çelësi API</label>
+    <input type="password" id="aiKeyInput" placeholder="sk-ant-..." style="margin-bottom:14px;font-family:'DM Mono',monospace;font-size:0.82rem"/>
+
+    <div class="row-end">
+      <button class="btn-sync" onclick="document.getElementById('aiSetupModal').classList.remove('open')">Anulo</button>
+      <button class="btn-sync primary" onclick="saveAIKey()">💾 Ruaj &amp; Aktivizo</button>
     </div>
   </div>
 </div>
@@ -7077,6 +7276,189 @@ function dayBadge(e) {
 function escAttr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtDate(d) { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
 function fmtDateLong(d) { return new Date(d+'T12:00:00').toLocaleDateString('sq-AL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+// ═══════════════════════════════════════
+// ── AI ASSISTANT ──
+// ═══════════════════════════════════════
+let aiHistory = []; // conversation history
+
+function openAI() {
+  const key = localStorage.getItem('pun_ai_key');
+  if (!key) {
+    document.getElementById('aiSetupModal').classList.add('open');
+    return;
+  }
+  document.getElementById('aiPanel').classList.add('open');
+  if (!aiHistory.length) renderAIWelcome();
+  setTimeout(() => document.getElementById('aiInput').focus(), 300);
+}
+
+function closeAI() {
+  document.getElementById('aiPanel').classList.remove('open');
+}
+
+function saveAIKey() {
+  const key = document.getElementById('aiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    showToast('⚠ Çelësi duhet të fillojë me sk-ant-...', true);
+    return;
+  }
+  localStorage.setItem('pun_ai_key', key);
+  save(); // syncs to Drive
+  document.getElementById('aiSetupModal').classList.remove('open');
+  document.getElementById('aiKeyInput').value = '';
+  showToast('✅ Asistenti u aktivizua!');
+  setTimeout(openAI, 400);
+}
+
+function renderAIWelcome() {
+  document.getElementById('aiMessages').innerHTML = `
+    <div class="ai-welcome">
+      <div class="ai-welcome-ico">🤖</div>
+      <div class="ai-welcome-title">Përshëndetje! Jam asistenti yt.</div>
+      <div class="ai-welcome-sub">Më pyet për biznesin, kërko të shkruaj oferta, ose merr këshilla. Shoh të dhënat e tua dhe të ndihmoj.</div>
+    </div>
+  `;
+}
+
+function addAIMessage(text, who) {
+  const msgs = document.getElementById('aiMessages');
+  // Clear welcome on first message
+  if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + who;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function askAI(question) {
+  document.getElementById('aiInput').value = question;
+  sendAI();
+}
+
+// Build a compact business-data summary for the AI context
+function buildBusinessContext() {
+  const today = todayStr;
+  const thisMonth = today.slice(0, 7);
+
+  // Workers + balances
+  const workerLines = workers.map(w => {
+    const bal = calcWorkerBalance(w.id);
+    return `${w.name} (${w.role||'punëtor'}, ${w.dailyWage||0}€/ditë): fituar ${bal.earned.toFixed(0)}€, paguar ${bal.paid.toFixed(0)}€, mbetet ${bal.balance.toFixed(0)}€`;
+  });
+
+  // Locations + status + work totals + profit
+  const allLocs = [...new Set(entries.map(e => e.location))];
+  const locLines = allLocs.map(loc => {
+    const status = (locStatus[loc]||'progress') === 'completed' ? 'kompletuar' : 'në progres';
+    const days = new Set(entries.filter(e => e.location === loc).map(e => e.date)).size;
+    const income = calcLocWorkTotal(loc);
+    // wages spent at this location
+    let wages = 0;
+    entries.filter(e => e.location === loc).forEach(e => {
+      const w = workers.find(x => x.id === e.workerId);
+      const pay = calcEarnings(e, w ? (w.dailyWage||0) : 0);
+      if (pay) wages += pay;
+    });
+    const c = contracts[loc];
+    let contractInfo = '';
+    if (c && c.total) contractInfo = `, kontratë ${c.total}€ (klient: ${c.client||'?'}, paguar ${c.advance||0}€)`;
+    return `${loc} (${status}, ${days} ditë): të ardhura nga punët ${income.toFixed(0)}€, paga punëtorësh ${wages.toFixed(0)}€, fitim ${(income-wages).toFixed(0)}€${contractInfo}`;
+  });
+
+  // Price list
+  const priceLines = priceList.map(p => `${p.name}: ${p.price}€/${p.unit}`);
+
+  // Recent offers
+  const offerLines = offers.slice(0, 8).map(o => `${o.number} për ${o.client}: ${(o.type||'work')==='work' ? o.total.toFixed(0)+'€' : 'çmimore'} (${fmtDate(o.date)})`);
+
+  return `TË DHËNAT E BIZNESIT (sot: ${fmtDate(today)}, muaji: ${thisMonth}):
+
+PUNËTORËT (${workers.length}):
+${workerLines.join('\n') || 'asnjë'}
+
+VENDET E PUNËS (${allLocs.length}):
+${locLines.join('\n') || 'asnjë'}
+
+ÇMIMORJA:
+${priceLines.join('\n') || 'asnjë'}
+
+OFERTAT E FUNDIT:
+${offerLines.join('\n') || 'asnjë'}`;
+}
+
+async function sendAI() {
+  const input = document.getElementById('aiInput');
+  const question = input.value.trim();
+  if (!question) return;
+
+  const key = localStorage.getItem('pun_ai_key');
+  if (!key) { document.getElementById('aiSetupModal').classList.add('open'); return; }
+
+  input.value = '';
+  addAIMessage(question, 'user');
+  const sendBtn = document.getElementById('aiSendBtn');
+  sendBtn.disabled = true;
+  document.getElementById('aiStatus').textContent = 'Po mendoj...';
+  const thinkingMsg = addAIMessage('...', 'bot');
+  thinkingMsg.classList.add('thinking');
+
+  const context = buildBusinessContext();
+  const systemPrompt = `Je një asistent biznesi për një firmë shtrimi pllakash në Maqedoninë e Veriut/Ballkan. Pronari quhet Fatlind. Fol SHQIP, shkurt dhe drejtpërdrejt, si një ndihmës praktik. Përdor të dhënat e dhëna për t'iu përgjigjur pyetjeve për pagesa, fitime, punëtorë dhe për të shkruar oferta. Kur jep shuma, përdor €. Mos shpik të dhëna që nuk i ke. Nëse të kërkohet të shkruash ofertë, përdor çmimet nga çmimorja.
+
+${context}`;
+
+  // Build messages with history
+  aiHistory.push({ role: 'user', content: question });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: aiHistory
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || ('HTTP ' + response.status));
+    }
+
+    const data = await response.json();
+    const answer = data.content.filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+    aiHistory.push({ role: 'assistant', content: answer });
+
+    thinkingMsg.classList.remove('thinking');
+    thinkingMsg.textContent = answer;
+    document.getElementById('aiMessages').scrollTop = document.getElementById('aiMessages').scrollHeight;
+  } catch (e) {
+    thinkingMsg.classList.remove('thinking');
+    let msg = '⚠ Gabim: ' + e.message;
+    if (/401|authentication|invalid.*key/i.test(e.message)) {
+      msg = '⚠ Çelësi API nuk është i vlefshëm. Kontrollo te cilësimet.';
+    } else if (/credit|balance|quota/i.test(e.message)) {
+      msg = '⚠ Krediti ka mbaruar. Shto kredit te console.anthropic.com → Billing.';
+    } else if (/rate/i.test(e.message)) {
+      msg = '⚠ Shumë pyetje njëherësh — prit pak sekonda.';
+    }
+    thinkingMsg.textContent = msg;
+    aiHistory.pop(); // remove failed question from history
+  } finally {
+    sendBtn.disabled = false;
+    document.getElementById('aiStatus').textContent = 'Gati për ndihmë';
+  }
+}
+
 function showToast(msg, warn=false) {
   const t = document.getElementById('toast');
   t.style.background = warn ? 'linear-gradient(135deg, #ef4444, #c0392b)' : '';
@@ -7338,6 +7720,9 @@ async function pullFromDrive() {
     projectWorks = data.projectWorks || [];
     plannedJobs = data.plannedJobs || [];
     offers = data.offers || [];
+    if (data.aiKey && !localStorage.getItem('pun_ai_key')) {
+      localStorage.setItem('pun_ai_key', data.aiKey);
+    }
 
     // Migrate old IDs in pulled data
     entries.forEach((e, i) => {
@@ -7412,6 +7797,7 @@ async function pushToDrive() {
   try {
     const payload = JSON.stringify({
       workers, entries, locStatus, expenses, contracts, payments, priceList, projectWorks, plannedJobs, offers,
+      aiKey: localStorage.getItem('pun_ai_key') || '',
       lastSync: new Date().toISOString(),
       version: 8
     }, null, 2);
