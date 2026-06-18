@@ -6824,18 +6824,108 @@ async function delExpense(id) {
   showToast('🗑 Shpenzimi u fshi', true);
 }
 
+let selectedExpMonth = '';   // '' = të gjitha
+let expandedExpLoc = null;    // cili vend është i hapur
+
+function getExpenseMonths() {
+  const months = new Set();
+  expenses.forEach(e => { const m = (e.date||'').split('T')[0].slice(0,7); if (m && m.includes('-')) months.add(m); });
+  return [...months].sort().reverse();
+}
+
 function renderExpenses() {
   populateExpenseDropdowns();
   const filterLoc = document.getElementById('expFilterLoc')?.value || '';
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+  const catIcons = { material: '🧱', transport: '🚛', qira: '🏠', ushqim: '🍔', tjeter: '📦' };
+  const catNames = { material: 'Materiale', transport: 'Transport', qira: 'Qira/Vegla', ushqim: 'Ushqim', tjeter: 'Tjetër' };
+  const catColors = { material: '#ff6b35', transport: '#4d9fff', qira: '#a855f7', ushqim: '#00d4a4', tjeter: '#fbbf24' };
+
   let filtered = expenses.slice();
   if (filterLoc) filtered = filtered.filter(e => e.location === filterLoc);
+  if (selectedExpMonth) filtered = filtered.filter(e => (e.date||'').split('T')[0].startsWith(selectedExpMonth));
+
+  const expMonths = getExpenseMonths();
+  const monthLabel = (m) => `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}`;
+
+  // Month selector (always shown)
+  let html = `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-bd" style="padding:12px">
+        <label style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;display:block;margin-bottom:8px">📅 Periudha</label>
+        <select id="expMonthSelect" onchange="selectedExpMonth=this.value;renderExpenses()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+          <option value="" ${selectedExpMonth===''?'selected':''}>Të gjitha</option>
+          ${expMonths.map(m => `<option value="${m}" ${selectedExpMonth===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
 
   if (!filtered.length) {
-    document.getElementById('expensesContainer').innerHTML = '<div class="empty-state"><div class="big">🧾</div><p>Nuk ka shpenzime ende.</p></div>';
+    html += '<div class="empty-state"><div class="big">🧾</div><p>Nuk ka shpenzime për këtë periudhë.</p></div>';
+    document.getElementById('expensesContainer').innerHTML = html;
     return;
   }
 
-  // Group by location
+  const totalAll = filtered.reduce((s,e) => s + e.amount, 0);
+  const periodLabel = selectedExpMonth ? monthLabel(selectedExpMonth) : 'Gjithsej';
+
+  // Category totals for pie chart
+  const catTotals = {};
+  filtered.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0) + e.amount; });
+  const catEntries = Object.entries(catTotals).sort((a,b) => b[1] - a[1]);
+
+  // Build SVG pie chart
+  const cx = 80, cy = 80, r = 70;
+  let startAngle = -Math.PI / 2;
+  let slices = '';
+  catEntries.forEach(([cat, amt]) => {
+    const frac = amt / totalAll;
+    const endAngle = startAngle + frac * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
+    const largeArc = frac > 0.5 ? 1 : 0;
+    if (frac >= 0.999) {
+      // Full circle
+      slices += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${catColors[cat]||'#888'}"/>`;
+    } else {
+      slices += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${catColors[cat]||'#888'}"/>`;
+    }
+    startAngle = endAngle;
+  });
+
+  // Total summary + pie chart card
+  html += `
+    <div class="card" style="margin-bottom:14px;background:rgba(255,107,53,0.05);border-color:var(--accent)">
+      <div class="card-bd" style="padding:18px">
+        <div style="text-align:center;margin-bottom:6px">
+          <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Shpenzime · ${esc(periodLabel)}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)">${totalAll.toFixed(0)}€</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+          <svg width="160" height="160" viewBox="0 0 160 160" style="flex-shrink:0">
+            ${slices}
+            <circle cx="${cx}" cy="${cy}" r="38" fill="var(--bg)"/>
+            <text x="${cx}" y="${cy-4}" text-anchor="middle" style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;fill:var(--text-bright)">${totalAll.toFixed(0)}€</text>
+            <text x="${cx}" y="${cy+14}" text-anchor="middle" style="font-size:9px;fill:var(--muted)">total</text>
+          </svg>
+          <div style="flex:1;min-width:140px">
+            ${catEntries.map(([cat, amt]) => {
+              const pct = ((amt/totalAll)*100).toFixed(0);
+              return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:0.84rem">
+                <span style="width:12px;height:12px;border-radius:3px;background:${catColors[cat]||'#888'};flex-shrink:0"></span>
+                <span style="flex:1">${catIcons[cat]||'📦'} ${catNames[cat]||cat}</span>
+                <span style="font-family:'DM Mono',monospace;font-weight:700">${amt.toFixed(0)}€</span>
+                <span style="color:var(--muted);font-size:0.74rem;min-width:32px;text-align:right">${pct}%</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Group by location — clickable
   const byLoc = {};
   filtered.forEach(e => {
     if (!byLoc[e.location]) byLoc[e.location] = { items: [], total: 0, byCat: {} };
@@ -6844,51 +6934,54 @@ function renderExpenses() {
     byLoc[e.location].byCat[e.category] = (byLoc[e.location].byCat[e.category] || 0) + e.amount;
   });
 
-  const totalAll = filtered.reduce((s,e) => s + e.amount, 0);
-  const catIcons = { material: '🧱', transport: '🚛', qira: '🏠', ushqim: '🍔', tjeter: '📦' };
-  const catNames = { material: 'Materiale', transport: 'Transport', qira: 'Qira/Vegla', ushqim: 'Ushqim', tjeter: 'Tjetër' };
-
-  let html = `
-    <div class="card" style="margin-bottom:14px;background:rgba(255,107,53,0.05);border-color:var(--accent)">
-      <div class="card-bd" style="text-align:center;padding:18px">
-        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Totali i Shpenzimeve</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent)">${totalAll.toFixed(2)}€</div>
-      </div>
-    </div>
-  `;
+  html += `<div style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:4px 4px 10px;font-family:'Syne',sans-serif;font-weight:700">📍 Sipas Vendit (kliko për detaje)</div>`;
 
   Object.keys(byLoc).sort((a,b) => byLoc[b].total - byLoc[a].total).forEach(loc => {
     const d = byLoc[loc];
-    const items = d.items.slice().sort((a,b) => b.date.localeCompare(a.date));
+    const isOpen = expandedExpLoc === loc;
+    const items = d.items.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const locKey = (loc||'').replace(/'/g, "\\'");
     html += `
-      <div class="month-section">
-        <div class="month-header" style="background:var(--accent)">
-          <span>📍 ${esc(loc)}</span>
-          <span class="month-total">${d.total.toFixed(2)}€</span>
+      <div class="card" style="margin-bottom:10px;overflow:hidden">
+        <div onclick="toggleExpLoc('${esc(locKey)}')" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:10px;background:${isOpen?'rgba(255,107,53,0.08)':'var(--surface)'}">
+          <div style="font-size:1.1rem">📍</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem">${esc(loc||'Pa vend')}</div>
+            <div style="font-size:0.72rem;color:var(--muted)">${d.items.length} shpenzime · ${Object.keys(d.byCat).length} kategori</div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);font-size:1.05rem">${d.total.toFixed(0)}€</div>
+          <div style="font-size:0.9rem;color:var(--muted);transition:transform 0.2s;transform:rotate(${isOpen?'180':'0'}deg)">▾</div>
         </div>
-        <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);border-bottom:1px solid var(--border)">
-          ${Object.entries(d.byCat).map(([cat, amt]) => `
-            <span style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:0.74rem">${catIcons[cat]||'📦'} ${catNames[cat]||cat}: ${amt.toFixed(2)}€</span>
-          `).join('')}
-        </div>
-        <div style="background:var(--surface)">
-          ${items.map(e => `
-            <div style="padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-              <div style="font-size:1.2rem">${catIcons[e.category]||'📦'}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:0.86rem;font-weight:600">${esc(e.desc)}</div>
-                <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
+        ${isOpen ? `
+          <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);border-top:1px solid var(--border)">
+            ${Object.entries(d.byCat).sort((a,b)=>b[1]-a[1]).map(([cat, amt]) => `
+              <span style="background:var(--surface);border:1px solid ${catColors[cat]||'var(--border)'};border-radius:20px;padding:3px 10px;font-size:0.74rem">${catIcons[cat]||'📦'} ${catNames[cat]||cat}: <strong>${amt.toFixed(0)}€</strong></span>
+            `).join('')}
+          </div>
+          <div style="background:var(--surface)">
+            ${items.map(e => `
+              <div style="padding:11px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                <div style="font-size:1.2rem">${catIcons[e.category]||'📦'}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:0.86rem;font-weight:600">${esc(e.desc)}</div>
+                  <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
+                </div>
+                <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(0)}€</div>
+                <button onclick="event.stopPropagation();delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px">🗑</button>
               </div>
-              <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(2)}€</div>
-              <button onclick="delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px">🗑</button>
-            </div>
-          `).join('')}
-        </div>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
   });
 
   document.getElementById('expensesContainer').innerHTML = html;
+}
+
+function toggleExpLoc(loc) {
+  expandedExpLoc = (expandedExpLoc === loc) ? null : loc;
+  renderExpenses();
 }
 
 // ═══════════════════════════════════════
@@ -7495,7 +7588,21 @@ function dayBadge(e) {
   return base + extraBadge(e.extraHours);
 }
 function escAttr(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtDate(d) { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+function fmtDate(d) {
+  if (!d) return '';
+  // Already in DD/MM/YYYY format
+  if (d.includes('/')) {
+    const parts = d.split('/');
+    if (parts.length === 3 && parts[2].length === 4) return d; // already DD/MM/YYYY
+  }
+  // ISO format YYYY-MM-DD (may include time)
+  const datePart = d.split('T')[0];
+  if (datePart.includes('-')) {
+    const [y,m,day] = datePart.split('-');
+    if (y && m && day) return `${day}/${m}/${y}`;
+  }
+  return d; // fallback: return as-is
+}
 function fmtDateLong(d) { return new Date(d+'T12:00:00').toLocaleDateString('sq-AL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
 // ═══════════════════════════════════════
 // ── AI ASSISTANT ──
