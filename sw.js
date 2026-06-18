@@ -1,5 +1,5 @@
 // Service Worker per Regjistri i Punës
-const CACHE_NAME = 'regjistri-pune-v64';
+const CACHE_NAME = 'regjistri-pune-v65';
 const ASSETS = [
   './',
   './index.html',

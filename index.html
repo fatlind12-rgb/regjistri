@@ -3233,6 +3233,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
       <button class="tab-btn" onclick="switchTab('monthly',this)">🗓 Mujore</button>
       <button class="tab-btn" onclick="switchTab('salary',this)">💰 Pagat</button>
       <button class="tab-btn" onclick="switchTab('payments',this)">💳 Pagesat</button>
+      <button class="tab-btn" onclick="switchTab('expenses',this)">💸 Shpenzime</button>
       <button class="tab-btn" onclick="switchTab('all',this)">📋 Të Gjitha</button>
     </div>
 
@@ -3352,6 +3353,55 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
       <div class="export-row" style="margin-top:14px">
         <button class="btn-o" onclick="exportPaymentsPDF()">📄 Eksporto PDF</button>
       </div>
+    </div>
+
+    <!-- EXPENSES TAB -->
+    <div id="tab-expenses" style="display:none">
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><h3>💸 Shto Shpenzim</h3></div>
+        <div class="card-bd">
+          <div class="grid2">
+            <div>
+              <label>Data</label>
+              <input type="date" id="expDate"/>
+            </div>
+            <div>
+              <label>Kategoria</label>
+              <select id="expCat" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+                <option value="material">🧱 Materiale</option>
+                <option value="transport">⛽ Transport</option>
+                <option value="qira">🔧 Qira/Vegla</option>
+                <option value="ushqim">🍔 Ushqim</option>
+                <option value="tjeter">📦 Tjetër</option>
+              </select>
+            </div>
+            <div>
+              <label>Shuma (€)</label>
+              <input type="number" id="expAmount" placeholder="p.sh. 150" min="0" step="0.01" inputmode="decimal"/>
+            </div>
+            <div>
+              <label>Vendi (opsional)</label>
+              <select id="expLoc" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+                <option value="">-- Zgjedh vendin --</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label>Përshkrimi</label>
+              <input type="text" id="expDesc" placeholder="p.sh. Pllaka dhe llaç"/>
+            </div>
+          </div>
+          <button class="btn-p" onclick="addExpense()">✔ Shto Shpenzimin</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-bd" style="padding:12px">
+          <label style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;display:block;margin-bottom:8px">🔍 Filtro sipas Vendit</label>
+          <select id="expFilterLoc" onchange="renderExpenses()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
+            <option value="">-- Të gjitha vendet --</option>
+          </select>
+        </div>
+      </div>
+      <div id="expensesContainer"></div>
     </div>
 
     <!-- ALL TAB -->
@@ -3958,9 +4008,10 @@ function switchTab(tab, btn) {
   if (dm) dm.classList.remove('open');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['locations','chart','monthly','salary','payments','all'].forEach(t => {
+  ['locations','chart','monthly','salary','payments','expenses','all'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
   });
+  if (tab === 'expenses') renderExpenses();
   renderHistory();
 }
 
@@ -6633,6 +6684,20 @@ function renderPayments() {
               <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:${balColor}">${Math.abs(w.balance).toFixed(0)}€</span>
             </div>
           </div>
+
+          ${!useMonth ? (() => {
+            // Per-month breakdown so user sees which month is paid/unpaid
+            const wMonths = [...new Set(entries.filter(e=>e.workerId===w.id).map(e=>(e.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+            if (wMonths.length <= 1) return '';
+            const rows = wMonths.map(m => {
+              const mb = calcWorkerMonthBalance(w.id, m);
+              const lbl = `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}`;
+              const c = mb.balance <= 0.01 ? 'var(--green)' : 'var(--accent)';
+              const st = mb.balance <= 0.01 ? '✓' : mb.balance.toFixed(0)+'€';
+              return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.8rem"><span style="color:var(--muted)">${lbl}</span><span style="color:${c};font-weight:600">${st}${mb.balance>0.01?' borxh':''}</span></div>`;
+            }).join('');
+            return `<details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);padding:4px 0;font-family:'Syne',sans-serif;font-weight:600">📅 Borxhi sipas Muajit</summary><div style="background:var(--surface2);border-radius:8px;padding:8px 12px;margin-top:4px">${rows}</div></details>`;
+          })() : ''}
 
           ${w.balance > 0.01 ? `
             <div style="display:flex;gap:8px;margin-bottom:8px">
