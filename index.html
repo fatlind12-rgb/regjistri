@@ -3809,6 +3809,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 
   <div class="ai-suggestions" id="aiSuggestions">
     <button class="ai-chip" onclick="askAI('Bëj një analizë të plotë të biznesit tim: fitimet, tendencat, problemet dhe çfarë duhet të përmirësoj. Jepmë këshilla konkrete.')" style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(99,102,241,0.1));border-color:var(--purple);color:var(--purple)">🔍 Analizo biznesin</button>
+    <button class="ai-chip" onclick="askAI('Sa kam shpenzuar dhe për çfarë? A janë të larta shpenzimet?')">💸 Shpenzimet</button>
     <button class="ai-chip" onclick="askAI('Kush nuk ka paguar ende?')">💰 Kush s'ka paguar?</button>
     <button class="ai-chip" onclick="askAI('Sa fitova këtë muaj?')">📊 Sa fitova?</button>
     <button class="ai-chip" onclick="askAI('Cili punëtor ka punuar më shumë?')">🏆 Më produktivi</button>
@@ -6472,7 +6473,8 @@ function addPayment() {
 
   payments.unshift({
     id: 'pay' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    workerId, workerName: w.name, date, amount, location, notes
+    workerId, workerName: w.name, date, amount, location, notes,
+    forMonth: date.slice(0,7)
   });
   save();
   document.getElementById('payAmount').value = '';
@@ -6502,6 +6504,32 @@ function calcWorkerBalance(workerId) {
   return { earned, paid, balance: earned - paid };
 }
 
+// Balance for a specific month (YYYY-MM)
+function calcWorkerMonthBalance(workerId, month) {
+  const w = workers.find(x => x.id === workerId);
+  if (!w) return { earned: 0, paid: 0, balance: 0 };
+  const dailyWage = w.dailyWage || 0;
+  let earned = 0;
+  entries.filter(e => e.workerId === workerId && (e.date||'').startsWith(month)).forEach(e => {
+    const pay = calcEarnings(e, dailyWage);
+    if (pay !== null) earned += pay;
+  });
+  // Payments assigned to this month (by forMonth field, fallback to payment date month)
+  const paid = payments.filter(p => p.workerId === workerId && (p.forMonth ? p.forMonth === month : (p.date||'').startsWith(month)))
+    .reduce((s,p) => s + p.amount, 0);
+  return { earned, paid, balance: earned - paid };
+}
+
+// Get list of months that have entries (YYYY-MM), newest first
+function getActiveMonths() {
+  const months = new Set();
+  entries.forEach(e => { const m = (e.date||'').slice(0,7); if (m) months.add(m); });
+  payments.forEach(p => { const m = p.forMonth || (p.date||'').slice(0,7); if (m) months.add(m); });
+  return [...months].sort().reverse();
+}
+
+let selectedPayMonth = ''; // '' = të gjitha, ose 'YYYY-MM'
+
 function renderPayments() {
   populatePaymentDropdowns();
 
@@ -6510,41 +6538,59 @@ function renderPayments() {
     return;
   }
 
-  // Calculate balance for each worker
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+  const activeMonths = getActiveMonths();
+  const monthLabel = (m) => `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}`;
+
+  // Month selector
+  let html = `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-bd" style="padding:12px">
+        <label style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;display:block;margin-bottom:8px">📅 Zgjedh Periudhën</label>
+        <select id="payMonthSelect" onchange="selectedPayMonth=this.value;renderPayments()" style="width:100%">
+          <option value="" ${selectedPayMonth===''?'selected':''}>Të gjitha (gjithsej)</option>
+          ${activeMonths.map(m => `<option value="${m}" ${selectedPayMonth===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+
+  // Calculate balances (monthly or total)
+  const useMonth = selectedPayMonth !== '';
   const workerBalances = workers.map(w => {
-    const b = calcWorkerBalance(w.id);
+    const b = useMonth ? calcWorkerMonthBalance(w.id, selectedPayMonth) : calcWorkerBalance(w.id);
     return { ...w, ...b };
   }).filter(w => w.earned > 0 || w.paid > 0);
 
   if (!workerBalances.length) {
-    document.getElementById('paymentsContainer').innerHTML = '<div class="empty-state"><div class="big">💳</div><p>Nuk ka të dhëna pagesash ende.<br><small style="color:var(--muted)">Shto rrogën te punëtorët dhe regjistro ditët e punës.</small></p></div>';
+    html += '<div class="empty-state"><div class="big">💳</div><p>Nuk ka të dhëna për këtë periudhë.</p></div>';
+    document.getElementById('paymentsContainer').innerHTML = html;
     return;
   }
 
-  // Sort by balance desc (most owed first)
   workerBalances.sort((a,b) => b.balance - a.balance);
-
-  // Overall totals
   const totalEarned = workerBalances.reduce((s,w) => s + w.earned, 0);
   const totalPaid = workerBalances.reduce((s,w) => s + w.paid, 0);
   const totalDebt = totalEarned - totalPaid;
 
-  let html = `
+  const periodLabel = useMonth ? monthLabel(selectedPayMonth) : 'Gjithsej';
+
+  html += `
     <div class="card" style="margin-bottom:14px">
       <div class="card-bd" style="padding:14px 10px">
-        <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;text-align:center;font-family:'Syne',sans-serif;font-weight:700">📊 Pamje e Përgjithshme</div>
+        <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;text-align:center;font-family:'Syne',sans-serif;font-weight:700">📊 ${esc(periodLabel)}</div>
         <div class="overview-grid">
           <div class="overview-box" style="background:rgba(0,212,164,0.06);border:1px solid rgba(0,212,164,0.2)">
-            <div class="ov-lbl">Të fituara</div>
-            <div class="ov-val" style="color:var(--green)">${totalEarned.toFixed(2)}€</div>
+            <div class="ov-lbl">Duhet paguar</div>
+            <div class="ov-val" style="color:var(--green)">${totalEarned.toFixed(0)}€</div>
           </div>
           <div class="overview-box" style="background:rgba(0,212,164,0.04);border:1px solid var(--border)">
-            <div class="ov-lbl">Të paguara</div>
-            <div class="ov-val">${totalPaid.toFixed(2)}€</div>
+            <div class="ov-lbl">Paguar</div>
+            <div class="ov-val">${totalPaid.toFixed(0)}€</div>
           </div>
           <div class="overview-box" style="background:${totalDebt > 0 ? 'rgba(255,107,53,0.08)' : 'rgba(0,212,164,0.06)'};border:1.5px solid ${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">
             <div class="ov-lbl">Borxhi</div>
-            <div class="ov-val" style="color:${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">${totalDebt.toFixed(2)}€</div>
+            <div class="ov-val" style="color:${totalDebt > 0 ? 'var(--accent)' : 'var(--green)'}">${totalDebt.toFixed(0)}€</div>
           </div>
         </div>
       </div>
@@ -6552,10 +6598,14 @@ function renderPayments() {
   `;
 
   workerBalances.forEach(w => {
-    const workerPayments = payments.filter(p => p.workerId === w.id).sort((a,b) => b.date.localeCompare(a.date));
-    const isPaid = w.balance <= 0;
+    const allWp = payments.filter(p => p.workerId === w.id);
+    const workerPayments = (useMonth
+        ? allWp.filter(p => (p.forMonth ? p.forMonth === selectedPayMonth : (p.date||'').startsWith(selectedPayMonth)))
+        : allWp
+      ).sort((a,b) => b.date.localeCompare(a.date));
+    const isPaid = w.balance <= 0.01;
     const balColor = isPaid ? 'var(--green)' : 'var(--accent)';
-    const balLabel = isPaid ? (w.balance < 0 ? 'Mbi-paguar' : 'Të paguara plotësisht') : 'Borxh';
+    const balLabel = isPaid ? (w.balance < -0.01 ? 'Mbi-paguar' : 'Paguar plotësisht') : 'Borxh';
 
     html += `
       <div class="card" style="margin-bottom:14px">
@@ -6564,50 +6614,97 @@ function renderPayments() {
             <div class="dw-av" style="width:44px;height:44px;font-size:0.95rem">${ini(w.name)}</div>
             <div style="flex:1;min-width:0">
               <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem">${esc(w.name)}</div>
-              <div style="font-size:0.74rem;color:var(--muted)">${w.dailyWage?w.dailyWage+'€/ditë':'⚠ Rroga jo e vendosur'}</div>
+              <div style="font-size:0.74rem;color:var(--muted)">${w.dailyWage?w.dailyWage+'€/ditë':'⚠ Rroga jo e vendosur'}${useMonth?' · '+esc(periodLabel):''}</div>
             </div>
-            ${isPaid && w.balance === 0 ? '<div style="font-size:1.5rem">✅</div>' : ''}
+            ${isPaid && w.balance >= -0.01 && w.balance <= 0.01 ? '<div style="font-size:1.5rem">✅</div>' : ''}
           </div>
 
           <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.86rem">
-              <span style="color:var(--muted)">💰 Të fituara</span>
-              <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${w.earned.toFixed(2)}€</span>
+              <span style="color:var(--muted)">💰 Duhet paguar</span>
+              <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${w.earned.toFixed(0)}€</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.86rem">
-              <span style="color:var(--muted)">✓ Të paguara</span>
-              <span style="font-family:'DM Mono',monospace;font-weight:700">${w.paid.toFixed(2)}€</span>
+              <span style="color:var(--muted)">✓ Paguar</span>
+              <span style="font-family:'DM Mono',monospace;font-weight:700">${w.paid.toFixed(0)}€</span>
             </div>
             <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;align-items:center">
               <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem">${balLabel}</span>
-              <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:${balColor}">${Math.abs(w.balance).toFixed(2)}€</span>
+              <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:${balColor}">${Math.abs(w.balance).toFixed(0)}€</span>
             </div>
           </div>
 
+          ${w.balance > 0.01 ? `
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <button class="btn-sync primary" style="flex:1" onclick="payFull(${w.id}, ${w.balance.toFixed(2)}, '${useMonth?selectedPayMonth:''}')">✓ Paguaj Komplet (${w.balance.toFixed(0)}€)</button>
+              <button class="btn-sync" style="flex:1" onclick="payPartial(${w.id}, ${w.balance.toFixed(2)}, '${useMonth?selectedPayMonth:''}')">✏️ Sa Dua</button>
+            </div>
+          ` : ''}
+
           ${workerPayments.length ? `
             <details style="margin-top:10px">
-              <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted);padding:6px 0;font-family:'Syne',sans-serif;font-weight:600">📜 Historiku i Pagesave (${workerPayments.length})</summary>
+              <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted);padding:6px 0;font-family:'Syne',sans-serif;font-weight:600">📜 Pagesat (${workerPayments.length})</summary>
               <div style="background:var(--surface2);border-radius:8px;margin-top:6px;overflow:hidden">
                 ${workerPayments.map(p => `
                   <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
                     <div style="font-size:1rem">💵</div>
                     <div style="flex:1;min-width:0">
-                      <div style="font-size:0.82rem;font-weight:600">${fmtDate(p.date)}${p.location?' · 📍 '+esc(p.location):''}</div>
+                      <div style="font-size:0.82rem;font-weight:600">${fmtDate(p.date)}${p.forMonth?' · për '+monthLabel(p.forMonth):''}</div>
                       ${p.notes ? `<div style="font-size:0.72rem;color:var(--muted)">${esc(p.notes)}</div>` : ''}
                     </div>
-                    <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(2)}€</div>
+                    <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(0)}€</div>
                     <button onclick="delPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 8px">🗑</button>
                   </div>
                 `).join('')}
               </div>
             </details>
-          ` : '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;text-align:center;padding:6px">Nuk ka pagesa të regjistruara</div>'}
+          ` : '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;text-align:center;padding:6px">Nuk ka pagesa</div>'}
         </div>
       </div>
     `;
   });
 
   document.getElementById('paymentsContainer').innerHTML = html;
+}
+
+// Pay full balance (optionally for a month)
+function payFull(workerId, amount, forMonth) {
+  const w = workers.find(x => x.id === workerId);
+  if (!w) return;
+  payments.unshift({
+    id: 'pay' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    workerId, workerName: w.name, date: todayStr, amount: parseFloat(amount),
+    location: '', notes: forMonth ? 'Pagesë e plotë' : 'Pagesë e plotë',
+    forMonth: forMonth || (todayStr.slice(0,7))
+  });
+  save();
+  renderPayments();
+  if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  showToast(`✔ ${w.name.split(' ')[0]} u pagua plotësisht (${parseFloat(amount).toFixed(0)}€)!`);
+}
+
+// Pay partial — ask amount
+async function payPartial(workerId, maxAmount, forMonth) {
+  const w = workers.find(x => x.id === workerId);
+  if (!w) return;
+  const input = await customPrompt(`Sa dëshiron t'i paguash ${w.name.split(' ')[0]}? (borxhi: ${parseFloat(maxAmount).toFixed(0)}€)`, {
+    title: '✏️ Pagesë e Pjesshme',
+    placeholder: 'Shuma në €',
+    type: 'number'
+  });
+  if (input === null) return;
+  const amount = parseFloat(input) || 0;
+  if (amount <= 0) { showToast('⚠ Shuma duhet të jetë më e madhe se 0', true); return; }
+  payments.unshift({
+    id: 'pay' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    workerId, workerName: w.name, date: todayStr, amount,
+    location: '', notes: 'Pagesë e pjesshme',
+    forMonth: forMonth || (todayStr.slice(0,7))
+  });
+  save();
+  renderPayments();
+  if (navigator.vibrate) navigator.vibrate([20,40,20]);
+  showToast(`✔ ${w.name.split(' ')[0]} u pagua ${amount.toFixed(0)}€!`);
 }
 
 // ═══════════════════════════════════════
@@ -7475,7 +7572,23 @@ function buildBusinessContext() {
   // ALL payments
   const paymentLines = payments.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p => {
     const w = workers.find(x => x.id === p.workerId);
-    return `${fmtDate(p.date)}: ${w ? w.name : 'punëtor'} — ${p.amount}€${p.notes?' ('+p.notes+')':''}`;
+    const forM = p.forMonth ? ` [për muajin ${p.forMonth}]` : '';
+    return `${fmtDate(p.date)}: ${w ? w.name : 'punëtor'} — ${p.amount}€${forM}${p.notes?' ('+p.notes+')':''}`;
+  });
+
+  // Yearly payment totals per worker (how much each worker received per year)
+  const payByWorkerYear = {};
+  payments.forEach(p => {
+    const w = workers.find(x => x.id === p.workerId);
+    if (!w) return;
+    const yr = (p.date||'').slice(0,4);
+    if (!yr) return;
+    const key = w.name + '|' + yr;
+    payByWorkerYear[key] = (payByWorkerYear[key]||0) + (p.amount||0);
+  });
+  const yearlyPayLines = Object.keys(payByWorkerYear).sort().map(k => {
+    const [name, yr] = k.split('|');
+    return `${name} mori gjithsej ${payByWorkerYear[k].toFixed(0)}€ në vitin ${yr}`;
   });
 
   // ALL entries (full access, not limited)
@@ -7568,6 +7681,18 @@ ${locProfits.length ? `• Vendi më fitimprurës: ${locProfits[0].loc} (${locPr
 ${locProfits.length > 1 ? `• Vendi më pak fitimprurës: ${locProfits[locProfits.length-1].loc} (${locProfits[locProfits.length-1].profit.toFixed(0)}€ fitim)` : ''}
 ${unpaidWorkers.length ? `• Borxhe ndaj punëtorëve: ${unpaidWorkers.map(w => w.name+' '+w.bal.toFixed(0)+'€').join(', ')}` : '• Të gjithë punëtorët janë paguar plotësisht'}`;
 
+  // ALL expenses + category breakdown
+  const expenseLines = expenses.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e =>
+    `${fmtDate(e.date)}: ${e.category||'tjetër'} — ${e.amount}€ @ ${e.location||'?'}${e.desc?' ('+e.desc+')':''}`
+  );
+  const totalExpensesAll = expenses.reduce((s,e)=>s+(e.amount||0),0);
+  // By category
+  const byCat = {};
+  expenses.forEach(e => { const c = e.category||'tjetër'; byCat[c] = (byCat[c]||0) + (e.amount||0); });
+  const catLines = Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]).map(c => `${c}: ${byCat[c].toFixed(0)}€`);
+  // This month expenses
+  const monthExp = expenses.filter(e => (e.date||'').startsWith(thisMonth)).reduce((s,e)=>s+(e.amount||0),0);
+
   return `TË DHËNAT E PLOTA TË BIZNESIT (sot: ${fmtDate(today)}, muaji aktual: ${monthNames[parseInt(thisMonth.slice(5,7))-1]} ${thisMonth.slice(0,4)}):
 
 ${analytics}
@@ -7584,16 +7709,23 @@ ${monthLines.join('\n') || 'asnjë'}
 ÇMIMORJA:
 ${priceLines.join('\n') || 'asnjë'}
 
+SHPENZIMET (${expenses.length}, gjithsej ${totalExpensesAll.toFixed(0)}€, këtë muaj ${monthExp.toFixed(0)}€):
+Sipas kategorisë: ${catLines.join(', ') || 'asnjë'}
+${expenseLines.slice(0,40).join('\n') || 'asnjë shpenzim'}
+
 OFERTAT (${offers.length}):
 ${offerLines.join('\n') || 'asnjë'}
 
 PAGESAT (${payments.length}):
 ${paymentLines.join('\n') || 'asnjë'}
 
+PAGESAT SIPAS VITIT (sa mori secili punëtor në total për çdo vit):
+${yearlyPayLines.join('\n') || 'asnjë'}
+
 TË GJITHA REGJISTRIMET (${entries.length}):
 ${allEntriesLines.join('\n') || 'asnjë'}
 
-SHPJEGIM: "ditë ekuivalente" = ditë plota + (gjysëm ÷ 2). "vetëm-ekstra" = ditë ku punoi vetëm orë ekstra. Fitimi = të ardhura nga punët − paga punëtorëve. Ti je Fatlind, pronari.`;
+SHPJEGIM: "ditë ekuivalente" = ditë plota + (gjysëm ÷ 2). "vetëm-ekstra" = ditë ku punoi vetëm orë ekstra. Fitimi = të ardhura nga punët − paga punëtorëve. FITIMI REAL = të ardhura − paga − shpenzime. Ti je Fatlind, pronari.`;
 }
 
 // ═══════════════════════════════════════
@@ -7649,6 +7781,9 @@ function showActionConfirm(action) {
   if (tip === 'oferte' || tip === 'ofertë' || tip === 'llogari') {
     return showOfferConfirm(action);
   }
+  if (tip === 'shpenzim' || tip === 'shpenzime') {
+    return showExpenseConfirm(action);
+  }
 
   // ── REGISTRATION ──
   const ws = resolveWorkers(action.puntoret);
@@ -7693,9 +7828,9 @@ function showActionConfirm(action) {
 
 function showPaymentConfirm(action) {
   const ws = resolveWorkers(action.puntori || action.puntoret);
-  const amount = parseFloat(action.shuma || action.amount || 0) || 0;
   const date = action.data || todayStr;
   const notes = action.shenim || action.notes || '';
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
 
   if (!ws.length) {
     addAIMessage('⚠ Nuk gjeta punëtorin. Për kë është pagesa?', 'bot');
@@ -7705,12 +7840,25 @@ function showPaymentConfirm(action) {
     addAIMessage('⚠ Pagesa duhet të jetë për një punëtor. Specifiko kë: ' + ws.map(w=>w.name.split(' ')[0]).join(', '), 'bot');
     return;
   }
+
+  // Resolve which month this payment is for
+  const forMonth = resolveMonth(action.muaji || action.forMonth) || (date.slice(0,7));
+  const monthLbl = `${monthNames[parseInt(forMonth.slice(5,7))-1]} ${forMonth.slice(0,4)}`;
+
+  // "komplet" → pay the full remaining balance for that month
+  let amount = parseFloat(action.shuma || action.amount || 0) || 0;
+  const isComplete = action.komplet === true || /komplet|plot[ëe]|t[ëe]r[ëe]/i.test(String(action.shuma||'') + ' ' + String(notes||''));
+  if (isComplete || amount <= 0) {
+    const bal = calcWorkerMonthBalance(ws[0].id, forMonth);
+    if (bal.balance > 0) amount = bal.balance;
+  }
+
   if (amount <= 0) {
-    addAIMessage('⚠ Sa është shuma e pagesës?', 'bot');
+    addAIMessage(`⚠ ${ws[0].name.split(' ')[0]} nuk ka borxh për ${monthLbl}, ose s'e kuptova shumën. Sa t'i paguaj?`, 'bot');
     return;
   }
 
-  pendingAction = { tip: 'pagese', worker: ws[0], amount, date, notes };
+  pendingAction = { tip: 'pagese', worker: ws[0], amount, date, notes: notes || ('Pagesë për '+monthLbl), forMonth };
 
   const msgs = document.getElementById('aiMessages');
   if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
@@ -7720,11 +7868,72 @@ function showPaymentConfirm(action) {
     <div class="aac-title">💰 Konfirmo Pagesën</div>
     <div class="aac-row"><span>👤 Punëtori:</span><strong>${esc(ws[0].name)}</strong></div>
     <div class="aac-row"><span>💶 Shuma:</span><strong>${amount.toFixed(0)}€</strong></div>
-    <div class="aac-row"><span>📅 Data:</span><strong>${fmtDate(date)}</strong></div>
+    <div class="aac-row"><span>🗓 Për muajin:</span><strong>${monthLbl}</strong></div>
+    <div class="aac-row"><span>📅 Data e pagesës:</span><strong>${fmtDate(date)}</strong></div>
     ${notes?`<div class="aac-row"><span>📝 Shënim:</span><strong>${esc(notes)}</strong></div>`:''}
     <div class="aac-actions">
       <button class="aac-btn cancel" onclick="cancelAction()">✕ Anulo</button>
       <button class="aac-btn ok" onclick="confirmAction()">✓ Po, Paguaj</button>
+    </div>
+  `;
+  msgs.appendChild(card);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Resolve a month name/spec to YYYY-MM
+function resolveMonth(spec) {
+  if (!spec) return null;
+  const s = String(spec).toLowerCase().trim();
+  // Already YYYY-MM
+  if (/^\d{4}-\d{2}$/.test(s)) return s;
+  const monthMap = { janar:1, shkurt:2, mars:3, prill:4, maj:5, qershor:6, korrik:7, gusht:8, shtator:9, tetor:10, nentor:11, 'nëntor':11, dhjetor:12 };
+  let monthNum = null, year = null;
+  for (const [name, num] of Object.entries(monthMap)) {
+    if (s.includes(name)) { monthNum = num; break; }
+  }
+  const yearMatch = s.match(/\b(20\d{2})\b/);
+  if (yearMatch) year = parseInt(yearMatch[1]);
+  if (monthNum) {
+    if (!year) {
+      // Use current year, or last year if that month is in the future
+      const now = new Date();
+      year = now.getFullYear();
+      if (monthNum > (now.getMonth()+1)) year--;
+    }
+    return `${year}-${String(monthNum).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+function showExpenseConfirm(action) {
+  const amount = parseFloat(action.shuma || action.amount || 0) || 0;
+  const catMap = { material:'material', materiale:'material', transport:'transport', naft:'transport', naftë:'transport', qira:'qira', vegla:'qira', vegël:'qira', ushqim:'ushqim', tjeter:'tjeter', 'tjetër':'tjeter' };
+  let cat = String(action.kategoria || action.category || 'tjeter').toLowerCase();
+  cat = catMap[cat] || (Object.keys(catMap).find(k => cat.includes(k)) ? catMap[Object.keys(catMap).find(k => cat.includes(k))] : 'tjeter');
+  const catLabel = { material:'Materiale', transport:'Transport', qira:'Qira/Vegla', ushqim:'Ushqim', tjeter:'Tjetër' }[cat];
+  const loc = resolveLocation(action.vendi || action.location) || '';
+  const date = action.data || todayStr;
+  const desc = action.pershkrimi || action.desc || '';
+
+  if (amount <= 0) { addAIMessage('⚠ Sa është shuma e shpenzimit?', 'bot'); return; }
+  if (!desc) { addAIMessage('⚠ Për çfarë ishte shpenzimi?', 'bot'); return; }
+
+  pendingAction = { tip: 'shpenzim', amount, cat, loc, date, desc };
+
+  const msgs = document.getElementById('aiMessages');
+  if (msgs.querySelector('.ai-welcome')) msgs.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'ai-action-card';
+  card.innerHTML = `
+    <div class="aac-title">💸 Konfirmo Shpenzimin</div>
+    <div class="aac-row"><span>📂 Kategoria:</span><strong>${catLabel}</strong></div>
+    <div class="aac-row"><span>💶 Shuma:</span><strong>${amount.toFixed(0)}€</strong></div>
+    <div class="aac-row"><span>📅 Data:</span><strong>${fmtDate(date)}</strong></div>
+    ${loc?`<div class="aac-row"><span>📍 Vendi:</span><strong>${esc(loc)}</strong></div>`:''}
+    <div class="aac-row"><span>📝 Përshkrimi:</span><strong>${esc(desc)}</strong></div>
+    <div class="aac-actions">
+      <button class="aac-btn cancel" onclick="cancelAction()">✕ Anulo</button>
+      <button class="aac-btn ok" onclick="confirmAction()">✓ Po, Shto</button>
     </div>
   `;
   msgs.appendChild(card);
@@ -7793,10 +8002,11 @@ function confirmAction() {
   const tip = pendingAction.tip;
 
   if (tip === 'pagese') {
-    const { worker, amount, date, notes } = pendingAction;
+    const { worker, amount, date, notes, forMonth } = pendingAction;
     payments.unshift({
       id: 'pay' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      workerId: worker.id, workerName: worker.name, date, amount, location: '', notes: notes || 'Nga asistenti'
+      workerId: worker.id, workerName: worker.name, date, amount, location: '',
+      notes: notes || 'Nga asistenti', forMonth: forMonth || date.slice(0,7)
     });
     save(); refreshUI();
     document.querySelectorAll('.ai-action-card .aac-actions').forEach(a => {
@@ -7837,6 +8047,23 @@ function confirmAction() {
     if (navigator.vibrate) navigator.vibrate([20,40,20]);
     addAIMessage(`✅ ${isWork?'Llogaria':'Oferta'} ${number} për ${client} u krijua dhe PDF u shkarkua. Diçka tjetër?`, 'bot');
     showToast('📄 ' + number + ' u krijua!');
+    return;
+  }
+
+  if (tip === 'shpenzim') {
+    const { amount, cat, loc, date, desc } = pendingAction;
+    expenses.unshift({
+      id: 'exp' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      date, location: loc, category: cat, amount, desc
+    });
+    save(); refreshUI();
+    document.querySelectorAll('.ai-action-card .aac-actions').forEach(a => {
+      a.innerHTML = '<div style="color:var(--green);font-weight:700;font-size:0.86rem;text-align:center">✅ Shpenzimi u shtua!</div>';
+    });
+    pendingAction = null;
+    if (navigator.vibrate) navigator.vibrate([20,40,20]);
+    addAIMessage(`✅ Shpenzimi ${amount.toFixed(0)}€ u regjistrua. Diçka tjetër?`, 'bot');
+    showToast('✔ Shpenzimi u shtua!');
     return;
   }
 
@@ -7941,16 +8168,23 @@ VEPRIME (3 LLOJE — përdor bllokun [VEPRIM] vetëm kur Fatlindi kërkon të KR
 {"tip":"regjistro","vendi":"emri","lloji":"plote|gjysem|ekstra","puntoret":"të gjithë OSE emra me presje","pershkrimi":"çfarë u bë","data":"","ore_ekstra":0}
 [/VEPRIM]
 
-2) PAGESE — kur thotë "i dhashë/paguaj [punëtor] [shumë]€" ose "shëno pagesë [shumë] për [punëtor]":
+2) PAGESE — kur thotë "i dhashë/paguaj [punëtor] [shumë]€" ose "[punëtor] e pagova komplet për [muajin]" ose "i dhashë 200€ për majin":
 [VEPRIM]
-{"tip":"pagese","puntori":"emri i punëtorit","shuma":100,"data":"","shenim":""}
+{"tip":"pagese","puntori":"emri i punëtorit","shuma":100,"muaji":"","komplet":false,"data":"","shenim":""}
 [/VEPRIM]
+(Nëse thotë "komplet/plotë për [muaj]" → "komplet":true dhe vendos muajin (p.sh. "muaji":"maj 2026"); sistemi llogarit vetë borxhin e atij muaji. Nëse jep shumë konkrete → "shuma":200,"muaji":"maj". Muaji mund të jetë "maj", "qershor 2026" etj. Nëse s'përmend muaj, lëre bosh.)
 
 3) OFERTE/LLOGARI — kur thotë "bëj ofertë/llogari për [klient]: [punët me sasi]":
 [VEPRIM]
 {"tip":"oferte","klient":"emri","projekti":"opsional","punet":[{"emri":"shtrim pllaka","sasi":40},{"emri":"bordura","sasi":12}]}
 [/VEPRIM]
 (emri i punës duhet të përkojë me çmimoren; sasia është për "llogari pune". Për "ofertë" pa sasi, lëre sasi:0)
+
+4) SHPENZIM — kur thotë "shëno shpenzim [shumë]€ për [çfarë]" ose "bleva material [shumë]€" ose "harxhova [shumë] naftë":
+[VEPRIM]
+{"tip":"shpenzim","shuma":50,"kategoria":"material|transport|qira|ushqim|tjeter","pershkrimi":"çfarë","vendi":"opsional","data":""}
+[/VEPRIM]
+(kategoria: material=materiale, transport=naftë/udhëtim, qira=vegla/qira, ushqim=ushqim, tjeter=tjetër)
 
 RREGULLA VEPRIMI: shkruaj 1 fjali të shkurtër para bllokut. Vendos VETËM një bllok [VEPRIM]. Përdoruesi konfirmon vetë para se të ruhet. Mos shkruaj [VEPRIM] kur thjesht pyet diçka.
 
@@ -8034,6 +8268,55 @@ function showToast(msg, warn=false) {
 // ── CUSTOM CONFIRM DIALOG (futuristic) ──
 // ═══════════════════════════════════════
 let confirmResolve = null;
+
+function customPrompt(msg, opts = {}) {
+  return new Promise(resolve => {
+    // Build dialog dynamically if not present
+    let ov = document.getElementById('promptOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'promptOverlay';
+      ov.className = 'confirm-overlay';
+      ov.innerHTML = `
+        <div class="confirm-box">
+          <div class="confirm-icon green" id="promptIcon">✏️</div>
+          <div class="confirm-title" id="promptTitle"></div>
+          <div class="confirm-msg" id="promptMsg"></div>
+          <input type="text" id="promptInput" style="width:100%;margin:12px 0;text-align:center;font-size:1.1rem;font-family:'DM Mono',monospace"/>
+          <div class="confirm-actions">
+            <button class="confirm-btn" id="promptCancelBtn">Anulo</button>
+            <button class="confirm-btn ok green" id="promptOkBtn">Ruaj</button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+    }
+    const input = document.getElementById('promptInput');
+    document.getElementById('promptTitle').textContent = opts.title || 'Vendos vlerën';
+    document.getElementById('promptMsg').textContent = msg;
+    input.type = opts.type || 'text';
+    input.placeholder = opts.placeholder || '';
+    input.value = '';
+    if (input.type === 'number') { input.inputMode = 'decimal'; input.step = 'any'; }
+    ov.classList.add('open');
+    setTimeout(() => input.focus(), 100);
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    const cleanup = () => {
+      ov.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKey);
+    };
+    const onOk = () => { const v = input.value; cleanup(); resolve(v); };
+    const onCancel = () => { cleanup(); resolve(null); };
+    const onKey = (e) => { if (e.key === 'Enter') onOk(); };
+    const okBtn = document.getElementById('promptOkBtn');
+    const cancelBtn = document.getElementById('promptCancelBtn');
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKey);
+  });
+}
 
 function customConfirm(msg, opts = {}) {
   return new Promise(resolve => {
