@@ -2115,6 +2115,16 @@ select {
   margin-bottom: 8px;
   padding: 0 4px;
 }
+.day-loc-desc {
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
 
 /* ═══════════════════════════════════════
    VOICE INPUT
@@ -6190,6 +6200,9 @@ function renderDrill(loc, data) {
   if (selectedDate && byDate[selectedDate]) {
     const dayEntries = byDate[selectedDate];
     const isFullDay = dayEntries.some(e => e.dayType === 'full');
+    // Shared description for this day/location
+    const dDescs = [...new Set(dayEntries.map(e => (e.desc||'').trim()).filter(d => d && d !== 'Punë'))];
+    const sharedDesc = dDescs.length === 1 ? dDescs[0] : null;
     document.getElementById('drillPanel').innerHTML = `
       <div class="drill-panel">
         <div class="drill-header">
@@ -6199,6 +6212,7 @@ function renderDrill(loc, data) {
           </div>
           <button class="btn-sm" onclick="selectDate(null)">← Kthehu</button>
         </div>
+        ${sharedDesc ? `<div class="day-loc-desc" style="margin-bottom:14px">🔨 ${esc(sharedDesc)}</div>` : ''}
         <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Punëtorët që Punuan</div>
         <div class="drill-entries">
           ${dayEntries.map(e => `
@@ -6206,7 +6220,7 @@ function renderDrill(loc, data) {
               <div class="dw-av" style="flex-shrink:0">${ini(e.workerName)}</div>
               <div style="flex:1;min-width:0">
                 <div class="de-name">${esc(e.workerName)}</div>
-                <div class="de-desc">${esc(e.desc)}</div>
+                ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="de-desc">${esc(e.desc)}</div>`:''}
               </div>
               <div style="flex-shrink:0">${dayBadge(e)}</div>
               <div class="entry-actions" style="flex-shrink:0" onclick="event.stopPropagation()">
@@ -7378,16 +7392,22 @@ function renderAll(filtered) {
       </div>
       ${isOpen ? `
         <div class="day-body">
-          ${locs.map(loc => `
+          ${locs.map(loc => {
+            const locEntries = dayEntries.filter(e => e.location === loc);
+            // Collect unique descriptions for this location/day
+            const descs = [...new Set(locEntries.map(e => (e.desc||'').trim()).filter(d => d && d !== 'Punë'))];
+            const sharedDesc = descs.length === 1 ? descs[0] : null; // all same → show once
+            return `
             <div class="day-loc-group">
               <div class="day-loc-name">📍 ${esc(loc)}</div>
-              ${dayEntries.filter(e => e.location === loc).map(e => `
+              ${sharedDesc ? `<div class="day-loc-desc">🔨 ${esc(sharedDesc)}</div>` : ''}
+              ${locEntries.map(e => `
                 <div class="ecard">
                   <div class="eav">${ini(e.workerName)}</div>
                   <div class="ei">
                     <strong>${esc(e.workerName)}</strong>
                     ${e.workerRole?`<div class="ei-meta"><span>${esc(e.workerRole)}</span></div>`:''}
-                    ${e.desc?`<div class="ei-desc">${esc(e.desc)}</div>`:''}
+                    ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="ei-desc">${esc(e.desc)}</div>`:''}
                   </div>
                   <div>${dayBadge(e)}</div>
                   <div class="entry-actions" onclick="event.stopPropagation()">
@@ -7397,7 +7417,8 @@ function renderAll(filtered) {
                 </div>
               `).join('')}
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       ` : ''}
     </div>
@@ -7936,6 +7957,22 @@ function buildBusinessContext() {
     return `${fmtDate(e.date)}: ${e.workerName} @ ${e.location} (${typeLabel}${extra})${e.desc ? ' — '+e.desc : ''}`;
   });
 
+  // ─── PUNA SIPAS DITËVE (description grouped by date+location) ───
+  const workByDay = {};
+  entries.forEach(e => {
+    const key = (e.date||'') + '|' + e.location;
+    if (!workByDay[key]) workByDay[key] = { date: e.date, loc: e.location, descs: new Set(), workers: new Set() };
+    if (e.desc && e.desc.trim() && e.desc.trim() !== 'Punë') workByDay[key].descs.add(e.desc.trim());
+    workByDay[key].workers.add(e.workerName);
+  });
+  const workByDayLines = Object.values(workByDay)
+    .sort((a,b) => (b.date||'').localeCompare(a.date||''))
+    .slice(0, 60)
+    .map(d => {
+      const desc = [...d.descs].join('; ') || '(pa përshkrim)';
+      return `${fmtDate(d.date)} @ ${d.loc}: "${desc}" (${d.workers.size} punëtorë)`;
+    });
+
   // ─── DEEP ANALYTICS ───
   const totalEntries = entries.length;
   const allTypes = countTypes(entries);
@@ -8062,6 +8099,9 @@ ${yearlyPayLines.join('\n') || 'asnjë'}
 
 TË GJITHA REGJISTRIMET (${entries.length}):
 ${allEntriesLines.join('\n') || 'asnjë'}
+
+PUNA SIPAS DITËVE (çfarë u bë çdo ditë në secilin vend):
+${workByDayLines.join('\n') || 'asnjë'}
 
 SHPJEGIM: "ditë ekuivalente" = ditë plota + (gjysëm ÷ 2). "vetëm-ekstra" = ditë ku punoi vetëm orë ekstra. Fitimi = të ardhura nga punët − paga punëtorëve. FITIMI REAL = të ardhura − paga − shpenzime. Ti je Fatlind, pronari.`;
 }
