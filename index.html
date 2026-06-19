@@ -8687,6 +8687,8 @@ function startVoiceMode() {
 
 function exitVoiceMode() {
   vmActive = false;
+  vmPendingAction = null;
+  vmActionSummary = '';
   if (vmRecognition) { try { vmRecognition.stop(); } catch(e){} }
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   document.getElementById('voiceMode').classList.remove('open');
@@ -8746,8 +8748,33 @@ async function vmSendToAI(question) {
   document.getElementById('vmHint').textContent = '';
   const key = localStorage.getItem('pun_ai_key');
 
+  // If there's a pending voice action, check for yes/no confirmation
+  if (vmPendingAction) {
+    const yes = /\b(po|patjet|patjetër|posi|në rregull|ne rregull|dakord|regjistro|ruaj|konfirmoj|okej|ok|mirë|mire)\b/i.test(question);
+    const no = /\b(jo|anulo|mos|jo jo|lër|ler|hiq)\b/i.test(question);
+    if (yes && !no) {
+      // Execute the pending action
+      pendingAction = vmPendingAction;
+      const summary = vmActionSummary;
+      vmPendingAction = null; vmActionSummary = '';
+      confirmAction();
+      setVMState('speaking', 'Po flas...');
+      speakText('U ruajt. ' + summary + ' Diçka tjetër?');
+      return;
+    } else if (no) {
+      vmPendingAction = null; vmActionSummary = '';
+      speakText('E anulova. Diçka tjetër?');
+      return;
+    }
+    // else: not a clear yes/no, fall through to normal processing
+    vmPendingAction = null; vmActionSummary = '';
+  }
+
   const context = buildBusinessContext();
-  const systemPrompt = `Je asistenti zanor i biznesit të Fatlindit (firmë shtrimi pllakash). Je në "voice mode" — përgjigju SHKURT dhe natyrshëm, si në bisedë telefonike (1-3 fjali). Pa lista, pa formatim, pa simbole — vetëm fjalë që tingëllojnë mirë kur lexohen me zë. Fol shqip. Përdor numrat realë nga të dhënat.
+  const systemPrompt = `Je asistenti zanor i biznesit të Fatlindit (firmë shtrimi pllakash). Je në "voice mode" — përgjigju SHKURT dhe natyrshëm, si në bisedë telefonike (1-2 fjali). Pa lista, pa formatim, pa simbole, pa yje (**). Fol shqip. Përdor numrat realë.
+
+VEPRIME: Nëse Fatlindi kërkon të regjistrojë/shtojë/paguajë/shpenzojë diçka, vendos bllokun [VEPRIM]{...}[/VEPRIM] në fund (formatet e njëjta: regjistro, pagese, shpenzim, oferte, paga, shto_puntor, status). Para bllokut, shkruaj një fjali të shkurtër që përshkruan veprimin dhe pyet "Dëshiron ta ruaj?". MOS thuaj që e ruajte — sapo ta konfirmojë me zë, do ruhet.
+Shembull: "Do regjistroj 13 euro për material tek Ibrahim. Dëshiron ta ruaj? [VEPRIM]{"tip":"shpenzim","shuma":13,"kategoria":"material","pershkrimi":"materiale","vendi":"Ibrahim"}[/VEPRIM]"
 
 ${context}`;
 
@@ -8774,13 +8801,71 @@ ${context}`;
     const answer = data.content.filter(c => c.type === 'text').map(c => c.text).join(' ').trim();
     vmHistory.push({ role: 'assistant', content: answer });
     if (!vmActive) return;
-    document.getElementById('vmTranscript').textContent = answer;
-    speakText(answer);
+
+    // Check for an action block
+    const action = extractAction(answer);
+    const cleanAnswer = answer.replace(/\[VEPRIM\][\s\S]*?\[\/VEPRIM\]/, '').replace(/\*\*/g,'').trim();
+
+    if (action && action.tip) {
+      // Stage the action — build pendingAction via the confirm builders but don't show card
+      const staged = stageVoiceAction(action);
+      if (staged) {
+        vmPendingAction = staged.pendingAction;
+        vmActionSummary = staged.summary;
+        document.getElementById('vmTranscript').textContent = cleanAnswer || (staged.summary + ' Dëshiron ta ruaj?');
+        speakText(cleanAnswer || (staged.summary + ' Dëshiron ta ruaj?'));
+      } else {
+        document.getElementById('vmTranscript').textContent = cleanAnswer;
+        speakText(cleanAnswer);
+      }
+    } else {
+      document.getElementById('vmTranscript').textContent = cleanAnswer;
+      speakText(cleanAnswer);
+    }
   } catch (e) {
     if (!vmActive) return;
     setVMState('idle', 'Gabim — provo prapë');
     speakText('Më fal, pati një gabim. Provo përsëri.');
   }
+}
+
+// Stage a voice action into a pendingAction object (without showing a card)
+let vmPendingAction = null;
+let vmActionSummary = '';
+function stageVoiceAction(action) {
+  const tip = action.tip;
+  if (tip === 'shpenzim' || tip === 'shpenzime') {
+    const amount = parseFloat(action.shuma || action.amount || 0) || 0;
+    const catMap = { material:'material', materiale:'material', transport:'transport', naft:'transport', 'naftë':'transport', qira:'qira', vegla:'qira', ushqim:'ushqim', tjeter:'tjeter', 'tjetër':'tjeter' };
+    let cat = String(action.kategoria || 'tjeter').toLowerCase();
+    cat = catMap[cat] || 'tjeter';
+    const loc = resolveLocation(action.vendi || action.location) || '';
+    if (amount <= 0) return null;
+    return { pendingAction: { tip:'shpenzim', amount, cat, loc, date: action.data||todayStr, desc: action.pershkrimi||action.desc||'Shpenzim' },
+             summary: `${amount} euro për ${cat}${loc?' tek '+loc:''}.` };
+  }
+  if (tip === 'regjistro') {
+    const ws = resolveWorkers(action.puntoret);
+    const loc = resolveLocation(action.vendi);
+    const dt = action.lloji==='gjysem'?'half':action.lloji==='ekstra'?'extra':'full';
+    if (!ws.length || !loc) return null;
+    return { pendingAction: { tip:'regjistro', ws, loc, dt, date: action.data||todayStr, desc: action.pershkrimi||'Punë', extraHours: parseFloat(action.ore_ekstra||0)||0 },
+             summary: `${ws.length} punëtorë tek ${loc}, ditë ${dt==='full'?'plotë':dt==='half'?'gjysmë':'ekstra'}.` };
+  }
+  if (tip === 'pagese' || tip === 'pagesë') {
+    const ws = resolveWorkers(action.puntori||action.puntoret);
+    if (ws.length !== 1) return null;
+    const forMonth = resolveMonth(action.muaji) || todayStr.slice(0,7);
+    let amount = parseFloat(action.shuma||0)||0;
+    if (action.komplet === true || amount <= 0) {
+      const bal = calcWorkerMonthBalance(ws[0].id, forMonth);
+      if (bal.balance > 0) amount = bal.balance;
+    }
+    if (amount <= 0) return null;
+    return { pendingAction: { tip:'pagese', worker: ws[0], amount, date: todayStr, notes:'Nga zëri', forMonth },
+             summary: `${amount} euro për ${ws[0].name.split(' ')[0]}.` };
+  }
+  return null;
 }
 
 function speakText(text) {
