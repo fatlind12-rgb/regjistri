@@ -2124,7 +2124,25 @@ select {
   padding: 8px 12px;
   margin-bottom: 10px;
   line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
+.day-loc-desc span { flex: 1; min-width: 0; }
+.desc-edit-btn {
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border-bright);
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s var(--ease);
+}
+.desc-edit-btn:active { transform: scale(0.9); }
 
 /* ═══════════════════════════════════════
    VOICE INPUT
@@ -6212,7 +6230,7 @@ function renderDrill(loc, data) {
           </div>
           <button class="btn-sm" onclick="selectDate(null)">← Kthehu</button>
         </div>
-        ${sharedDesc ? `<div class="day-loc-desc" style="margin-bottom:14px">🔨 ${esc(sharedDesc)}</div>` : ''}
+        ${sharedDesc ? `<div class="day-loc-desc" style="margin-bottom:14px"><span>🔨 ${esc(sharedDesc)}</span><button class="desc-edit-btn" onclick="event.stopPropagation();editDayDesc('${selectedDate}','${esc(loc).replace(/'/g,"\\'")}')" title="Ndrysho përshkrimin">✎</button></div>` : ''}
         <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Punëtorët që Punuan</div>
         <div class="drill-entries">
           ${dayEntries.map(e => `
@@ -7400,7 +7418,7 @@ function renderAll(filtered) {
             return `
             <div class="day-loc-group">
               <div class="day-loc-name">📍 ${esc(loc)}</div>
-              ${sharedDesc ? `<div class="day-loc-desc">🔨 ${esc(sharedDesc)}</div>` : ''}
+              ${sharedDesc ? `<div class="day-loc-desc"><span>🔨 ${esc(sharedDesc)}</span><button class="desc-edit-btn" onclick="event.stopPropagation();editDayDesc('${date}','${esc(loc).replace(/'/g,"\\'")}')" title="Ndrysho përshkrimin">✎</button></div>` : ''}
               ${locEntries.map(e => `
                 <div class="ecard">
                   <div class="eav">${ini(e.workerName)}</div>
@@ -7430,6 +7448,30 @@ function toggleDayExpand(date) {
   expandedDate = expandedDate === date ? null : date;
   renderAll(getFiltered());
   if (navigator.vibrate) navigator.vibrate(8);
+}
+
+async function editDayDesc(date, loc) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  // Find entries for this date+location
+  const dayLocEntries = entries.filter(e => e.date === date && e.location === loc);
+  if (!dayLocEntries.length) return;
+  const current = (dayLocEntries[0].desc || '').trim();
+  const input = await customPrompt(`Ndrysho përshkrimin për ${loc} (${fmtDate(date)}). Do ndryshohet për të gjithë punëtorët e asaj dite.`, {
+    title: '🔨 Ndrysho Punën',
+    placeholder: 'Çfarë u bë...',
+    type: 'text'
+  });
+  if (input === null) return;
+  const newDesc = input.trim();
+  // Update all entries for this date+location
+  let count = 0;
+  entries.forEach(e => {
+    if (e.date === date && e.location === loc) { e.desc = newDesc || 'Punë'; count++; }
+  });
+  save();
+  renderHistory();
+  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  showToast(`✔ Përshkrimi u ndryshua për ${count} regjistrime!`);
 }
 
 async function delEntry(id) {
