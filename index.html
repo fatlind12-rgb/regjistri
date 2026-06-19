@@ -8852,6 +8852,50 @@ function toggleAIVoice() {
   aiRecognition.start();
 }
 
+// Retry to get an action block when AI forgot to include it
+async function retryAction() {
+  const key = localStorage.getItem('pun_ai_key');
+  if (!key) return;
+  const context = buildBusinessContext();
+  const systemPrompt = `Je asistenti i biznesit. Përdoruesi kërkoi një veprim por ti harrove bllokun [VEPRIM]. Ripërgjigju VETËM me një bllok [VEPRIM]{...}[/VEPRIM] sipas formateve të mësuara (regjistro/pagese/oferte/shpenzim/paga/shto_puntor/status/fshi). Pa tekst tjetër.
+
+${context}`;
+  const thinking = addAIMessage('...', 'bot');
+  thinking.classList.add('thinking');
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: aiHistory
+      })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    const answer = data.content.filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+    aiHistory.push({ role: 'assistant', content: answer });
+    const action = extractAction(answer);
+    thinking.classList.remove('thinking');
+    if (action && action.tip) {
+      thinking.textContent = 'E përgatita:';
+      showActionConfirm(action);
+    } else {
+      thinking.textContent = '⚠ S\'munda ta përgatis veprimin. Provo ta thuash më qartë, p.sh. "regjistro shpenzim 20 euro materiale".';
+    }
+  } catch (e) {
+    thinking.classList.remove('thinking');
+    thinking.textContent = '⚠ Gabim. Provo përsëri.';
+  }
+}
+
 async function sendAI() {
   const input = document.getElementById('aiInput');
   const question = input.value.trim();
@@ -8928,7 +8972,18 @@ VEPRIME (3 LLOJE — përdor bllokun [VEPRIM] vetëm kur Fatlindi kërkon të KR
 [/VEPRIM]
 (Për siguri, mund të fshish vetëm regjistrimin e fundit me komandë.)
 
-RREGULLA VEPRIMI: shkruaj 1 fjali të shkurtër para bllokut. Vendos VETËM një bllok [VEPRIM]. Përdoruesi konfirmon vetë para se të ruhet. Mos shkruaj [VEPRIM] kur thjesht pyet diçka.
+RREGULLA VEPRIMI (SHUMË E RËNDËSISHME):
+- Kur Fatlindi kërkon të regjistrosh/shtosh/paguash/ndryshosh DIÇKA, ti DUHET të vendosësh bllokun [VEPRIM]{...}[/VEPRIM] në përgjigje. PA bllokun, asgjë NUK ruhet.
+- KURRË mos thuaj "e regjistrova", "u shtua", "e bëra" PA vendosur bllokun [VEPRIM]. Nëse s'vendos bllokun, veprimi NUK kryhet — do gënjesh përdoruesin.
+- Mos thuaj se veprimi u krye — sistemi do tregojë kartën e konfirmimit dhe përdoruesi vendos. Ti thjesht përgatit veprimin me bllokun.
+- Shkruaj 1 fjali të shkurtër (p.sh. "E përgatita:") PASTAJ bllokun [VEPRIM]. Vendos VETËM një bllok.
+- Mos shkruaj [VEPRIM] vetëm kur përdoruesi PYET diçka (jo kur kërkon veprim).
+
+Shembull i SAKTË për "regjistro 20 euro për materiale sot":
+"E përgatita shpenzimin:
+[VEPRIM]
+{"tip":"shpenzim","shuma":20,"kategoria":"material","pershkrimi":"materiale","data":""}
+[/VEPRIM]"
 
 KËRKIM I THELLË: Ke akses te TË GJITHA regjistrimet, pagesat, shpenzimet. Mund të përgjigjesh për çdo detaj: sa herë punoi dikush diku, çfarë u bë në një datë, sa m² u shtruan, kur mbaroi një vend, etj. Kërko në të dhënat e dhëna.
 
@@ -8981,6 +9036,15 @@ ${context}`;
       showActionConfirm(action);
     } else {
       thinkingMsg.textContent = cleanAnswer || answer;
+      // Safety net: AI claims it did something but didn't emit a [VEPRIM] block
+      const claimsAction = /\b(e regjistrova|u regjistrua|e shtova|u shtua|e bëra|u krye|e ruajta|u ruajt|e pagova|u pagua|e ndryshova|u ndryshua)\b/i.test(answer);
+      if (claimsAction) {
+        // Re-prompt the AI internally to produce the action block
+        addAIMessage('⚠ Prit — më duket se desh të kryesh një veprim. Po e përgatit përsëri...', 'bot');
+        aiHistory.push({ role: 'user', content: 'Nuk e vendose bllokun [VEPRIM] në përgjigjen e fundit, prandaj asgjë nuk u ruajt. Të lutem ripërgjigju VETËM me bllokun [VEPRIM]{...}[/VEPRIM] për veprimin që desha, pa tekst tjetër.' });
+        // Trigger a follow-up call
+        retryAction();
+      }
     }
     document.getElementById('aiMessages').scrollTop = document.getElementById('aiMessages').scrollHeight;
   } catch (e) {
