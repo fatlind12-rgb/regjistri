@@ -9377,7 +9377,15 @@ function notifyUpcomingJobs() {
 function refreshUI() {
   renderChecklist();
   if (document.getElementById('view-workers').classList.contains('active')) renderWorkers();
-  if (document.getElementById('view-history').classList.contains('active')) renderHistory();
+  if (document.getElementById('view-history').classList.contains('active')) {
+    renderHistory();
+    // Refresh expenses tab if it's the active sub-tab
+    const expTab = document.getElementById('tab-expenses');
+    if (expTab && expTab.style.display !== 'none') renderExpenses();
+    // Refresh payments tab if active
+    const payTab = document.getElementById('tab-payments');
+    if (payTab && payTab.style.display !== 'none') renderPayments();
+  }
   if (document.getElementById('view-planned').classList.contains('active')) renderPlanned();
   if (document.getElementById('view-prices').classList.contains('active')) { renderPriceList(); renderOffersList(); }
 }
