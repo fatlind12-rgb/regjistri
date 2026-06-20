@@ -2523,7 +2523,127 @@ input[type="number"]::-webkit-inner-spin-button {
 .ai-voicemode-btn svg { width: 18px; height: 18px; }
 .ai-voicemode-btn:active { transform: scale(0.9); }
 
-/* AI Action confirmation card */
+/* ═══════════════════════════════════════
+   CUSTOM PICKER (bottom sheet)
+═══════════════════════════════════════ */
+.picker-overlay {
+  position: fixed; inset: 0;
+  z-index: 700;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-end;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+.picker-overlay.open { display: flex; opacity: 1; }
+.picker-sheet {
+  width: 100%;
+  background: var(--surface);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border-top: 1px solid var(--border-bright);
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+  max-height: 70vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+}
+.picker-overlay.open .picker-sheet { transform: translateY(0); }
+.picker-handle {
+  width: 42px; height: 5px; border-radius: 3px;
+  background: var(--border-bright);
+  margin: 4px auto 14px;
+}
+.picker-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.92rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  text-align: center; margin-bottom: 14px;
+}
+.picker-options { display: flex; flex-direction: column; gap: 6px; }
+.custom-select-btn {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-bright);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem; font-weight: 500;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.2s var(--ease);
+  text-align: left;
+}
+.custom-select-btn:active { transform: scale(0.99); border-color: var(--accent); }
+.picker-opt {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  color: var(--text-bright);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.18s var(--ease);
+}
+.picker-opt:active { transform: scale(0.98); }
+.picker-opt.selected {
+  background: linear-gradient(135deg, rgba(255,107,53,0.18), rgba(255,107,53,0.06));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.picker-opt.selected::after { content: '✓'; font-weight: 800; }
+
+/* ═══════════════════════════════════════
+   SLIDE-TO-ACTION rows
+═══════════════════════════════════════ */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  touch-action: pan-y;
+}
+.swipe-actions {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  display: flex; align-items: stretch;
+  z-index: 1;
+}
+.swipe-act {
+  width: 64px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
+  border: none; cursor: pointer;
+  color: #fff; font-size: 1.2rem;
+  font-family: 'DM Sans', sans-serif;
+}
+.swipe-act small { font-size: 0.62rem; font-weight: 600; }
+.swipe-act.edit { background: linear-gradient(135deg, #00d4a4, #00a880); }
+.swipe-act.del { background: linear-gradient(135deg, #ff6b35, #e0451f); }
+.swipe-content {
+  position: relative; z-index: 2;
+  background: var(--surface);
+  transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform;
+}
+.swipe-wrap.open .swipe-content { transform: translateX(-128px); }
+.swipe-hint {
+  position: absolute; top: 50%; right: 10px;
+  transform: translateY(-50%);
+  color: var(--muted); font-size: 0.7rem;
+  opacity: 0.5; z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════
+   CUSTOM PICKER end
+═══════════════════════════════════════ */
 .ai-action-card {
   align-self: stretch;
   background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.05) 100%);
@@ -4055,6 +4175,15 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
       <button class="btn-sync" onclick="closeEditExpense()">Anulo</button>
       <button class="btn-sync primary" onclick="saveEditExpense()">Ruaj</button>
     </div>
+  </div>
+</div>
+
+<!-- CUSTOM PICKER (bottom sheet, replaces native select) -->
+<div class="picker-overlay" id="pickerOverlay" onclick="closePicker(event)">
+  <div class="picker-sheet" id="pickerSheet">
+    <div class="picker-handle"></div>
+    <div class="picker-title" id="pickerTitle">Zgjedh</div>
+    <div class="picker-options" id="pickerOptions"></div>
   </div>
 </div>
 
@@ -6866,6 +6995,65 @@ function getActiveMonths() {
 
 let selectedPayMonth = ''; // '' = të gjitha, ose 'YYYY-MM'
 
+async function pickPayMonth() {
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+  const activeMonths = getActiveMonths();
+  const opts = [{ value: '', label: 'Të gjitha (gjithsej)' }].concat(
+    activeMonths.map(m => ({ value: m, label: `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}` }))
+  );
+  const chosen = await openPicker('Zgjedh Periudhën', opts, selectedPayMonth);
+  if (chosen === null) return;
+  selectedPayMonth = chosen;
+  renderPayments();
+}
+
+// ═══════════════════════════════════════
+// SLIDE-TO-ACTION (swipe rows to reveal edit/delete)
+// ═══════════════════════════════════════
+let swipeStartX = 0, swipeStartY = 0, swipeEl = null, swipeMoved = false, swipeLocked = false;
+function initSwipe(container) {
+  if (!container) return;
+  container.querySelectorAll('.swipe-wrap').forEach(wrap => {
+    if (wrap.dataset.swipeInit) return;
+    wrap.dataset.swipeInit = '1';
+    const content = wrap.querySelector('.swipe-content');
+    if (!content) return;
+
+    content.addEventListener('touchstart', (e) => {
+      swipeEl = wrap; swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY;
+      swipeMoved = false; swipeLocked = false;
+      // Close any other open rows
+      container.querySelectorAll('.swipe-wrap.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+    }, { passive: true });
+
+    content.addEventListener('touchmove', (e) => {
+      if (!swipeEl) return;
+      const dx = e.touches[0].clientX - swipeStartX;
+      const dy = e.touches[0].clientY - swipeStartY;
+      if (!swipeLocked) {
+        if (Math.abs(dy) > Math.abs(dx)) { swipeEl = null; return; } // vertical scroll
+        swipeLocked = true;
+      }
+      swipeMoved = true;
+      const isOpen = wrap.classList.contains('open');
+      let offset = dx + (isOpen ? -128 : 0);
+      offset = Math.max(-128, Math.min(0, offset));
+      content.style.transition = 'none';
+      content.style.transform = `translateX(${offset}px)`;
+    }, { passive: true });
+
+    content.addEventListener('touchend', (e) => {
+      if (!swipeEl) return;
+      content.style.transition = '';
+      content.style.transform = '';
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      if (dx < -45) wrap.classList.add('open');
+      else if (dx > 45) wrap.classList.remove('open');
+      swipeEl = null;
+    }, { passive: true });
+  });
+}
+
 function renderPayments() {
   populatePaymentDropdowns();
 
@@ -6878,15 +7066,16 @@ function renderPayments() {
   const activeMonths = getActiveMonths();
   const monthLabel = (m) => `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}`;
 
-  // Month selector
+  // Month selector (custom picker, no native Android UI)
+  const curMonthLabel = selectedPayMonth === '' ? 'Të gjitha (gjithsej)' : monthLabel(selectedPayMonth);
   let html = `
     <div class="card" style="margin-bottom:14px">
       <div class="card-bd" style="padding:12px">
         <label style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;display:block;margin-bottom:8px">📅 Zgjedh Periudhën</label>
-        <select id="payMonthSelect" onchange="selectedPayMonth=this.value;renderPayments()" style="width:100%">
-          <option value="" ${selectedPayMonth===''?'selected':''}>Të gjitha (gjithsej)</option>
-          ${activeMonths.map(m => `<option value="${m}" ${selectedPayMonth===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
-        </select>
+        <button class="custom-select-btn" onclick="pickPayMonth()">
+          <span>${esc(curMonthLabel)}</span>
+          <span style="color:var(--muted)">▾</span>
+        </button>
       </div>
     </div>
   `;
@@ -6996,15 +7185,20 @@ function renderPayments() {
               <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted);padding:6px 0;font-family:'Syne',sans-serif;font-weight:600">📜 Pagesat (${workerPayments.length})</summary>
               <div style="background:var(--surface2);border-radius:8px;margin-top:6px;overflow:hidden">
                 ${workerPayments.map(p => `
-                  <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-                    <div style="font-size:1rem">💵</div>
-                    <div style="flex:1;min-width:0">
-                      <div style="font-size:0.82rem;font-weight:600">${fmtDate(p.date)}${p.forMonth?' · për '+monthLabel(p.forMonth):''}</div>
-                      ${p.notes ? `<div style="font-size:0.72rem;color:var(--muted)">${esc(p.notes)}</div>` : ''}
+                  <div class="swipe-wrap">
+                    <div class="swipe-actions">
+                      <button class="swipe-act edit" onclick="editPayment('${p.id}')">✎<small>Edito</small></button>
+                      <button class="swipe-act del" onclick="delPayment('${p.id}')">🗑<small>Fshi</small></button>
                     </div>
-                    <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(0)}€</div>
-                    <button onclick="editPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:4px 6px" title="Edito">✎</button>
-                    <button onclick="delPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 8px" title="Fshi">🗑</button>
+                    <div class="swipe-content" style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                      <div style="font-size:1rem">💵</div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:0.82rem;font-weight:600">${fmtDate(p.date)}${p.forMonth?' · për '+monthLabel(p.forMonth):''}</div>
+                        ${p.notes ? `<div style="font-size:0.72rem;color:var(--muted)">${esc(p.notes)}</div>` : ''}
+                      </div>
+                      <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(0)}€</div>
+                      <span class="swipe-hint">‹ rrëshqit</span>
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -7016,6 +7210,7 @@ function renderPayments() {
   });
 
   document.getElementById('paymentsContainer').innerHTML = html;
+  initSwipe(document.getElementById('paymentsContainer'));
 }
 
 // Pay full balance (optionally for a month)
@@ -7149,6 +7344,18 @@ function closeEditExpense() {
 }
 
 let selectedExpMonth = '';   // '' = të gjitha
+
+async function pickExpMonth() {
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+  const expMonths = getExpenseMonths();
+  const opts = [{ value: '', label: 'Të gjitha' }].concat(
+    expMonths.map(m => ({ value: m, label: `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}` }))
+  );
+  const chosen = await openPicker('Periudha', opts, selectedExpMonth);
+  if (chosen === null) return;
+  selectedExpMonth = chosen;
+  renderExpenses();
+}
 let expandedExpLoc = null;    // cili vend është i hapur
 
 function getExpenseMonths() {
@@ -7172,15 +7379,16 @@ function renderExpenses() {
   const expMonths = getExpenseMonths();
   const monthLabel = (m) => `${monthNames[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}`;
 
-  // Month selector (always shown)
+  // Month selector (custom picker, no native Android UI)
+  const curExpMonthLabel = selectedExpMonth === '' ? 'Të gjitha' : monthLabel(selectedExpMonth);
   let html = `
     <div class="card" style="margin-bottom:14px">
       <div class="card-bd" style="padding:12px">
         <label style="font-size:0.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'Syne',sans-serif;font-weight:700;display:block;margin-bottom:8px">📅 Periudha</label>
-        <select id="expMonthSelect" onchange="selectedExpMonth=this.value;renderExpenses()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;padding:10px 13px;outline:none;cursor:pointer">
-          <option value="" ${selectedExpMonth===''?'selected':''}>Të gjitha</option>
-          ${expMonths.map(m => `<option value="${m}" ${selectedExpMonth===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
-        </select>
+        <button class="custom-select-btn" onclick="pickExpMonth()">
+          <span>${esc(curExpMonthLabel)}</span>
+          <span style="color:var(--muted)">▾</span>
+        </button>
       </div>
     </div>
   `;
@@ -7284,15 +7492,20 @@ function renderExpenses() {
           </div>
           <div style="background:var(--surface)">
             ${items.map(e => `
-              <div style="padding:11px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">
-                <div style="font-size:1.2rem">${catIcons[e.category]||'📦'}</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:0.86rem;font-weight:600">${esc(e.desc)}</div>
-                  <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
+              <div class="swipe-wrap">
+                <div class="swipe-actions">
+                  <button class="swipe-act edit" onclick="editExpense('${e.id}')">✎<small>Edito</small></button>
+                  <button class="swipe-act del" onclick="delExpense('${e.id}')">🗑<small>Fshi</small></button>
                 </div>
-                <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(0)}€</div>
-                <button onclick="event.stopPropagation();editExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 6px" title="Edito">✎</button>
-                <button onclick="event.stopPropagation();delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px" title="Fshi">🗑</button>
+                <div class="swipe-content" style="padding:11px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                  <div style="font-size:1.2rem">${catIcons[e.category]||'📦'}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:0.86rem;font-weight:600">${esc(e.desc)}</div>
+                    <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(0)}€</div>
+                  <span class="swipe-hint">‹ rrëshqit</span>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -7302,6 +7515,7 @@ function renderExpenses() {
   });
 
   document.getElementById('expensesContainer').innerHTML = html;
+  initSwipe(document.getElementById('expensesContainer'));
 }
 
 function toggleExpLoc(loc) {
@@ -9418,6 +9632,34 @@ function customPrompt(msg, opts = {}) {
     cancelBtn.addEventListener('click', onCancel);
     input.addEventListener('keydown', onKey);
   });
+}
+
+// ═══════════════════════════════════════
+// CUSTOM PICKER (replaces native <select>)
+// ═══════════════════════════════════════
+let pickerResolve = null;
+function openPicker(title, options, currentValue) {
+  // options: [{value, label}]
+  return new Promise(resolve => {
+    pickerResolve = resolve;
+    document.getElementById('pickerTitle').textContent = title || 'Zgjedh';
+    const cont = document.getElementById('pickerOptions');
+    cont.innerHTML = options.map(o =>
+      `<div class="picker-opt ${o.value===currentValue?'selected':''}" onclick="choosePicker('${String(o.value).replace(/'/g,"\\'")}')">${esc(o.label)}</div>`
+    ).join('');
+    document.getElementById('pickerOverlay').classList.add('open');
+    if (navigator.vibrate) navigator.vibrate(12);
+  });
+}
+function choosePicker(value) {
+  document.getElementById('pickerOverlay').classList.remove('open');
+  if (pickerResolve) { pickerResolve(value); pickerResolve = null; }
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+function closePicker(event) {
+  if (event && event.target.id !== 'pickerOverlay') return;
+  document.getElementById('pickerOverlay').classList.remove('open');
+  if (pickerResolve) { pickerResolve(null); pickerResolve = null; }
 }
 
 function customConfirm(msg, opts = {}) {
