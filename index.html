@@ -2632,6 +2632,10 @@ input[type="number"]::-webkit-inner-spin-button {
   transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
   will-change: transform;
 }
+/* When swipe-content also has a card class, keep that card's flex layout */
+.swipe-content.ecard, .swipe-content.de-row, .swipe-content.wcard {
+  display: flex; align-items: center;
+}
 .swipe-wrap.open .swipe-content { transform: translateX(-128px); }
 .swipe-hint {
   position: absolute; top: 50%; right: 10px;
@@ -4637,19 +4641,22 @@ function renderWorkers() {
     return;
   }
   g.innerHTML = workers.map(w => `
-    <div class="wcard">
-      <div class="wav">${ini(w.name)}</div>
-      <div class="wi">
-        <strong>${esc(w.name)}</strong>
-        <small>${esc(w.role)||'Punëtor'}</small>
-        ${w.dailyWage ? `<span class="wage-badge">💰 ${w.dailyWage}€/ditë</span>` : ''}
+    <div class="swipe-wrap">
+      <div class="swipe-actions">
+        <button class="swipe-act edit" onclick="editWorker(${w.id})">✎<small>Edito</small></button>
+        <button class="swipe-act del" onclick="delWorker(${w.id})">🗑<small>Fshi</small></button>
       </div>
-      <div class="card-actions">
-        <button class="btn-edit" onclick="editWorker(${w.id})" title="Edito">✎</button>
-        <button class="btn-xw" onclick="delWorker(${w.id})" title="Fshi">✕</button>
+      <div class="swipe-content wcard">
+        <div class="wav">${ini(w.name)}</div>
+        <div class="wi">
+          <strong>${esc(w.name)}</strong>
+          <small>${esc(w.role)||'Punëtor'}</small>
+          ${w.dailyWage ? `<span class="wage-badge">💰 ${w.dailyWage}€/ditë</span>` : ''}
+        </div>
       </div>
     </div>
   `).join('');
+  initSwipe(g);
 }
 
 // ═══════════════════════════════════════
@@ -6431,24 +6438,27 @@ function renderDrill(loc, data) {
         </div>
         ${sharedDesc ? `<div class="day-loc-desc" style="margin-bottom:14px"><span>🔨 ${esc(sharedDesc)}</span><button class="desc-edit-btn" onclick="event.stopPropagation();editDayDesc('${selectedDate}','${esc(loc).replace(/'/g,"\\'")}')" title="Ndrysho përshkrimin">✎</button></div>` : ''}
         <div style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Punëtorët që Punuan</div>
-        <div class="drill-entries">
+        <div class="drill-entries" id="drillEntriesSwipe">
           ${dayEntries.map(e => `
-            <div class="de-row">
-              <div class="dw-av" style="flex-shrink:0">${ini(e.workerName)}</div>
-              <div style="flex:1;min-width:0">
-                <div class="de-name">${esc(e.workerName)}</div>
-                ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="de-desc">${esc(e.desc)}</div>`:''}
+            <div class="swipe-wrap">
+              <div class="swipe-actions">
+                <button class="swipe-act edit" onclick="openEditEntry('${e.id}')">✎<small>Edito</small></button>
+                <button class="swipe-act del" onclick="delEntry('${e.id}')">🗑<small>Fshi</small></button>
               </div>
-              <div style="flex-shrink:0">${dayBadge(e)}</div>
-              <div class="entry-actions" style="flex-shrink:0" onclick="event.stopPropagation()">
-                <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
-                <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
+              <div class="swipe-content de-row">
+                <div class="dw-av" style="flex-shrink:0">${ini(e.workerName)}</div>
+                <div style="flex:1;min-width:0">
+                  <div class="de-name">${esc(e.workerName)}</div>
+                  ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="de-desc">${esc(e.desc)}</div>`:''}
+                </div>
+                <div style="flex-shrink:0">${dayBadge(e)}</div>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
     `;
+    setTimeout(() => initSwipe(document.getElementById('drillEntriesSwipe')), 0);
     return;
   }
 
@@ -7197,7 +7207,7 @@ function renderPayments() {
                         ${p.notes ? `<div style="font-size:0.72rem;color:var(--muted)">${esc(p.notes)}</div>` : ''}
                       </div>
                       <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(0)}€</div>
-                      <span class="swipe-hint">‹ rrëshqit</span>
+                      
                     </div>
                   </div>
                 `).join('')}
@@ -7504,7 +7514,7 @@ function renderExpenses() {
                     <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
                   </div>
                   <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(0)}€</div>
-                  <span class="swipe-hint">‹ rrëshqit</span>
+                  
                 </div>
               </div>
             `).join('')}
@@ -7761,17 +7771,19 @@ function renderAll(filtered) {
               <div class="day-loc-name">📍 ${esc(loc)}</div>
               ${sharedDesc ? `<div class="day-loc-desc"><span>🔨 ${esc(sharedDesc)}</span><button class="desc-edit-btn" onclick="event.stopPropagation();editDayDesc('${date}','${esc(loc).replace(/'/g,"\\'")}')" title="Ndrysho përshkrimin">✎</button></div>` : ''}
               ${locEntries.map(e => `
-                <div class="ecard">
-                  <div class="eav">${ini(e.workerName)}</div>
-                  <div class="ei">
-                    <strong>${esc(e.workerName)}</strong>
-                    ${e.workerRole?`<div class="ei-meta"><span>${esc(e.workerRole)}</span></div>`:''}
-                    ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="ei-desc">${esc(e.desc)}</div>`:''}
+                <div class="swipe-wrap">
+                  <div class="swipe-actions">
+                    <button class="swipe-act edit" onclick="openEditEntry('${e.id}')">✎<small>Edito</small></button>
+                    <button class="swipe-act del" onclick="delEntry('${e.id}')">🗑<small>Fshi</small></button>
                   </div>
-                  <div>${dayBadge(e)}</div>
-                  <div class="entry-actions" onclick="event.stopPropagation()">
-                    <button class="btn-edit" onclick="event.stopPropagation();openEditEntry('${e.id}')" title="Edito">✎</button>
-                    <button class="btn-xe" onclick="event.stopPropagation();delEntry('${e.id}')" title="Fshi">🗑</button>
+                  <div class="swipe-content ecard">
+                    <div class="eav">${ini(e.workerName)}</div>
+                    <div class="ei">
+                      <strong>${esc(e.workerName)}</strong>
+                      ${e.workerRole?`<div class="ei-meta"><span>${esc(e.workerRole)}</span></div>`:''}
+                      ${(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim() !== 'Punë')?`<div class="ei-desc">${esc(e.desc)}</div>`:''}
+                    </div>
+                    <div>${dayBadge(e)}</div>
                   </div>
                 </div>
               `).join('')}
@@ -7783,6 +7795,7 @@ function renderAll(filtered) {
     </div>
   `;
   }).join('');
+  initSwipe(document.getElementById('allContainer'));
 }
 
 function toggleDayExpand(date) {
