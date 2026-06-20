@@ -165,7 +165,8 @@ body::before {
 }
 
 /* Smooth scrolling */
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 10px; }
@@ -442,6 +443,31 @@ select {
   -webkit-appearance: none;
   padding-right: 36px;
 }
+/* Date inputs — tame the native Android/iOS picker styling */
+input[type="date"], input[type="time"], input[type="month"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  color-scheme: dark; /* makes native picker dark instead of bright white/green */
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(60%) sepia(60%) saturate(2000%) hue-rotate(340deg);
+  cursor: pointer;
+  opacity: 0.85;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit { color: var(--text-bright); }
+/* Number inputs — remove spinner for cleaner look */
+input[type="number"] {
+  appearance: textfield;
+  -webkit-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
 
 .toggle-group { display: flex; gap: 7px; }
 .tbtn {
@@ -708,7 +734,7 @@ select {
   cursor: pointer; font-size: 0.9rem;
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm);
+  border-radius: 50%;
   transition: all 0.2s var(--ease);
   padding: 0;
 }
@@ -725,7 +751,7 @@ select {
   cursor: pointer; font-size: 0.9rem;
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm);
+  border-radius: 50%;
   transition: all 0.2s var(--ease);
   padding: 0;
 }
@@ -742,7 +768,7 @@ select {
   cursor: pointer; font-size: 0.9rem;
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm);
+  border-radius: 50%;
   transition: all 0.2s var(--ease);
   padding: 0;
 }
@@ -937,6 +963,12 @@ select {
   background: var(--grad-accent); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+/* Global: every round avatar/icon stays a perfect circle, never oval */
+.dw-av, .eav, .aac-ico, .ai-header-ico, .worker-avatar, .pay-av {
+  flex-shrink: 0 !important;
+  aspect-ratio: 1 / 1;
 }
 .dw-info strong { display: block; font-size: 0.88rem; font-weight: 600; }
 .dw-info small { font-size: 0.75rem; color: var(--muted); }
@@ -3988,6 +4020,44 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
   </div>
 </div>
 
+<!-- EDIT EXPENSE MODAL -->
+<div class="modal-overlay" id="editExpenseModal">
+  <div class="modal">
+    <h3>✎ Edito Shpenzimin</h3>
+    <input type="hidden" id="editExpId"/>
+    <div style="margin-bottom:14px">
+      <label>Data</label>
+      <input type="date" id="editExpDate"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Kategoria</label>
+      <select id="editExpCat">
+        <option value="material">🧱 Materiale</option>
+        <option value="transport">⛽ Transport</option>
+        <option value="qira">🔧 Qira/Vegla</option>
+        <option value="ushqim">🍔 Ushqim</option>
+        <option value="tjeter">📦 Tjetër</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Shuma (€)</label>
+      <input type="number" id="editExpAmount" min="0" step="0.01" inputmode="decimal"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Vendi</label>
+      <select id="editExpLoc"></select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Përshkrimi</label>
+      <input type="text" id="editExpDesc"/>
+    </div>
+    <div class="row-end">
+      <button class="btn-sync" onclick="closeEditExpense()">Anulo</button>
+      <button class="btn-sync primary" onclick="saveEditExpense()">Ruaj</button>
+    </div>
+  </div>
+</div>
+
 <!-- CUSTOM CONFIRM DIALOG -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box" id="confirmBox">
@@ -6739,6 +6809,23 @@ async function delPayment(id) {
   showToast('🗑 Pagesa u fshi', true);
 }
 
+async function editPayment(id) {
+  const p = payments.find(x => x.id === id);
+  if (!p) { showToast('⚠ Pagesa nuk u gjet!', true); return; }
+  const input = await customPrompt(`Ndrysho shumën e pagesës (${fmtDate(p.date)}):`, {
+    title: '✎ Edito Pagesën',
+    placeholder: 'Shuma në €',
+    type: 'number'
+  });
+  if (input === null) return;
+  const amount = parseFloat(input) || 0;
+  if (amount <= 0) { showToast('⚠ Shuma duhet të jetë mbi 0', true); return; }
+  p.amount = amount;
+  save(); renderPayments();
+  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  showToast('✔ Pagesa u përditësua!');
+}
+
 function calcWorkerBalance(workerId) {
   // Total earned (from all entries)
   const w = workers.find(x => x.id === workerId);
@@ -6916,7 +7003,8 @@ function renderPayments() {
                       ${p.notes ? `<div style="font-size:0.72rem;color:var(--muted)">${esc(p.notes)}</div>` : ''}
                     </div>
                     <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green)">${p.amount.toFixed(0)}€</div>
-                    <button onclick="delPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 8px">🗑</button>
+                    <button onclick="editPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:4px 6px" title="Edito">✎</button>
+                    <button onclick="delPayment('${p.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 8px" title="Fshi">🗑</button>
                   </div>
                 `).join('')}
               </div>
@@ -7020,6 +7108,44 @@ async function delExpense(id) {
   expenses = expenses.filter(e => e.id !== id);
   save(); renderExpenses();
   showToast('🗑 Shpenzimi u fshi', true);
+}
+
+function editExpense(id) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  const e = expenses.find(x => x.id === id);
+  if (!e) { showToast('⚠ Shpenzimi nuk u gjet!', true); return; }
+  document.getElementById('editExpId').value = e.id;
+  document.getElementById('editExpDate').value = (e.date||'').split('T')[0];
+  document.getElementById('editExpCat').value = e.category || 'tjeter';
+  document.getElementById('editExpAmount').value = e.amount || 0;
+  document.getElementById('editExpDesc').value = e.desc || '';
+  // Populate location dropdown
+  const sel = document.getElementById('editExpLoc');
+  const locs = [...new Set(entries.map(en => en.location).filter(Boolean))];
+  sel.innerHTML = '<option value="">-- Pa vend --</option>' + locs.map(l => `<option value="${esc(l)}" ${l===e.location?'selected':''}>${esc(l)}</option>`).join('');
+  document.getElementById('editExpenseModal').classList.add('open');
+}
+
+function saveEditExpense() {
+  const id = document.getElementById('editExpId').value;
+  const e = expenses.find(x => x.id === id);
+  if (!e) return;
+  const date = document.getElementById('editExpDate').value;
+  const cat = document.getElementById('editExpCat').value;
+  const amount = parseFloat(document.getElementById('editExpAmount').value) || 0;
+  const desc = document.getElementById('editExpDesc').value.trim();
+  const loc = document.getElementById('editExpLoc').value;
+  if (!date) { showToast('⚠ Zgjedh datën!', true); return; }
+  if (amount <= 0) { showToast('⚠ Vendos shumën!', true); return; }
+  e.date = date; e.category = cat; e.amount = amount; e.desc = desc || 'Shpenzim'; e.location = loc;
+  save(); renderExpenses();
+  closeEditExpense();
+  if (navigator.vibrate) navigator.vibrate([15,30,15]);
+  showToast('✔ Shpenzimi u përditësua!');
+}
+
+function closeEditExpense() {
+  document.getElementById('editExpenseModal').classList.remove('open');
 }
 
 let selectedExpMonth = '';   // '' = të gjitha
@@ -7165,7 +7291,8 @@ function renderExpenses() {
                   <div style="font-size:0.74rem;color:var(--muted)">${fmtDate(e.date)} · ${catNames[e.category]||e.category}</div>
                 </div>
                 <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${e.amount.toFixed(0)}€</div>
-                <button onclick="event.stopPropagation();delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px">🗑</button>
+                <button onclick="event.stopPropagation();editExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:4px 6px" title="Edito">✎</button>
+                <button onclick="event.stopPropagation();delExpense('${e.id}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px 8px" title="Fshi">🗑</button>
               </div>
             `).join('')}
           </div>
