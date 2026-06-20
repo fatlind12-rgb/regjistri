@@ -2636,8 +2636,24 @@ input[type="number"]::-webkit-inner-spin-button {
   z-index: 3;
   box-shadow: 0 2px 8px rgba(0,212,164,0.3);
 }
-.loc-grid .swipe-wrap { margin-bottom: 0; }
-.swipe-content.loc-card { margin-bottom: 0 !important; }
+.loc-grid .swipe-wrap { margin-bottom: 0; border: none; box-shadow: var(--sh); background: transparent; border-radius: var(--r); }
+.swipe-content.loc-card {
+  margin-bottom: 0 !important;
+  background: var(--surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+.loc-grid .swipe-wrap .swipe-actions { border-radius: 0 var(--r) var(--r) 0; overflow: hidden; }
+/* All swipe-content must be fully opaque so actions don't bleed through */
+.swipe-content {
+  background: var(--surface);
+}
+.swipe-content.completed {
+  background: #14201c !important;
+  opacity: 1 !important;
+}
 .swipe-content {
   position: relative; z-index: 2;
   background: var(--surface);
