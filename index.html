@@ -2626,6 +2626,18 @@ input[type="number"]::-webkit-inner-spin-button {
 .swipe-act small { font-size: 0.62rem; font-weight: 600; }
 .swipe-act.edit { background: linear-gradient(135deg, #00d4a4, #00a880); }
 .swipe-act.del { background: linear-gradient(135deg, #ff6b35, #e0451f); }
+.swipe-act.complete { background: linear-gradient(135deg, #4d9fff, #2563eb); }
+.loc-work-btn {
+  position: absolute; top: 12px; right: 12px;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--green); color: #fff;
+  border: none; cursor: pointer; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0,212,164,0.3);
+}
+.loc-grid .swipe-wrap { margin-bottom: 0; }
+.swipe-content.loc-card { margin-bottom: 0 !important; }
 .swipe-content {
   position: relative; z-index: 2;
   background: var(--surface);
@@ -2635,8 +2647,19 @@ input[type="number"]::-webkit-inner-spin-button {
 /* When swipe-content also has a card class, keep that card's flex layout */
 .swipe-content.ecard, .swipe-content.de-row, .swipe-content.wcard {
   display: flex; align-items: center;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+/* The wrap provides spacing + rounded corners + border instead */
+.swipe-wrap {
+  border: 1px solid var(--border);
+  box-shadow: var(--sh);
+  background: var(--surface);
 }
 .swipe-wrap.open .swipe-content { transform: translateX(-128px); }
+.swipe-wrap.three.open .swipe-content { transform: translateX(-192px); }
 .swipe-hint {
   position: absolute; top: 50%; right: 10px;
   transform: translateY(-50%);
@@ -6310,24 +6333,26 @@ function renderLocations(filtered) {
     const locEsc = esc(loc).replace(/'/g,"\\'");
     const locWorkTotal = calcLocWorkTotal(loc);
     return `
-      <div class="loc-card ${sel} ${isCompleted?'completed':''}" onclick="selectLoc('${locEsc}')">
-        <div class="loc-card-actions" onclick="event.stopPropagation()">
-          <button class="loc-edit-btn" onclick="openProjectWorks('${locEsc}')" title="Punët e bëra" style="background:var(--green);color:#fff;border-color:var(--green)">💼</button>
-          <button class="loc-edit-btn" onclick="openEditLoc('${locEsc}')" title="Edito emrin">✎</button>
-          <button class="loc-status-btn" onclick="toggleLocStatus('${locEsc}')" title="${isCompleted?'Rikthe në Progres':'Shëno si të Kompletuar'}">
-            ${isCompleted?'↩':'✓'}
-          </button>
+      <div class="swipe-wrap three">
+        <div class="swipe-actions">
+          <button class="swipe-act edit" onclick="openEditLoc('${locEsc}')">✎<small>Edito</small></button>
+          <button class="swipe-act complete" onclick="toggleLocStatus('${locEsc}')">${isCompleted?'↩':'✓'}<small>${isCompleted?'Rikthe':'Komplet'}</small></button>
+          <button class="swipe-act del" onclick="delLocation('${locEsc}')">🗑<small>Fshi</small></button>
         </div>
-        <div class="loc-name">${isCompleted?'✅':'🚧'} ${esc(loc)}</div>
-        <div class="loc-stats">
-          <div class="loc-stat"><div class="n">${d.uniqueDays}</div><div class="l">Ditë</div></div>
-          <div class="loc-stat"><div class="n">${d.uniqueWorkers}</div><div class="l">Punëtorë</div></div>
-          ${locWorkTotal > 0 ? `<div class="loc-stat"><div class="n" style="color:var(--green);font-size:0.95rem">${locWorkTotal.toFixed(0)}€</div><div class="l">Fituar</div></div>` : ''}
+        <div class="swipe-content loc-card ${sel} ${isCompleted?'completed':''}" onclick="selectLoc('${locEsc}')">
+          <button class="loc-work-btn" onclick="event.stopPropagation();openProjectWorks('${locEsc}')" title="Punët e bëra">💼</button>
+          <div class="loc-name">${isCompleted?'✅':'🚧'} ${esc(loc)}</div>
+          <div class="loc-stats">
+            <div class="loc-stat"><div class="n">${d.uniqueDays}</div><div class="l">Ditë</div></div>
+            <div class="loc-stat"><div class="n">${d.uniqueWorkers}</div><div class="l">Punëtorë</div></div>
+            ${locWorkTotal > 0 ? `<div class="loc-stat"><div class="n" style="color:var(--green);font-size:0.95rem">${locWorkTotal.toFixed(0)}€</div><div class="l">Fituar</div></div>` : ''}
+          </div>
+          <div class="loc-bar"><div class="loc-bar-fill" style="width:${pct}%"></div></div>
         </div>
-        <div class="loc-bar"><div class="loc-bar-fill" style="width:${pct}%"></div></div>
       </div>
     `;
   }).join('');
+  initSwipe(document.getElementById('locGrid'));
 
   if (selectedLoc && locMap[selectedLoc]) {
     renderDrill(selectedLoc, locMap[selectedLoc]);
@@ -6347,6 +6372,26 @@ function toggleLocStatus(loc) {
   }
   renderHistory();
   showToast(newStatus === 'completed' ? '✅ U kompletua!' : '🚧 U kthye në progres');
+}
+
+async function delLocation(loc) {
+  const entryCount = entries.filter(e => e.location === loc).length;
+  const expCount = expenses.filter(e => e.location === loc).length;
+  const ok = await customConfirm(
+    `Do fshihen TË GJITHA të dhënat e vendit "${loc}": ${entryCount} regjistrime, ${expCount} shpenzime, punët dhe kontrata. Ky veprim s'kthehet!`,
+    { title: '🗑 Fshi Vendin?', okText: 'Po, Fshi' }
+  );
+  if (!ok) return;
+  entries = entries.filter(e => e.location !== loc);
+  expenses = expenses.filter(e => e.location !== loc);
+  projectWorks = projectWorks.filter(w => w.location !== loc);
+  delete locStatus[loc];
+  if (contracts && contracts[loc]) delete contracts[loc];
+  if (selectedLoc === loc) { selectedLoc = null; selectedDate = null; }
+  save();
+  renderHistory();
+  if (navigator.vibrate) navigator.vibrate([20,50,20]);
+  showToast('🗑 Vendi u fshi me të gjitha të dhënat', true);
 }
 
 function openEditLoc(loc) {
@@ -7045,9 +7090,11 @@ function initSwipe(container) {
         swipeLocked = true;
       }
       swipeMoved = true;
+      const actions = wrap.querySelector('.swipe-actions');
+      const maxSlide = actions ? actions.offsetWidth : 128;
       const isOpen = wrap.classList.contains('open');
-      let offset = dx + (isOpen ? -128 : 0);
-      offset = Math.max(-128, Math.min(0, offset));
+      let offset = dx + (isOpen ? -maxSlide : 0);
+      offset = Math.max(-maxSlide, Math.min(0, offset));
       content.style.transition = 'none';
       content.style.transform = `translateX(${offset}px)`;
     }, { passive: true });
