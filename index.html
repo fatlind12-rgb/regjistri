@@ -2687,6 +2687,66 @@ input[type="number"]::-webkit-inner-spin-button {
 /* ═══════════════════════════════════════
    CUSTOM PICKER end
 ═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════ */
+.dash-hero {
+  background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(168,85,247,0.08));
+  border: 1.5px solid var(--border-bright);
+  border-radius: var(--r);
+  padding: 22px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.dash-hero-label { font-size: 0.8rem; color: var(--muted); font-family:'Syne',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+.dash-hero-value { font-family:'Syne',sans-serif; font-weight:800; font-size: 2.6rem; margin: 6px 0; }
+.dash-hero-value.pos { color: var(--green); }
+.dash-hero-value.neg { color: var(--accent); }
+.dash-hero-sub { display:flex; justify-content:center; gap:18px; font-size:0.8rem; color:var(--muted); flex-wrap:wrap; }
+.dash-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin-bottom:18px; }
+.dash-stat {
+  background: var(--surface); border:1px solid var(--border);
+  border-radius: 14px; padding:14px; text-align:center; cursor:pointer;
+  transition: all 0.2s var(--ease);
+}
+.dash-stat:active { transform: scale(0.97); }
+.dash-stat-ico { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin:0 auto 8px; }
+.dash-stat-val { font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem; }
+.dash-stat-lbl { font-size:0.72rem;color:var(--muted);margin-top:2px; }
+.dash-section-title { font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin:18px 0 10px; }
+.dash-alerts { display:flex;flex-direction:column;gap:8px; }
+.dash-alert {
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--muted);
+  border-radius:12px;padding:13px 15px;
+}
+.dash-alert.warn { border-left-color: var(--accent); }
+.dash-alert.good { border-left-color: var(--green); }
+.dash-alert.info { border-left-color: #4d9fff; }
+.dash-alert-ico { font-size:1.2rem; }
+.dash-alert-text { flex:1;font-size:0.86rem;font-weight:500; }
+.dash-allgood {
+  background:rgba(0,212,164,0.06);border:1px solid rgba(0,212,164,0.25);
+  border-radius:12px;padding:16px;text-align:center;color:var(--green);font-weight:600;font-size:0.9rem;
+}
+.dash-actions { display:grid;grid-template-columns:repeat(2,1fr);gap:10px; }
+.dash-action {
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:16px 10px;cursor:pointer;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;
+  transition:all 0.2s var(--ease);
+}
+.dash-action:active { transform: scale(0.96); border-color: var(--accent); }
+.dash-action-ico { font-size:1.5rem; }
+.dash-recent { display:flex;flex-direction:column;gap:6px; }
+.dash-recent-row {
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:10px 14px;
+}
+
 .ai-action-card {
   align-self: stretch;
   background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.05) 100%);
@@ -3359,7 +3419,11 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
     </button>
   </div>
   <div class="nav" id="mainNav">
-    <button class="nav-btn active" data-view="register" onclick="showView('register',this)">
+    <button class="nav-btn active" data-view="dashboard" onclick="showView('dashboard',this)">
+      <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-txt">Kreu</span>
+    </button>
+    <button class="nav-btn" data-view="register" onclick="showView('register',this)">
       <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       <span class="nav-txt">Regjistro</span>
     </button>
@@ -3384,7 +3448,16 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 </header>
 
 <!-- ══ REGJISTRO ══ -->
-<div id="view-register" class="view active">
+<!-- DASHBOARD VIEW -->
+<div id="view-dashboard" class="view">
+  <div class="section-head">
+    <h2>🏠 Kreu</h2>
+    <p class="muted" id="dashGreeting">Përmbledhja e biznesit tënd</p>
+  </div>
+  <div id="dashboardContent"></div>
+</div>
+
+<div id="view-register" class="view">
   <div class="page">
     <div class="sync-bar">
       <div class="sync-status">
@@ -3394,7 +3467,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
       <div class="sync-actions">
         <button class="btn-sync" id="btnSyncNow" onclick="syncNow()" style="display:none">🔄 Sync</button>
         <button class="btn-sync primary" id="btnConnect" onclick="connectDrive()">🔗 Lidhu</button>
-        <button class="btn-sync" id="btnDisconnect" onclick="disconnectDrive()" style="display:none">⏏</button>
+        <button class="btn-sync" id="btnLogout" onclick="logoutDrive()" style="display:none" title="Dil nga llogaria">🚪</button>
       </div>
     </div>
 
@@ -4423,11 +4496,168 @@ document.getElementById('regDate').value = todayStr;
 document.getElementById('todayLabel').textContent = fmtDate(todayStr);
 
 // ── NAV ──
+function renderDashboard() {
+  const cont = document.getElementById('dashboardContent');
+  const monthNames = ['Janar','Shkurt','Mars','Prill','Maj','Qershor','Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+  const now = new Date();
+  const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const curMonthLabel = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Greeting by time of day
+  const hr = now.getHours();
+  const greet = hr < 12 ? 'Mirëmëngjes' : hr < 18 ? 'Mirëdita' : 'Mirëmbrëma';
+  document.getElementById('dashGreeting').textContent = `${greet}! ${curMonthLabel}`;
+
+  // ── This month's numbers ──
+  const monthEntries = entries.filter(e => (e.date||'').startsWith(curMonth));
+  const monthExpenses = expenses.filter(e => (e.date||'').startsWith(curMonth));
+
+  // Income this month (from project works)
+  let monthIncome = 0;
+  projectWorks.filter(w => (w.date||'').startsWith(curMonth)).forEach(w => {
+    monthIncome += (w.pricePerUnit||0) * (w.quantity||0);
+  });
+
+  // Wages this month
+  let monthWages = 0;
+  monthEntries.forEach(e => {
+    const w = workers.find(x => x.id === e.workerId);
+    if (w) { const pay = calcEarnings(e, w.dailyWage||0); if (pay) monthWages += pay; }
+  });
+
+  const monthExpTotal = monthExpenses.reduce((s,e) => s + (e.amount||0), 0);
+  const monthProfit = monthIncome - monthWages - monthExpTotal;
+
+  // Total debt across all workers
+  let totalDebt = 0;
+  workers.forEach(w => { const b = calcWorkerBalance(w.id); if (b.balance > 0) totalDebt += b.balance; });
+
+  // Active vs completed locations
+  const allLocs = [...new Set(entries.map(e => e.location).filter(Boolean))];
+  const completedLocs = allLocs.filter(l => locStatus[l] === 'completed').length;
+  const activeLocs = allLocs.length - completedLocs;
+
+  // Calendar work days this month
+  const workDays = new Set(monthEntries.map(e => e.date)).size;
+
+  // ── Smart alerts ──
+  const alerts = [];
+  // Unpaid workers
+  const unpaidWorkers = workers.filter(w => calcWorkerBalance(w.id).balance > 0.01);
+  if (unpaidWorkers.length > 0) {
+    alerts.push({ icon:'💰', type:'warn', text:`${unpaidWorkers.length} punëtor${unpaidWorkers.length>1?'ë':''} me borxh (${totalDebt.toFixed(0)}€ total)`, action:`showView('history',document.querySelector('[data-view=history]'));setTimeout(()=>switchTab('payments',document.querySelectorAll('.tab-btn')[4]),100)` });
+  }
+  // Locations without contract/advance
+  const locsNoContract = allLocs.filter(l => locStatus[l] !== 'completed' && (!contracts[l] || !contracts[l].advance));
+  if (locsNoContract.length > 0) {
+    alerts.push({ icon:'📋', type:'info', text:`${locsNoContract.length} vend${locsNoContract.length>1?'e':''} pa avans të regjistruar` });
+  }
+  // Profit comparison with last month
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()+1).padStart(2,'0')}`;
+  let lastIncome = 0, lastWages = 0, lastExp = 0;
+  projectWorks.filter(w => (w.date||'').startsWith(lastMonth)).forEach(w => lastIncome += (w.pricePerUnit||0)*(w.quantity||0));
+  entries.filter(e => (e.date||'').startsWith(lastMonth)).forEach(e => { const w = workers.find(x=>x.id===e.workerId); if(w){const p=calcEarnings(e,w.dailyWage||0); if(p) lastWages+=p;} });
+  expenses.filter(e => (e.date||'').startsWith(lastMonth)).forEach(e => lastExp += (e.amount||0));
+  const lastProfit = lastIncome - lastWages - lastExp;
+  if (lastProfit > 0 && monthProfit > 0) {
+    const diff = ((monthProfit - lastProfit) / lastProfit * 100);
+    if (Math.abs(diff) >= 5) {
+      alerts.push({ icon: diff>0?'📈':'📉', type: diff>0?'good':'warn', text:`Fitimi ${diff>0?'+':''}${diff.toFixed(0)}% kundrejt ${monthNames[lastMonthDate.getMonth()]}` });
+    }
+  }
+
+  // Recent activity (last 4 entries)
+  const recentEntries = entries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,4);
+
+  cont.innerHTML = `
+    <!-- Profit hero card -->
+    <div class="dash-hero">
+      <div class="dash-hero-label">💰 Fitimi këtë muaj</div>
+      <div class="dash-hero-value ${monthProfit>=0?'pos':'neg'}">${monthProfit>=0?'+':''}${monthProfit.toFixed(0)}€</div>
+      <div class="dash-hero-sub">
+        <span>📥 ${monthIncome.toFixed(0)}€ të ardhura</span>
+        <span>📤 ${(monthWages+monthExpTotal).toFixed(0)}€ dalje</span>
+      </div>
+    </div>
+
+    <!-- Quick stat grid -->
+    <div class="dash-grid">
+      <div class="dash-stat" onclick="showView('history',document.querySelector('[data-view=history]'));setTimeout(()=>switchTab('payments',document.querySelectorAll('.tab-btn')[4]),100)">
+        <div class="dash-stat-ico" style="background:rgba(255,107,53,0.15)">🔴</div>
+        <div class="dash-stat-val" style="color:${totalDebt>0?'var(--accent)':'var(--green)'}">${totalDebt.toFixed(0)}€</div>
+        <div class="dash-stat-lbl">Borxh total</div>
+      </div>
+      <div class="dash-stat" onclick="showView('history',document.querySelector('[data-view=history]'))">
+        <div class="dash-stat-ico" style="background:rgba(0,212,164,0.15)">🚧</div>
+        <div class="dash-stat-val">${activeLocs}</div>
+        <div class="dash-stat-lbl">Vende aktive</div>
+      </div>
+      <div class="dash-stat" onclick="showView('history',document.querySelector('[data-view=history]'))">
+        <div class="dash-stat-ico" style="background:rgba(0,212,164,0.15)">✅</div>
+        <div class="dash-stat-val">${completedLocs}</div>
+        <div class="dash-stat-lbl">Kompletuara</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-ico" style="background:rgba(168,85,247,0.15)">📅</div>
+        <div class="dash-stat-val">${workDays}</div>
+        <div class="dash-stat-lbl">Ditë pune</div>
+      </div>
+    </div>
+
+    ${alerts.length ? `
+      <div class="dash-section-title">⚡ Sinjale</div>
+      <div class="dash-alerts">
+        ${alerts.map(a => `
+          <div class="dash-alert ${a.type}" ${a.action?`onclick="${a.action}" style="cursor:pointer"`:''}>
+            <span class="dash-alert-ico">${a.icon}</span>
+            <span class="dash-alert-text">${esc(a.text)}</span>
+            ${a.action?'<span style="color:var(--muted)">›</span>':''}
+          </div>
+        `).join('')}
+      </div>
+    ` : `<div class="dash-allgood">✨ Gjithçka në rregull — pa borxhe urgjente!</div>`}
+
+    <!-- Quick actions -->
+    <div class="dash-section-title">⚡ Veprime të Shpejta</div>
+    <div class="dash-actions">
+      <button class="dash-action" onclick="showView('register',document.querySelector('[data-view=register]'))">
+        <span class="dash-action-ico">➕</span><span>Regjistro Ditë</span>
+      </button>
+      <button class="dash-action" onclick="showView('history',document.querySelector('[data-view=history]'));setTimeout(()=>switchTab('expenses',document.querySelectorAll('.tab-btn')[5]),100)">
+        <span class="dash-action-ico">💸</span><span>Shto Shpenzim</span>
+      </button>
+      <button class="dash-action" onclick="showView('history',document.querySelector('[data-view=history]'));setTimeout(()=>switchTab('payments',document.querySelectorAll('.tab-btn')[4]),100)">
+        <span class="dash-action-ico">💰</span><span>Paguaj</span>
+      </button>
+      <button class="dash-action" onclick="openAI()">
+        <span class="dash-action-ico">🤖</span><span>Pyet AI</span>
+      </button>
+    </div>
+
+    ${recentEntries.length ? `
+      <div class="dash-section-title">🕐 Aktiviteti i Fundit</div>
+      <div class="dash-recent">
+        ${recentEntries.map(e => `
+          <div class="dash-recent-row">
+            <div class="dw-av" style="width:34px;height:34px;font-size:0.75rem">${ini(e.workerName)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:0.85rem;font-weight:600">${esc(e.workerName)} · ${esc(e.location)}</div>
+              <div style="font-size:0.72rem;color:var(--muted)">${fmtDate(e.date)} · ${e.dayType==='full'?'Ditë plotë':e.dayType==='half'?'Gjysmë':'Ekstra'}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
 function showView(name, btn) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   btn.classList.add('active');
+  if (name==='dashboard') renderDashboard();
   if (name==='register') renderChecklist();
   if (name==='workers') renderWorkers();
   if (name==='prices') { renderPriceList(); renderOffersList(); }
@@ -9785,7 +10015,7 @@ document.getElementById('registerFormBody').style.display = 'none';
 // GOOGLE DRIVE SYNC
 // ═══════════════════════════════════════
 const DRIVE_FILE_NAME = 'regjistri-pune-backup.json';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 // Client ID i paracaktuar — përdoruesit nuk kanë nevojë ta vendosin
 const DEFAULT_CLIENT_ID = '843359131456-qfr3m4o8pg6e38ra3imvohgflnmgmak1.apps.googleusercontent.com';
 let tokenClient = null;
@@ -9816,7 +10046,8 @@ function setSyncStatus(state, text, sub) {
   const isOnline = state === 'online';
   document.getElementById('btnConnect').style.display = isOnline ? 'none' : '';
   document.getElementById('btnSyncNow').style.display = isOnline ? '' : 'none';
-  document.getElementById('btnDisconnect').style.display = isOnline ? '' : 'none';
+  const logoutBtn = document.getElementById('btnLogout');
+  if (logoutBtn) logoutBtn.style.display = isOnline ? '' : 'none';
 
   // Show/hide register form vs not-connected wall
   const wall = document.getElementById('notConnectedWall');
@@ -9867,6 +10098,7 @@ function startAuth(clientId, forceConsent = false) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPES,
+      login_hint: localStorage.getItem('gdrive_email') || '',
       callback: (resp) => {
         if (resp.error) {
           // If silent auth fails, try with consent screen
@@ -9893,6 +10125,16 @@ function startAuth(clientId, forceConsent = false) {
 
 async function onAuthSuccess() {
   setSyncStatus('syncing', 'I lidhur', 'Duke marrë të dhënat nga Drive...');
+  // Fetch and store the user's email so future logins are silent (login_hint)
+  try {
+    const profRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (profRes.ok) {
+      const prof = await profRes.json();
+      if (prof.email) localStorage.setItem('gdrive_email', prof.email);
+    }
+  } catch(e) { /* non-critical */ }
   try {
     driveFileId = await findOrCreateDriveFile();
     // ALWAYS pull from Drive first — Drive is the single source of truth
@@ -9917,6 +10159,24 @@ async function disconnectDrive() {
   setSyncStatus('', 'Jo i lidhur me Google Drive', 'Klik "Lidhu" për të hyrë në të dhënat e tua');
   renderChecklist(); renderWorkers();
   showToast('Shkëputur nga Google Drive');
+}
+
+async function logoutDrive() {
+  if (!await customConfirm('Do dilni plotësisht nga llogaria Google. Herën tjetër do duhet të zgjedhni llogarinë përsëri. Të dhënat në Drive mbeten të sigurta.', {title: '🚪 Dil nga Llogaria?', okText: 'Po, Dil'})) return;
+  // Revoke token if we have one
+  if (accessToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+    try { google.accounts.oauth2.revoke(accessToken, () => {}); } catch(e) {}
+  }
+  accessToken = null;
+  driveFileId = null;
+  workers = []; entries = []; locStatus = {}; expenses = []; contracts = {}; payments = []; priceList = []; projectWorks = []; plannedJobs = []; offers = [];
+  saveLocalCache();
+  localStorage.removeItem('gdrive_token_time');
+  localStorage.removeItem('gdrive_email'); // forget the account
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  setSyncStatus('', 'Dolët nga llogaria', 'Klik "Lidhu" për të hyrë me një llogari');
+  renderChecklist(); renderWorkers();
+  showToast('🚪 Dolët nga llogaria Google');
 }
 
 async function findOrCreateDriveFile() {
@@ -10128,6 +10388,7 @@ window.addEventListener('load', () => {
         tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: cid,
           scope: SCOPES,
+          login_hint: localStorage.getItem('gdrive_email') || '',
           callback: (resp) => {
             if (resp.error) {
               setSyncStatus('', 'Klik "Lidhu" për t\'u lidhur', '');
