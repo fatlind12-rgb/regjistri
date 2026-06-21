@@ -3488,7 +3488,7 @@ strong, h1, h2, h3, h4 { color: var(--text-bright); }
 
 <!-- ══ REGJISTRO ══ -->
 <!-- DASHBOARD VIEW -->
-<div id="view-dashboard" class="view">
+<div id="view-dashboard" class="view active">
   <div class="section-head">
     <h2>🏠 Kreu</h2>
     <p class="muted" id="dashGreeting">Përmbledhja e biznesit tënd</p>
@@ -10038,13 +10038,10 @@ document.getElementById('confirmOverlay').addEventListener('click', (e) => {
   }
 });
 
-renderChecklist();
-renderDashboard();
-
-// ═══ SPLASH SCREEN — keep while auto-connecting, hide when ready ═══
-// If user has connected before (saved email), keep splash until Drive loads.
-// Otherwise hide quickly so they can connect manually.
-const willAutoConnect = getClientId() && localStorage.getItem('gdrive_email');
+// ═══ SPLASH SCREEN — register hide timers FIRST (no deps that aren't defined yet) ═══
+// Use localStorage directly instead of getClientId() (which is declared later → TDZ error)
+const _savedEmail = localStorage.getItem('gdrive_email');
+const willAutoConnect = !!(_savedEmail); // had a successful login before
 if (willAutoConnect) {
   const ss = document.getElementById('splashStatus');
   if (ss) { ss.textContent = 'Po lidhem me Google Drive...'; ss.style.opacity = '1'; }
@@ -10053,15 +10050,21 @@ setTimeout(() => {
   const sp = document.getElementById('splashScreen');
   if (sp && !willAutoConnect) sp.classList.add('hide');
 }, 900);
-// Safety: never keep splash longer than 8s even if Drive hangs
+// Safety: never keep splash longer than 6s even if Drive hangs or render fails
 setTimeout(() => {
   const sp = document.getElementById('splashScreen');
   if (sp) sp.classList.add('hide');
-}, 8000);
+}, 6000);
+
+// Initial render (wrapped so a render error never blocks the app)
+try { renderChecklist(); } catch(e) { console.error('renderChecklist:', e); }
+try { renderDashboard(); } catch(e) { console.error('renderDashboard:', e); }
 
 // Show not-connected wall initially — will hide when Drive connects
-document.getElementById('notConnectedWall').classList.add('visible');
-document.getElementById('registerFormBody').style.display = 'none';
+try {
+  document.getElementById('notConnectedWall').classList.add('visible');
+  document.getElementById('registerFormBody').style.display = 'none';
+} catch(e) {}
 
 // ═══════════════════════════════════════
 // GOOGLE DRIVE SYNC
