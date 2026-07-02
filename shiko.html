@@ -81,6 +81,10 @@ body{
 .pill.half{background:rgba(255,149,88,0.15);color:#ff9558;}
 .pill.extra{background:rgba(168,85,247,0.15);color:var(--purple);}
 .loc-tag{display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--muted);background:var(--surface2);padding:3px 9px;border-radius:8px;margin-top:2px;}
+.loc-group{margin-top:12px;padding:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;}
+.loc-group-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:var(--accent);margin-bottom:8px;}
+.loc-group .day-desc{margin:8px 0 10px;}
+.loc-group .workers-row{margin-top:8px;}
 
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:0.9rem;}
 .empty .big{font-size:2.5rem;margin-bottom:10px;}
@@ -262,39 +266,48 @@ function render(){
   dates.forEach(date=>{
     const dayEntries=byDate[date];
     const p=parseDate(date);
-    // Shared description for the day (if all same)
-    const descs=[...new Set(dayEntries.map(e=>(e.desc||'').trim()).filter(d=>d&&d!=='Punë'))];
-    const sharedDesc=descs.length===1?descs[0]:null;
-    // Locations worked that day (shown small, since user searches may need it)
-    const locs=[...new Set(dayEntries.map(e=>e.location).filter(Boolean))];
+    // UNIQUE workers count (a worker split across 2 locations counts once)
+    const uniqueWorkers=new Set(dayEntries.map(e=>e.workerId!=null?e.workerId:e.workerName)).size;
+    // Group entries by location within this date
+    const byLoc={};
+    dayEntries.forEach(e=>{ const l=e.location||'Pa vend'; (byLoc[l]=byLoc[l]||[]).push(e); });
+    const locNames=Object.keys(byLoc);
 
     html+=`<div class="day-card">
       <div class="day-head">
         <div class="day-cal"><div class="d">${p?p.day:'?'}</div><div class="m">${p?monthShort[p.m-1]:''}</div></div>
         <div class="day-title">
           <strong>${dayName(date)}, ${p?p.day:''} ${p?monthNames[p.m-1]:''} ${p?p.y:''}</strong>
-          <small>${dayEntries.length} punëtor${dayEntries.length>1?'ë':''}${locs.length?' · '+esc(locs.join(', ')):''}</small>
+          <small>${uniqueWorkers} punëtor${uniqueWorkers>1?'ë':''} · ${locNames.length} vend${locNames.length>1?'e':''}</small>
         </div>
       </div>`;
 
-    if(sharedDesc){
-      html+=`<div class="day-desc">🔨 ${esc(sharedDesc)}</div>`;
-    }
+    locNames.forEach(loc=>{
+      const locEntries=byLoc[loc];
+      // Shared description within this location group
+      const descs=[...new Set(locEntries.map(e=>(e.desc||'').trim()).filter(d=>d&&d!=='Punë'))];
+      const sharedDesc=descs.length===1?descs[0]:null;
 
-    html+=`<div class="workers-row">`;
-    dayEntries.forEach(e=>{
-      const name=e.workerName||'?';
-      const perDesc=(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim()!=='Punë')?e.desc.trim():'';
-      html+=`<div class="wkr">
-        <div class="wkr-av">${ini(name)}</div>
-        <div class="wkr-info">
-          <strong>${esc(name)}</strong>
-          ${perDesc?`<small>🔨 ${esc(perDesc)}</small>`:(e.workerRole?`<small>${esc(e.workerRole)}</small>`:'')}
-        </div>
-        ${dayBadge(e)}
-      </div>`;
+      html+=`<div class="loc-group">
+        <div class="loc-group-name">📍 ${esc(loc)}</div>
+        ${sharedDesc?`<div class="day-desc">🔨 ${esc(sharedDesc)}</div>`:''}
+        <div class="workers-row">`;
+      locEntries.forEach(e=>{
+        const name=e.workerName||'?';
+        const perDesc=(!sharedDesc && e.desc && e.desc.trim() && e.desc.trim()!=='Punë')?e.desc.trim():'';
+        html+=`<div class="wkr">
+          <div class="wkr-av">${ini(name)}</div>
+          <div class="wkr-info">
+            <strong>${esc(name)}</strong>
+            ${perDesc?`<small>🔨 ${esc(perDesc)}</small>`:(e.workerRole?`<small>${esc(e.workerRole)}</small>`:'')}
+          </div>
+          ${dayBadge(e)}
+        </div>`;
+      });
+      html+=`</div></div>`;
     });
-    html+=`</div></div>`;
+
+    html+=`</div>`;
   });
 
   html+=`<div class="refresh-note">🔄 Rifresko faqen për të dhënat më të reja</div>`;
